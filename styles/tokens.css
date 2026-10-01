@@ -1,0 +1,167 @@
+/* ==========================================================================
+   FLORA FUSION — DESIGN TOKENS
+   Source of truth: DOCS/Flora_Fusion_design_tokens (1).md
+   Brand: Flora Fusion ("Nature Meets Your Space")
+   ========================================================================== */
+
+:root {
+  /* --- Brand Colors --- */
+  --color-brand-forest: #173F2B;
+  --color-brand-green: #24583B;
+  --color-brand-deep: #123222;
+  --color-brand-sage: #A9BDA3;
+  --color-brand-sage-light: #DDE7D8;
+
+  /* --- Neutral & Surface Colors --- */
+  --color-cream: #F7F4EC;
+  --color-cream-soft: #FBF9F4;
+  --color-beige: #EEE8DA;
+  --color-sand: #DCC8A8;
+  --color-white: #FFFFFF;
+
+  --color-text-primary: #173F2B;
+  --color-text-secondary: #53635A;
+  --color-text-muted: #7A847D;
+
+  --color-border: #DDDCD3;
+  --color-border-light: #EAE8DF;
+  --color-border-active: #24583B;
+
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F5F3EA;
+
+  /* --- Category Accents --- */
+  --color-category-plants: #315F3F;
+  --color-category-plants-soft: #E5EEE3;
+  --color-category-pots: #B9825B;
+  --color-category-pots-soft: #F1E1D4;
+  --color-category-seeds: #718B55;
+  --color-category-seeds-soft: #E5EBD8;
+
+  /* --- Semantic Colors --- */
+  --color-success: #3D754B;
+  --color-success-soft: #E6F0E6;
+  --color-warning: #B07A2A;
+  --color-warning-soft: #F7EEDB;
+  --color-error: #A34A42;
+  --color-error-soft: #F5E5E2;
+  --color-info: #52758A;
+  --color-info-soft: #E6EEF2;
+
+  /* --- Typography Families --- */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* --- Typography Scale --- */
+  --text-display-xl: clamp(2.75rem, 5vw, 4.5rem);
+  --text-display-lg: clamp(2.25rem, 4vw, 3.75rem);
+  --text-display-md: clamp(1.85rem, 3vw, 3rem);
+  --text-h1: clamp(1.75rem, 2.5vw, 2.5rem);
+  --text-h2: clamp(1.4rem, 2vw, 2rem);
+  --text-h3: 1.5rem;
+  --text-h4: 1.25rem;
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-label: 0.75rem;
+  --text-caption: 0.6875rem;
+
+  /* --- Font Weights --- */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* --- Letter Spacing --- */
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-label: 0.08em;
+
+  /* --- Line Heights --- */
+  --leading-none: 1;
+  --leading-tight: 1.15;
+  --leading-heading: 1.25;
+  --leading-body: 1.6;
+  --leading-relaxed: 1.75;
+
+  /* --- Spacing Scale --- */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+
+  /* --- Layout Containers --- */
+  --container-max: 1360px;
+  --container-reading: 760px;
+  --page-padding-desktop: 40px;
+  --page-padding-tablet: 24px;
+  --page-padding-mobile: 16px;
+
+  /* --- Radii Tokens --- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* --- Shadow Tokens (Soft botanical green tint) --- */
+  --shadow-xs: 0 1px 3px rgba(23, 63, 43, 0.05);
+  --shadow-sm: 0 4px 12px rgba(23, 63, 43, 0.07);
+  --shadow-md: 0 10px 28px rgba(23, 63, 43, 0.10);
+  --shadow-lg: 0 18px 45px rgba(23, 63, 43, 0.13);
+  --shadow-floating: 0 20px 40px -10px rgba(23, 63, 43, 0.18);
+
+  /* --- Component Specific Tokens --- */
+  --logo-width-desktop: 150px;
+  --logo-width-mobile: 120px;
+  --header-height-desktop: 76px;
+  --header-height-mobile: 64px;
+  --bottom-nav-height: 68px;
+
+  --product-card-radius: 12px;
+  --product-card-padding: 12px;
+  --product-card-border: var(--color-border-light);
+  --product-card-bg: var(--color-white);
+
+  --chip-height: 36px;
+  --chip-radius: var(--radius-pill);
+
+  --rating-star: #D89427;
+
+  /* --- AI Assistant Tokens --- */
+  --ai-primary: var(--color-brand-forest);
+  --ai-surface: #EEF4EA;
+  --ai-user-surface: #F4F0E6;
+  --ai-border: #D7E1D3;
+  --ai-button-size: 56px;
+  --ai-panel-width: 420px;
+
+  /* --- Z-Indices --- */
+  --z-base: 0;
+  --z-header: 100;
+  --z-dropdown: 200;
+  --z-sticky: 300;
+  --z-bottom-nav: 400;
+  --z-drawer: 500;
+  --z-modal: 600;
+  --z-ai: 700;
+  --z-toast: 800;
+
+  /* --- Motion Easings --- */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-instant: 120ms;
+  --duration-fast: 200ms;
+  --duration-normal: 350ms;
+  --duration-slow: 600ms;
+}

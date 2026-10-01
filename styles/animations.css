@@ -1,0 +1,194 @@
+/* ==========================================================================
+   FLORA FUSION — ANIMATION STYLES & GSAP HELPER CLASSES
+   Floating, Levitation, Pulse, and Scroll Reveal Keyframes
+   ========================================================================== */
+
+/* Subtle Ambient Levitation */
+@keyframes flora-float-slow {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes flora-float-reverse {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(7px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.animate-levitate {
+  animation: flora-float-slow 4s ease-in-out infinite;
+}
+
+.animate-levitate-reverse {
+  animation: flora-float-reverse 4.5s ease-in-out infinite;
+}
+
+/* Typing Dots Animation for Flora AI */
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--color-border-light);
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-brand-forest);
+  border-radius: 999px;
+  animation: flora-typing 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes flora-typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* Pulse Glow for Live Badges */
+.pulse-glow {
+  position: relative;
+}
+
+.pulse-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: inherit;
+  opacity: 0.4;
+  animation: pulse-ring 2s infinite;
+  z-index: -1;
+}
+
+/* Continuous Marquee for Botanical Badge Banner */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  width: max-content;
+  animation: marqueeScroll 32s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ==========================================================================
+   ANTI-GRAVITY (FLOATING) ANIMATION FOR FEATURE CARDS
+   Smooth vertical levitation (0px to -12px), subtle tilt (-1deg to 1deg),
+   dynamic elevation box-shadow, staggered offsets, and hover elevation.
+   ========================================================================== */
+
+@keyframes antiGravityFloatA {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    box-shadow: 0 4px 12px rgba(23, 63, 43, 0.05);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1deg);
+    box-shadow: 0 18px 28px rgba(23, 63, 43, 0.11);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+    box-shadow: 0 4px 12px rgba(23, 63, 43, 0.05);
+  }
+}
+
+@keyframes antiGravityFloatB {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    box-shadow: 0 4px 12px rgba(23, 63, 43, 0.05);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-1deg);
+    box-shadow: 0 18px 28px rgba(23, 63, 43, 0.11);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+    box-shadow: 0 4px 12px rgba(23, 63, 43, 0.05);
+  }
+}
+
+/* Card Staggered Delay Assignments */
+.trust-item:nth-child(1) {
+  animation: antiGravityFloatA 3.8s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.trust-item:nth-child(2) {
+  animation: antiGravityFloatB 3.8s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.trust-item:nth-child(3) {
+  animation: antiGravityFloatA 3.8s ease-in-out infinite;
+  animation-delay: 1.6s;
+}
+
+.trust-item:nth-child(4) {
+  animation: antiGravityFloatB 3.8s ease-in-out infinite;
+  animation-delay: 2.4s;
+}
+
+/* Hover Effect: Gracefully pause float, elevate higher (-16px), scale slightly (1.03), deepen shadow */
+.trust-item:hover {
+  animation-play-state: paused;
+  transform: translateY(-16px) scale(1.03);
+  box-shadow: 0 24px 38px rgba(23, 63, 43, 0.15);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .animate-levitate,
+  .animate-levitate-reverse,
+  .pulse-glow::after,
+  .animate-marquee,
+  .overlapping-badge-svg,
+  .trust-item {
+    animation: none !important;
+    transform: none !important;
+  }
+  .trust-item:hover {
+    transform: none !important;
+  }
+}
+

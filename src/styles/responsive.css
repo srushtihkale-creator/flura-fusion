@@ -1,0 +1,34 @@
+/* ==========================================================================
+   FLORA FUSION — RESPONSIVE FOUNDATION
+   Breakpoints: Desktop (1440px/1024px), Tablet (768px), Mobile (480px, 360px)
+   ========================================================================== */
+
+/* Mobile First Helpers */
+.hide-desktop {
+  display: none !important;
+}
+
+.hide-mobile {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .hide-desktop {
+    display: block !important;
+  }
+  
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  body {
+    padding-bottom: var(--bottom-nav-height); /* Clear sticky mobile bottom nav */
+  }
+}
+
+/* Touch optimization */
+@media (hover: none) and (pointer: coarse) {
+  button, a, input, select {
+    min-height: 44px;
+  }
+}

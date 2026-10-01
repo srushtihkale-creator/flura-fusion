@@ -1,0 +1,113 @@
+/* ==========================================================================
+   FLORA FUSION — CORE COMPONENT PRIMITIVES
+   Buttons, Badges, Chips, and Surface Cards
+   ========================================================================== */
+
+/* Primary Button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background-color: var(--color-brand-forest);
+  color: var(--color-white);
+  padding: 0 var(--space-6);
+  height: 48px;
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body);
+  transition: all var(--duration-fast) var(--ease-standard);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-brand-green);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: var(--color-white);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background-color: transparent;
+  color: var(--color-brand-forest);
+  border: 1px solid var(--color-brand-forest);
+  padding: 0 var(--space-6);
+  height: 48px;
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body);
+  transition: all var(--duration-fast) var(--ease-standard);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-cream-soft);
+  border-color: var(--color-brand-green);
+  color: var(--color-brand-green);
+}
+
+/* Filter Chip */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-4);
+  height: var(--chip-height);
+  border-radius: var(--chip-radius);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+  transition: all var(--duration-fast) var(--ease-standard);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  border-color: var(--color-brand-green);
+  background-color: var(--color-cream-soft);
+}
+
+.filter-chip.active {
+  background-color: var(--color-brand-forest);
+  color: var(--color-white);
+  border-color: var(--color-brand-forest);
+}
+
+/* Card Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.badge-forest {
+  background-color: var(--color-brand-forest);
+  color: var(--color-white);
+}
+
+.badge-sage {
+  background-color: var(--color-brand-sage-light);
+  color: var(--color-brand-forest);
+}
+
+.badge-terracotta {
+  background-color: var(--color-category-pots-soft);
+  color: var(--color-category-pots);
+}

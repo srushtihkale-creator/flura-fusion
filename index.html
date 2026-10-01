@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="description" content="Flora Fusion — Nature Meets Your Space. Premium Indian plant nursery e-commerce for healthy plants, artisan pots, and organic seeds." />
+  <meta name="theme-color" content="#173F2B" />
+  <title>Flora Fusion — Nature Meets Your Space</title>
+
+  <!-- Google Fonts: Cormorant Garamond & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <link rel="stylesheet" href="styles/responsive.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header" id="site-header">
+    <div class="container">
+      
+      <!-- Brand Logo (Exact Provided Asset) -->
+      <a href="#/" class="brand-logo" title="Flora Fusion Home">
+        <img src="assets/logo.png" alt="Flora Fusion" class="brand-logo-img" />
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav class="nav-links" aria-label="Main Navigation">
+        <a href="#/plants" class="nav-link" data-route="plants">Plants</a>
+        <a href="#/pots" class="nav-link" data-route="pots">Pots</a>
+        <a href="#/seeds" class="nav-link" data-route="seeds">Seeds</a>
+        <a href="#/about" class="nav-link" data-route="about">About</a>
+        <a href="#/plant-care" class="nav-link" data-route="plant-care">Plant Care</a>
+      </nav>
+
+      <!-- Live Search Bar -->
+      <div class="header-search">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="header-search-input" class="search-input" placeholder="Search for plants, pots or seeds..." autocomplete="off" />
+        </div>
+        <div id="search-dropdown" class="search-dropdown"></div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Account / Orders -->
+        <a href="#/tracking" class="header-action-btn" title="Track Orders">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </a>
+
+        <!-- Wishlist -->
+        <button class="header-action-btn open-wishlist-btn" title="Wishlist">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span class="action-badge wishlist-badge" style="display:none;">0</span>
+        </button>
+
+        <!-- Cart -->
+        <button class="header-action-btn open-cart-btn" title="Shopping Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span class="action-badge cart-badge" style="display:none;">0</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Mobile Search Row -->
+  <div class="mobile-search-row">
+    <div class="search-input-wrapper">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" class="search-input" placeholder="Search plants, pots, seeds..." oninput="FloraApp.handleSearchInput(this.value)" />
+    </div>
+  </div>
+
+  <!-- ==================== MAIN VIEW CONTAINERS (SPA) ==================== -->
+  <main id="main-content">
+
+    <!-- 1. HOME VIEW -->
+    <div id="home-view" class="app-view">
+      
+      <!-- HERO SECTION -->
+      <section class="hero-section">
+        <div class="container hero-grid">
+          
+          <!-- Hero Text -->
+          <div class="hero-text-content">
+            <div class="hero-eyebrow">
+              <span>🍃</span> GREEN SPACES. HAPPIER PLACES.
+            </div>
+            <h1 class="hero-title">
+              Bring Nature<br />
+              <span>Home</span>
+            </h1>
+            <p class="hero-description">
+              Discover a wide range of healthy plants, beautiful pots and quality seeds — all in one place.
+            </p>
+            <div class="hero-cta-group">
+              <a href="#/plants" class="btn-primary">
+                Shop Now →
+              </a>
+            </div>
+          </div>
+
+          <!-- Hero Visual & Zero-Gravity Levitation -->
+          <div class="hero-visual-wrapper">
+            <!-- Decorative Floating SVG Leaves -->
+            <svg class="floating-leaf-svg leaf-1" viewBox="0 0 64 64" fill="currentColor">
+              <path d="M12 54C28 54 52 42 54 10C34 12 10 32 12 54Z" fill="#A9BDA3" fill-opacity="0.3"></path>
+              <path d="M12 54C28 42 42 28 54 10" stroke="#173F2B" stroke-width="2"></path>
+            </svg>
+            <svg class="floating-leaf-svg leaf-2" viewBox="0 0 64 64" fill="currentColor">
+              <path d="M52 54C36 54 12 42 10 10C30 12 54 32 52 54Z" fill="#24583B" fill-opacity="0.25"></path>
+              <path d="M52 54C36 42 22 28 10 10" stroke="#24583B" stroke-width="2"></path>
+            </svg>
+
+            <!-- Main Hero Card -->
+            <div class="hero-main-card">
+              <img src="assets/hero/hero_lush.jpg" alt="Flora Fusion Botanical Collection" class="hero-image" onerror="this.src='assets/hero/hero_banner.png'" />
+              
+              <!-- Floating Nursery Badge -->
+              <div class="hero-floating-badge animate-levitate">
+                <div class="floating-badge-icon">🌿</div>
+                <div>
+                  <h4 class="floating-badge-title">100% Nursery Fresh</h4>
+                  <p class="floating-badge-sub">Transit-safe bio packaging</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. TRUST STRIP (Prompt 2 Final Sections 19 & 20) -->
+      <section class="trust-strip">
+        <div class="container trust-grid">
+          <div class="trust-item">
+            <div class="trust-icon-box" title="Healthy Plants">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 20h10"></path>
+                <path d="M12 20v-8"></path>
+                <path d="M12 12c0-4 4-7 8-7 0 4-3 8-7 8"></path>
+                <path d="M12 12c0-3-3-5-6-5 0 3 2 6 5 6"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Healthy Plants</h4>
+              <p class="trust-desc">Direct from local nurseries</p>
+            </div>
+          </div>
+          <div class="trust-item">
+            <div class="trust-icon-box" title="Safe & Secure">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                <circle cx="12" cy="16" r="1"></circle>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Safe & Secure</h4>
+              <p class="trust-desc">Payments & instant confirmation</p>
+            </div>
+          </div>
+          <div class="trust-item">
+            <div class="trust-icon-box" title="Fast & Reliable">
+              <svg viewBox="0 0 24 24">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Fast & Reliable</h4>
+              <p class="trust-desc">Free delivery above ₹799</p>
+            </div>
+          </div>
+          <div class="trust-item">
+            <div class="trust-icon-box" title="Expert Support">
+              <svg viewBox="0 0 24 24">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Expert Support</h4>
+              <p class="trust-desc">Plant care & Flora AI assistance</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. PLANTS CATALOG (Prompt 2 Final Sections 5, 7, 17) -->
+      <section class="container" style="margin-top: var(--space-8);">
+        <div class="home-section-header">
+          <div class="home-section-title-wrap">
+            <div class="category-icon-badge">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2L8 9h8l-4-7z"></path>
+                <path d="M12 9l-5 8h10l-5-8z"></path>
+                <path d="M12 17v5"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>Plants</h2>
+              <p class="section-tagline">Green companions for a healthier, happier you.</p>
+            </div>
+          </div>
+          <div class="home-filter-chips" data-category="plants">
+            <button class="home-filter-chip active" onclick="FloraApp.filterHomeCategory('plants', 'all', this)">All</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('plants', 'indoor', this)">Indoor</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('plants', 'outdoor', this)">Outdoor</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('plants', 'flowering', this)">Flowering</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('plants', 'air-purifying', this)">Air Purifying</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('plants', 'succulents', this)">Succulents</button>
+          </div>
+          <a href="#/plants" class="nav-link" style="font-weight:600; color:var(--color-brand-green);">View all 11 plants →</a>
+        </div>
+        <div id="home-plants-grid" class="product-grid"></div>
+      </section>
+
+      <!-- 5. POTS CATALOG (Prompt 2 Final Sections 5, 7, 17) -->
+      <section class="container" style="margin-top: var(--space-8);">
+        <div class="home-section-header">
+          <div class="home-section-title-wrap">
+            <div class="category-icon-badge">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 3h12l2 7-3 11H7L4 10l2-7z"></path>
+                <path d="M4 10h16"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>Pots</h2>
+              <p class="section-tagline">The perfect home for your plants.</p>
+            </div>
+          </div>
+          <div class="home-filter-chips" data-category="pots">
+            <button class="home-filter-chip active" onclick="FloraApp.filterHomeCategory('pots', 'all', this)">All</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('pots', 'ceramic', this)">Ceramic</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('pots', 'terracotta', this)">Terracotta</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('pots', 'hanging', this)">Hanging</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('pots', 'decorative', this)">Decorative</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('pots', 'self-watering', this)">Self-Watering</button>
+          </div>
+          <a href="#/pots" class="nav-link" style="font-weight:600; color:var(--color-brand-green);">View all 10 pots →</a>
+        </div>
+        <div id="home-pots-grid" class="product-grid"></div>
+      </section>
+
+      <!-- 6. SEEDS CATALOG (Prompt 2 Final Sections 5, 7, 17) -->
+      <section class="container" style="margin-top: var(--space-8);">
+        <div class="home-section-header">
+          <div class="home-section-title-wrap">
+            <div class="category-icon-badge">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2C8 2 4 6 4 11c0 6 8 11 8 11s8-5 8-11c0-5-4-9-8-9z"></path>
+                <path d="M12 7v5"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>Seeds</h2>
+              <p class="section-tagline">Small seeds. Big green dreams.</p>
+            </div>
+          </div>
+          <div class="home-filter-chips" data-category="seeds">
+            <button class="home-filter-chip active" onclick="FloraApp.filterHomeCategory('seeds', 'all', this)">All</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('seeds', 'flower', this)">Flower</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('seeds', 'vegetable', this)">Vegetable</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('seeds', 'herb', this)">Herb</button>
+            <button class="home-filter-chip" onclick="FloraApp.filterHomeCategory('seeds', 'fruit', this)">Fruit</button>
+          </div>
+          <a href="#/seeds" class="nav-link" style="font-weight:600; color:var(--color-brand-green);">View all 10 seeds →</a>
+        </div>
+        <div id="home-seeds-grid" class="product-grid"></div>
+      </section>
+
+      <!-- 7. PROMOTIONAL CATEGORY BANNERS (Prompt 2 Final Section 7) -->
+      <section class="promo-banners-section" style="margin-top: var(--space-8);">
+        <div class="container promo-grid">
+          <!-- Plants Promo Banner -->
+          <a href="#/plants" class="promo-card promo-card-plants">
+            <div class="promo-card-content">
+              <h3 class="promo-category-name">Plants</h3>
+              <p class="promo-desc">Indoor, outdoor, flowering, succulents & air-purifying companions.</p>
+              <span class="promo-btn">Explore Plants →</span>
+            </div>
+            <img src="assets/banners/promo_plants.png" alt="Plants" class="promo-bg-img" />
+          </a>
+
+          <!-- Pots Promo Banner -->
+          <a href="#/pots" class="promo-card promo-card-pots">
+            <div class="promo-card-content">
+              <h3 class="promo-category-name">Pots</h3>
+              <p class="promo-desc">Ceramic, terracotta, hanging, marble & self-watering containers.</p>
+              <span class="promo-btn">Explore Pots →</span>
+            </div>
+            <img src="assets/banners/promo_pots.png" alt="Pots" class="promo-bg-img" />
+          </a>
+
+          <!-- Seeds Promo Banner -->
+          <a href="#/seeds" class="promo-card promo-card-seeds">
+            <div class="promo-card-content">
+              <h3 class="promo-category-name">Seeds</h3>
+              <p class="promo-desc">Grow your own organic dreams and kitchen herbs from scratch.</p>
+              <span class="promo-btn">Explore Seeds →</span>
+            </div>
+            <img src="assets/banners/promo_seeds.png" alt="Seeds" class="promo-bg-img" />
+          </a>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 2. DEDICATED CATALOG VIEW -->
+    <div id="catalog-view" class="app-view" style="display:none; padding: var(--space-8) 0;">
+      <div class="container">
+        
+        <div style="font-size:0.8125rem; color:var(--color-text-muted); margin-bottom:var(--space-4);">
+          <a href="#/" style="color:var(--color-brand-forest);">Home</a> &gt; <span id="catalog-breadcrumb" style="color:var(--color-text-secondary);">Catalog</span>
+        </div>
+
+        <div class="section-header-block">
+          <div>
+            <h1 id="catalog-page-title">Plants</h1>
+            <p id="catalog-page-desc" class="section-tagline">Green companions for a healthier you.</p>
+          </div>
+          <!-- Dynamic Category Filter Chips -->
+          <div id="catalog-filter-chips" class="category-filter-chips"></div>
+        </div>
+
+        <!-- Catalog Product Grid -->
+        <div id="dedicated-catalog-grid" class="product-grid"></div>
+
+      </div>
+    </div>
+
+    <!-- 3. ABOUT VIEW -->
+    <div id="about-view" class="app-view" style="display:none; padding: var(--space-12) 0;">
+      <div class="container" style="max-width: var(--container-reading);">
+        <div style="text-align: center; margin-bottom: var(--space-8);">
+          <span style="font-size: 2rem;">🌿</span>
+          <h1 style="font-size: var(--text-display-lg); margin-top: 8px;">Nature Meets Your Space</h1>
+          <p style="font-size: var(--text-body-lg); color: var(--color-brand-green); font-style: italic;">
+            Connecting Indian homes with hand-nurtured greenery
+          </p>
+        </div>
+
+        <div style="background: #fff; padding: var(--space-8); border-radius: var(--radius-lg); border: 1px solid var(--color-border-light); line-height: 1.8;">
+          <h3 style="margin-bottom: 12px;">Our Botanical Story</h3>
+          <p>
+            Flora Fusion began with a humble realization: urban living disconnects us from the grounding rhythm of nature. We set out to bridge this gap by bringing wholesome nursery plants, artisan hand-thrown pots, and non-GMO heirloom seeds directly to your living rooms, balconies, and workspaces.
+          </p>
+          <h3 style="margin: 24px 0 12px;">Curated for Real Homes</h3>
+          <p>
+            Every single plant in our collection is acclimatized in certified nurseries, conditioned for apartment lighting, and packaged in biodegradable transit pods that protect foliage and soil throughout the journey.
+          </p>
+          <div style="margin-top: 32px; padding: 20px; background: var(--color-surface-soft); border-radius: var(--radius-md); border-left: 4px solid var(--color-brand-forest);">
+            <h4 style="margin-bottom: 4px;">Got questions about plant care?</h4>
+            <p style="font-size: 0.875rem; margin-bottom: 8px;">Our customer assistant Flora AI is always ready to recommend the ideal plant for your light conditions.</p>
+            <button class="btn-primary" style="padding: 8px 18px; font-size: 0.8125rem;" onclick="FloraAI.open()">Talk with Flora AI 🍃</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PLANT CARE VIEW -->
+    <div id="care-view" class="app-view" style="display:none; padding: var(--space-12) 0;">
+      <div class="container" style="max-width: var(--container-reading);">
+        <div style="text-align: center; margin-bottom: var(--space-8);">
+          <span style="font-size: 2rem;">🩺</span>
+          <h1 style="font-size: var(--text-display-lg); margin-top: 8px;">Plant Care Guide</h1>
+          <p style="font-size: var(--text-body-lg); color: var(--color-text-secondary);">Simple, trustworthy guidance for joyful plant parenting.</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+          <div style="background:#fff; padding: var(--space-6); border-radius: var(--radius-md); border:1px solid var(--color-border-light);">
+            <h3 style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">💧 The Golden Rule of Watering</h3>
+            <p>More indoor plants suffer from over-watering than under-watering. Always insert your index finger 2 inches into the soil. If damp, wait! When watering, pour slowly until water drains freely from the base drainage hole.</p>
+          </div>
+
+          <div style="background:#fff; padding: var(--space-6); border-radius: var(--radius-md); border:1px solid var(--color-border-light);">
+            <h3 style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">☀️ Deciphering Sunlight</h3>
+            <p><strong>Bright Indirect Light:</strong> Within 3-5 feet of an unshaded window.<br/>
+            <strong>Low Light:</strong> Interior hallways or north-facing rooms (Snake Plant and ZZ Plant thrive here).<br/>
+            <strong>Direct Sun:</strong> Essential for flowering lavender, jade plants, and balcony vegetable seeds.</p>
+          </div>
+
+          <div style="background:#fff; padding: var(--space-6); border-radius: var(--radius-md); border:1px solid var(--color-border-light);">
+            <h3 style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">🏺 Potting & Drainage</h3>
+            <p>Always ensure your pot has a drainage hole. If using decorative metal or marble pots without holes, place the plant in a nursery plastic pot inside the decorative container (cachepot method).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== CART DRAWER ==================== -->
+  <div id="cart-drawer-backdrop" class="drawer-backdrop"></div>
+  <aside id="cart-drawer" class="cart-drawer" aria-label="Shopping Cart">
+    
+    <div class="drawer-header">
+      <h3 class="drawer-title">
+        <span>🛒</span> Your Green Cart
+      </h3>
+      <button id="cart-drawer-close" class="modal-close-btn" style="position:static;" title="Close Cart">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Free Shipping Tracker -->
+      <div class="free-shipping-bar">
+        <div id="cart-progress-text" class="shipping-bar-text">Add items for Free Delivery!</div>
+        <div class="progress-track">
+          <div id="cart-progress-fill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div id="cart-items-container"></div>
+    </div>
+
+    <div class="drawer-footer">
+      <!-- Coupon Form -->
+      <form id="cart-coupon-form" class="cart-coupon-form">
+        <input type="text" id="cart-coupon-input" class="coupon-input" placeholder="Coupon Code (e.g. FLORA10)" />
+        <button type="submit" class="coupon-btn">Apply</button>
+      </form>
+
+      <!-- Totals Summary -->
+      <div class="cart-summary-line">
+        <span>Subtotal</span>
+        <span id="cart-subtotal">₹0</span>
+      </div>
+      <div class="cart-summary-line">
+        <span>Shipping</span>
+        <span id="cart-shipping">₹0</span>
+      </div>
+      <div id="cart-discount-row" class="cart-summary-line" style="color:var(--color-brand-green); display:none;">
+        <span>Discount (FLORA10)</span>
+        <span id="cart-discount">-₹0</span>
+      </div>
+      <div class="cart-summary-total">
+        <span>Total</span>
+        <span id="cart-total">₹0</span>
+      </div>
+
+      <!-- Checkout CTA -->
+      <button class="btn-primary" style="width:100%; margin-top:14px; padding:14px;" onclick="FloraApp.openCheckoutModal()">
+        Proceed to Checkout →
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ==================== PRODUCT DETAIL MODAL ==================== -->
+  <div id="product-detail-modal" class="modal-backdrop">
+    <div class="modal-container">
+      <button id="product-modal-close" class="modal-close-btn" title="Close">✕</button>
+      
+      <div class="product-modal-grid">
+        <!-- Gallery -->
+        <div class="product-modal-gallery">
+          <img id="modal-prod-img" src="" alt="Product Image" class="modal-main-img" />
+          <div id="modal-care-guide-box" class="modal-specs-box"></div>
+        </div>
+
+        <!-- Information -->
+        <div class="product-modal-info">
+          <h2 id="modal-prod-name" style="margin-bottom: 4px;"></h2>
+          <p id="modal-prod-tagline" style="color:var(--color-brand-green); font-weight:500; font-size:0.9375rem;"></p>
+          <div id="modal-prod-rating" style="font-size:0.8125rem; color:var(--color-text-secondary); margin-bottom:12px;"></div>
+          
+          <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:16px;">
+            <span id="modal-prod-price" style="font-size:1.6rem; font-weight:700; color:var(--color-brand-deep);"></span>
+            <span id="modal-prod-original-price" class="product-price-original" style="font-size:1rem;"></span>
+          </div>
+
+          <p id="modal-prod-desc" style="font-size:0.9375rem; line-height:1.6;"></p>
+
+          <!-- Specifications table -->
+          <div id="modal-prod-specs" class="modal-specs-box"></div>
+
+          <!-- Quantity and Actions -->
+          <div class="quantity-control-group">
+            <div class="qty-counter">
+              <button id="modal-qty-minus" class="qty-btn">−</button>
+              <span id="modal-qty-val" class="qty-val">1</span>
+              <button id="modal-qty-plus" class="qty-btn">+</button>
+            </div>
+            <button id="modal-add-cart-btn" class="btn-primary" style="flex:1;">
+              Add to Cart 🛒
+            </button>
+            <button id="modal-buy-now-btn" class="btn-secondary" style="flex:1;">
+              Buy Now
+            </button>
+          </div>
+
+          <!-- Transit Safe Assurance (Prompt 2 Final Section 26) -->
+          <div style="margin-top:16px; padding:10px 14px; background:var(--color-surface-soft); border-radius:var(--radius-sm); border:1px solid var(--color-border-light); display:flex; align-items:center; gap:10px; font-size:0.75rem; color:var(--color-brand-forest);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span><strong>Nursery Fresh Assurance:</strong> Transit-safe bio-packaging with healthy root guarantee. Free delivery above ₹799.</span>
+          </div>
+
+          <!-- Cross-Selling: Frequently Bought Together (Prompt 2 Final Sections 26 & 27) -->
+          <div id="modal-prod-cross-sell" class="modal-cross-sell-section" style="display:none;"></div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== WISHLIST MODAL ==================== -->
+  <div id="wishlist-modal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 840px;">
+      <button class="modal-close-btn" onclick="FloraApp.closeWishlistModal()" title="Close">✕</button>
+      <div style="margin-bottom: var(--space-6);">
+        <h2>Saved Green Wishlist</h2>
+        <p style="color:var(--color-text-secondary); font-size:0.875rem;">Your favorite plants, pots, and seeds saved for your space.</p>
+      </div>
+      <div id="wishlist-items-grid" class="product-grid" style="margin-bottom: 0;"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CHECKOUT STEPPER MODAL ==================== -->
+  <div id="checkout-modal" class="modal-backdrop">
+    <div class="modal-container checkout-modal-container">
+      <button id="checkout-modal-close" class="modal-close-btn" title="Close">✕</button>
+      
+      <!-- Stepper Indicator -->
+      <div class="stepper-header">
+        <div class="stepper-step active" data-step="1">
+          <div class="stepper-circle">1</div>
+          <span>Shipping</span>
+        </div>
+        <div style="flex:1; height:2px; background:var(--color-border); margin:0 10px;"></div>
+        <div class="stepper-step" data-step="2">
+          <div class="stepper-circle">2</div>
+          <span>Delivery</span>
+        </div>
+        <div style="flex:1; height:2px; background:var(--color-border); margin:0 10px;"></div>
+        <div class="stepper-step" data-step="3">
+          <div class="stepper-circle">3</div>
+          <span>Payment</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Address -->
+      <div id="checkout-step-1" class="checkout-step-content">
+        <h3 style="margin-bottom: 16px;">1. Delivery Address</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="checkout-name" class="form-input" placeholder="e.g. Priya Sharma" value="Priya Sharma" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" id="checkout-phone" class="form-input" placeholder="e.g. 9876543210" value="9876543210" />
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Street Address *</label>
+            <input type="text" id="checkout-address" class="form-input" placeholder="Flat / House no, Apartment, Street" value="Flat 402, Green Meadows" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">City *</label>
+            <input type="text" id="checkout-city" class="form-input" placeholder="e.g. Pune" value="Pune" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">PIN Code *</label>
+            <input type="text" id="checkout-pincode" class="form-input" placeholder="e.g. 411001" value="411001" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Delivery Option -->
+      <div id="checkout-step-2" class="checkout-step-content" style="display:none;">
+        <h3 style="margin-bottom: 16px;">2. Select Delivery Option</h3>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+          <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid var(--color-brand-forest); border-radius:var(--radius-sm); background:var(--color-surface-soft); cursor:pointer;">
+            <input type="radio" name="delivery-speed" value="standard" checked />
+            <div style="flex:1;">
+              <strong>Standard Eco Delivery (3-5 Business Days)</strong>
+              <div style="font-size:0.75rem; color:var(--color-text-secondary);">Direct safe transit with breathable bio-box</div>
+            </div>
+            <strong>FREE</strong>
+          </label>
+          <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid var(--color-border); border-radius:var(--radius-sm); cursor:pointer;">
+            <input type="radio" name="delivery-speed" value="express" />
+            <div style="flex:1;">
+              <strong>Express Nursery Priority (24-48 Hours)</strong>
+              <div style="font-size:0.75rem; color:var(--color-text-secondary);">Dedicated climate-controlled vehicle delivery</div>
+            </div>
+            <strong>₹99</strong>
+          </label>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment Simulation -->
+      <div id="checkout-step-3" class="checkout-step-content" style="display:none;">
+        <h3 style="margin-bottom: 16px;">3. Payment Method</h3>
+        <div class="payment-options-grid">
+          <label class="payment-card-option active">
+            <input type="radio" name="payment-method" value="UPI" checked />
+            <strong style="display:block; margin-top:6px;">UPI / QR Code</strong>
+            <span style="font-size:0.75rem; color:var(--color-text-secondary);">Google Pay, PhonePe, Paytm</span>
+          </label>
+          <label class="payment-card-option">
+            <input type="radio" name="payment-method" value="Card" />
+            <strong style="display:block; margin-top:6px;">Credit / Debit Card</strong>
+            <span style="font-size:0.75rem; color:var(--color-text-secondary);">Visa, Mastercard, RuPay</span>
+          </label>
+          <label class="payment-card-option">
+            <input type="radio" name="payment-method" value="NetBanking" />
+            <strong style="display:block; margin-top:6px;">Net Banking</strong>
+            <span style="font-size:0.75rem; color:var(--color-text-secondary);">All Indian Major Banks</span>
+          </label>
+          <label class="payment-card-option">
+            <input type="radio" name="payment-method" value="COD" />
+            <strong style="display:block; margin-top:6px;">Cash on Delivery</strong>
+            <span style="font-size:0.75rem; color:var(--color-text-secondary);">Pay in cash or UPI at doorstep</span>
+          </label>
+        </div>
+
+        <div style="padding:16px; background:var(--color-cream-soft); border-radius:var(--radius-sm); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+          <div>Total Payable Amount:</div>
+          <div id="checkout-modal-total" style="font-size:1.4rem; font-weight:700; color:var(--color-brand-forest);">₹0</div>
+        </div>
+      </div>
+
+      <!-- Stepper Action Buttons -->
+      <div style="display:flex; justify-content:space-between; margin-top:24px; padding-top:16px; border-top:1px solid var(--color-border-light);">
+        <button id="checkout-prev-btn" class="btn-secondary" style="padding:10px 20px;">← Back</button>
+        <button id="checkout-next-btn" class="btn-primary" style="padding:10px 24px;">Continue →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== ORDER CONFIRMATION MODAL ==================== -->
+  <div id="confirmation-modal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 580px; text-align: center;">
+      <button id="confirmation-modal-close" class="modal-close-btn" title="Close">✕</button>
+      
+      <div style="font-size: 3.5rem; margin-bottom: 12px;">🎉🌿</div>
+      <h2 style="font-size: 2rem; color: var(--color-brand-forest); margin-bottom: 8px;">Order Confirmed!</h2>
+      <p style="color: var(--color-text-secondary); margin-bottom: 24px;">
+        Thank you for choosing Flora Fusion. Your plants are being hand-inspected and packed with care.
+      </p>
+
+      <div style="background: var(--color-surface-soft); padding: 20px; border-radius: var(--radius-md); text-align: left; margin-bottom: 24px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.875rem;">
+          <span style="color:var(--color-text-muted);">Order Number:</span>
+          <strong id="conf-order-id" style="color:var(--color-brand-forest);"></strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.875rem;">
+          <span style="color:var(--color-text-muted);">Total Paid:</span>
+          <strong id="conf-order-total"></strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.875rem;">
+          <span style="color:var(--color-text-muted);">Estimated Delivery:</span>
+          <strong id="conf-delivery-estimate" style="color:var(--color-brand-green);"></strong>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; justify-content:center;">
+        <button class="btn-primary" onclick="FloraApp.closeConfirmationModal(); FloraApp.openTrackingModal();">
+          Track Live Order 🚚
+        </button>
+        <button class="btn-secondary" onclick="FloraApp.closeConfirmationModal(); window.location.hash='#/';">
+          Continue Shopping
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== ORDER TRACKING MODAL ==================== -->
+  <div id="tracking-modal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 620px;">
+      <button id="tracking-modal-close" class="modal-close-btn" title="Close">✕</button>
+      
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
+        <h2>Order Tracking</h2>
+        <span id="tracking-order-num" style="font-weight:700; color:var(--color-brand-green);"></span>
+      </div>
+
+      <p style="font-size:0.8125rem; color:var(--color-text-muted); margin-bottom:20px;">
+        Placed on <span id="tracking-order-date"></span> • Delivering to <span id="tracking-order-address"></span>
+      </p>
+
+      <!-- 6-Stage Timeline -->
+      <div class="order-tracking-timeline">
+        <div class="timeline-point completed">
+          <div class="timeline-dot">✓</div>
+          <div class="timeline-title">Order Placed & Verified</div>
+          <div class="timeline-time">Just now</div>
+        </div>
+        <div class="timeline-point completed active">
+          <div class="timeline-dot">✓</div>
+          <div class="timeline-title">Confirmed by Partner Nursery</div>
+          <div class="timeline-time">Plants inspected for healthy roots</div>
+        </div>
+        <div class="timeline-point">
+          <div class="timeline-dot">3</div>
+          <div class="timeline-title">Eco Transit Packaging</div>
+          <div class="timeline-time">Tomorrow morning</div>
+        </div>
+        <div class="timeline-point">
+          <div class="timeline-dot">4</div>
+          <div class="timeline-title">Dispatched via Express Flora</div>
+          <div class="timeline-time">In 24 hours</div>
+        </div>
+        <div class="timeline-point">
+          <div class="timeline-dot">5</div>
+          <div class="timeline-title">Out for Delivery</div>
+          <div class="timeline-time">Estimated in 3 days</div>
+        </div>
+        <div class="timeline-point">
+          <div class="timeline-dot">6</div>
+          <div class="timeline-title">Delivered to Doorstep</div>
+          <div class="timeline-time">Enjoy your green sanctuary</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="FloraApp.closeTrackingModal()">
+        Done
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ==================== FLORA AI FLOATING ASSISTANT ==================== -->
+  <div id="flora-ai-launcher" class="flora-ai-launcher" title="Ask Flora AI">
+    <div class="ai-launcher-pulse"></div>
+    <span class="ai-leaf-icon" style="font-size: 1.6rem;">🌿</span>
+  </div>
+
+  <div id="flora-ai-backdrop" class="drawer-backdrop"></div>
+  <aside id="flora-ai-panel" class="flora-ai-panel" aria-label="Flora AI Customer Assistant">
+    
+    <!-- AI Header -->
+    <div class="flora-ai-header">
+      <div class="flora-ai-title-wrap">
+        <div class="flora-ai-avatar">🌿</div>
+        <div>
+          <h4 class="flora-ai-panel-title">Flora AI</h4>
+          <p class="flora-ai-panel-sub">Your Plant Guide</p>
+        </div>
+      </div>
+      <button id="flora-ai-close" class="modal-close-btn" style="position:static; background:rgba(255,255,255,0.2); color:#fff;" title="Close AI">✕</button>
+    </div>
+
+    <!-- Quick Question Chips (Prompt 2 Final Section 25) -->
+    <div class="flora-ai-chips-strip">
+      <button class="flora-ai-chip" data-query="Find a plant for low light">Low Light Plants 🌙</button>
+      <button class="flora-ai-chip" data-query="Plants under 500">Plants under ₹500 💰</button>
+      <button class="flora-ai-chip" data-query="Help me choose a plant for my apartment">Help me choose 🌿</button>
+      <button class="flora-ai-chip" data-query="Easy plants for beginners">Beginner Friendly 🌱</button>
+      <button class="flora-ai-chip" data-query="Which pot fits a Snake Plant">Ceramic Pots 🏺</button>
+      <button class="flora-ai-chip" data-query="Easy herb seeds">Kitchen Herbs 🥗</button>
+      <button class="flora-ai-chip" data-query="How to water Snake Plant">Snake Plant Care 💧</button>
+    </div>
+
+    <!-- Message Stream -->
+    <div id="flora-ai-messages" class="flora-ai-body"></div>
+
+    <!-- Input Bar -->
+    <form id="flora-ai-form" class="flora-ai-input-bar">
+      <input type="text" id="flora-ai-input" class="flora-ai-input" placeholder="Ask Flora anything about plants, pots, or seeds..." autocomplete="off" />
+      <button type="submit" class="flora-ai-send-btn" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </form>
+
+  </aside>
+
+  <!-- ==================== MOBILE BOTTOM NAVIGATION ==================== -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+    <div class="mobile-nav-items">
+      <a href="#/" class="mobile-nav-btn active" data-route="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Home</span>
+      </a>
+
+      <a href="#/plants" class="mobile-nav-btn" data-route="plants">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>Catalog</span>
+      </a>
+
+      <button class="mobile-nav-btn" onclick="FloraAI.open()" style="color:var(--color-brand-forest);">
+        <div style="background:var(--color-brand-sage-light); width:32px; height:32px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+          🌿
+        </div>
+        <span>Flora AI</span>
+      </button>
+
+      <button class="mobile-nav-btn open-wishlist-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span>Wishlist</span>
+        <span class="mobile-badge wishlist-badge" style="display:none;">0</span>
+      </button>
+
+      <a href="#/tracking" class="mobile-nav-btn" data-route="account" title="Account & Order Tracking">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Account</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==================== 9. MAIN FOOTER (Prompt 2 Final Section 41) ==================== -->
+  <footer class="site-footer">
+    <div class="container">
+      
+      <div class="footer-grid">
+        <div>
+          <a href="#/" class="brand-logo" title="Flora Fusion Home">
+            <img src="assets/logo.png" alt="Flora Fusion" class="brand-logo-img footer-logo-img" />
+          </a>
+          <p class="footer-brand-desc">
+            Nature Meets Your Space. Premium nursery plants, handcrafted pots, and organic seeds curated for modern living.
+          </p>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h4 class="footer-heading">Collections</h4>
+          <div class="footer-links">
+            <a href="#/plants" class="footer-link">Indoor & Air Purifying Plants</a>
+            <a href="#/pots" class="footer-link">Artisan Ceramic & Terracotta</a>
+            <a href="#/seeds" class="footer-link">Heirloom Organic Seeds</a>
+            <a href="#/plants" class="footer-link">Bestseller Green Picks</a>
+          </div>
+        </div>
+
+        <!-- Help & Guides -->
+        <div>
+          <h4 class="footer-heading">Care & Support</h4>
+          <div class="footer-links">
+            <a href="#/about" class="footer-link">About Flora Fusion</a>
+            <a href="#/plant-care" class="footer-link">Plant Care Guide</a>
+            <a href="#/tracking" class="footer-link">Track Your Order</a>
+            <a href="javascript:void(0)" onclick="FloraAI.open()" class="footer-link">Ask Flora AI Assistant</a>
+          </div>
+        </div>
+
+        <!-- Newsletter -->
+        <div>
+          <h4 class="footer-heading">Stay in the Loop</h4>
+          <p style="font-size:0.8125rem; color:var(--color-text-secondary); margin-bottom:8px;">
+            Get weekly plant parenting tips, new botanical arrivals & 10% off your first nursery order.
+          </p>
+          <form class="newsletter-form" onsubmit="event.preventDefault(); FloraStore.showToast('Subscribed! Welcome to Flora Fusion 🌿', 'success'); this.reset();">
+            <input type="email" class="newsletter-input" placeholder="Enter your email" required />
+            <button type="submit" class="newsletter-btn" title="Subscribe">→</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ==================== 10. SUB-FOOTER / LEGAL STRIP (Prompt 2 Final Sections 42 & 43) ==================== -->
+  <aside class="site-subfooter" aria-label="Legal & Policies">
+    <div class="container subfooter-inner">
+      <div class="subfooter-copyright">
+        © <span class="current-year">2026</span> Flora Fusion. All rights reserved.
+      </div>
+      <div class="subfooter-legal-links">
+        <a class="subfooter-legal-link" onclick="FloraApp.openPolicyModal('terms')">Terms & Conditions</a>
+        <span class="subfooter-separator">•</span>
+        <a class="subfooter-legal-link" onclick="FloraApp.openPolicyModal('shipping')">Shipping Policy</a>
+        <span class="subfooter-separator">•</span>
+        <a class="subfooter-legal-link" onclick="FloraApp.openPolicyModal('privacy')">Privacy Policy</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==================== 11. REPEATING OVERLAPPING BOTANICAL BADGE STRIP ==================== -->
+  <section class="overlapping-badges-strip" aria-label="Botanical Emblems">
+    <div class="overlapping-badges-track">
+        <!-- Badge 0: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-0" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-0" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 1: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-1" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-1" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 2: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-2" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-2" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 3: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-3" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-3" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 4: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-4" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-4" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 5: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-5" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-5" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 6: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-6" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-6" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 7: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-7" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-7" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 8: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-8" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-8" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 9: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-9" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-9" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 10: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-10" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-10" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 11: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-11" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-11" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 12: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-12" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-12" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 13: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-13" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-13" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 14: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-14" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-14" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 15: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-15" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-15" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 16: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-16" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-16" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 17: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-17" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-17" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 18: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-18" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-18" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 19: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-19" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-19" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 20: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-20" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-20" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 21: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-21" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-21" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 22: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-22" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-22" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 23: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-23" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-23" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 24: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-24" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-24" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 25: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-25" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-25" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 26: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-26" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-26" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 27: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-27" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-27" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 28: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-28" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-28" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 29: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-29" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-29" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 30: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-30" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-30" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 31: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-31" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-31" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 32: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-32" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-32" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 33: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-33" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-33" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 34: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-34" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-34" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 35: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-35" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-35" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 36: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-36" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-36" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 37: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-37" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-37" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 38: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-38" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-38" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 39: Forest Green -->
+        <div class="overlapping-badge-item badge--forest" role="img" aria-label="People Grow Plants • Plants Grow People">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-39" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--forest" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--sage" />
+            <text class="badge-text badge-text--cream" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-39" startOffset="3px">• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,6 C6,2 10,6 0,11" fill="currentColor"/>
+              <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor"/>
+              <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor"/>
+              <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 40: Warm Cream -->
+        <div class="overlapping-badge-item badge--cream" role="img" aria-label="Flora Fusion • Nature Meets Your Space">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-40" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--cream" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-40" startOffset="3px">• FLORA FUSION • NATURE MEETS YOUR SPACE</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+              <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M0,14 V-8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+              <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" stroke-width="0.9" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <!-- Badge 41: Terracotta Blush -->
+        <div class="overlapping-badge-item badge--terracotta" role="img" aria-label="A Greener Tomorrow • Flora Fusion">
+          <svg class="overlapping-badge-svg" viewBox="0 0 120 120">
+            <defs>
+              <path id="ff-p-41" d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
+            </defs>
+            <circle cx="60" cy="60" r="58" class="badge-bg badge-bg--terracotta" />
+            <circle cx="60" cy="60" r="51" class="badge-ring badge-ring--forest" />
+            <text class="badge-text badge-text--forest" textLength="250" lengthAdjust="spacing">
+              <textPath href="#ff-p-41" startOffset="3px">• A GREENER TOMORROW • FLORA FUSION</textPath>
+            </text>
+            <g class="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+              <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M0,4 C5,1 9,5 0,10" fill="currentColor"/>
+              <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor"/>
+              <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor"/>
+              <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor"/>
+              <circle cx="0" cy="-14" r="2.2" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
+    </div>
+  </section>
+
+  <!-- ==================== POLICY & LEGAL MODAL ==================== -->
+  <div id="policy-modal" class="modal-backdrop">
+    <div class="modal-container policy-modal-container">
+      <button id="policy-modal-close" class="modal-close-btn" title="Close">✕</button>
+      <h2 id="policy-modal-title" class="policy-modal-title"></h2>
+      <div id="policy-modal-body" class="policy-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ==================== THIRD-PARTY LIBRARIES (CDN) ==================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+  <!-- ==================== APPLICATION SCRIPTS ==================== -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
