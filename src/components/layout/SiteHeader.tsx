@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Heart, ShoppingBag, User } from "lucide-react";
 import { useFloraStore } from "@/store/useFloraStore";
 import { ProductService } from "@/services/product.service";
 import { Product } from "@/types/product";
@@ -22,7 +21,6 @@ export function SiteHeader() {
     setMounted(true);
   }, []);
 
-  // Handle live search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -38,7 +36,6 @@ export function SiteHeader() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Click outside listener for search dropdown
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -61,66 +58,22 @@ export function SiteHeader() {
   ];
 
   return (
-    <header
-      style={{
-        backgroundColor: "var(--color-surface)",
-        borderBottom: "1px solid var(--color-border-light)",
-        position: "sticky",
-        top: 0,
-        zIndex: "var(--z-header)",
-        boxShadow: "var(--shadow-xs)",
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          height: "var(--header-height-desktop)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "var(--space-6)",
-        }}
-      >
-        {/* Exact Brand Logo Asset */}
-        <Link href="/" style={{ display: "flex", alignItems: "center" }} title="Flora Fusion Home">
-          <Image
-            src="/assets/logo.png"
-            alt="Flora Fusion"
-            width={150}
-            height={40}
-            priority
-            style={{
-              objectFit: "contain",
-              height: "auto",
-              width: "var(--logo-width-desktop)",
-            }}
-          />
+    <header className="site-header" id="site-header">
+      <div className="container">
+        {/* Brand Logo (Exact Provided Asset) */}
+        <Link href="/" className="brand-logo" title="Flora Fusion Home">
+          <img src="/assets/logo.png" alt="Flora Fusion" className="brand-logo-img" />
         </Link>
 
         {/* Desktop Navigation */}
-        <nav
-          className="hide-mobile"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--space-8)",
-          }}
-          aria-label="Main Navigation"
-        >
+        <nav className="nav-links" aria-label="Main Navigation">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                style={{
-                  fontSize: "var(--text-body-sm)",
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? "var(--color-brand-forest)" : "var(--color-text-secondary)",
-                  borderBottom: isActive ? "2px solid var(--color-brand-forest)" : "2px solid transparent",
-                  paddingBottom: "4px",
-                  transition: "all var(--duration-fast) var(--ease-standard)",
-                }}
+                className={`nav-link ${isActive ? "active" : ""}`}
               >
                 {link.label}
               </Link>
@@ -129,60 +82,35 @@ export function SiteHeader() {
         </nav>
 
         {/* Live Search Bar */}
-        <div
-          ref={searchRef}
-          className="hide-mobile"
-          style={{
-            position: "relative",
-            flex: "1",
-            maxWidth: "340px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              backgroundColor: "var(--color-cream-soft)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-pill)",
-              padding: "0 var(--space-4)",
-              height: "40px",
-              gap: "var(--space-2)",
-            }}
-          >
-            <Search size={18} color="var(--color-brand-green)" />
+        <div ref={searchRef} className="header-search">
+          <div className="search-input-wrapper">
+            <svg
+              className="search-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
             <input
               type="text"
-              placeholder="Search plants, pots or seeds..."
+              id="header-search-input"
+              className="search-input"
+              placeholder="Search for plants, pots or seeds..."
+              autoComplete="off"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery.trim() && setIsSearchOpen(true)}
-              style={{
-                border: "none",
-                background: "transparent",
-                width: "100%",
-                fontSize: "var(--text-body-sm)",
-                outline: "none",
-              }}
             />
           </div>
 
           {/* Search Dropdown */}
           {isSearchOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 8px)",
-                left: 0,
-                right: 0,
-                backgroundColor: "var(--color-white)",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-lg)",
-                border: "1px solid var(--color-border-light)",
-                padding: "var(--space-3)",
-                zIndex: "var(--z-dropdown)",
-              }}
-            >
+            <div id="search-dropdown" className="search-dropdown" style={{ display: "block" }}>
               {searchResults.length > 0 ? (
                 <div>
                   <div
@@ -191,8 +119,8 @@ export function SiteHeader() {
                       fontWeight: 600,
                       color: "var(--color-text-muted)",
                       textTransform: "uppercase",
-                      marginBottom: "var(--space-2)",
-                      paddingLeft: "var(--space-2)",
+                      marginBottom: "8px",
+                      paddingLeft: "8px",
                     }}
                   >
                     Catalog Matches
@@ -205,8 +133,8 @@ export function SiteHeader() {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "var(--space-3)",
-                        padding: "var(--space-2)",
+                        gap: "12px",
+                        padding: "8px",
                         borderRadius: "var(--radius-sm)",
                         transition: "background var(--duration-fast)",
                       }}
@@ -237,7 +165,7 @@ export function SiteHeader() {
                   ))}
                 </div>
               ) : (
-                <div style={{ padding: "var(--space-4)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "var(--text-body-sm)" }}>
+                <div style={{ padding: "16px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "0.875rem" }}>
                   No plants found for that search.
                 </div>
               )}
@@ -246,102 +174,34 @@ export function SiteHeader() {
         </div>
 
         {/* Header Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-          {/* Order Tracking / Account */}
-          <Link
-            href="/account"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "44px",
-              height: "44px",
-              borderRadius: "var(--radius-pill)",
-              color: "var(--color-text-primary)",
-              transition: "background var(--duration-fast)",
-            }}
-            title="Track Orders & Account"
-          >
-            <User size={20} />
+        <div className="header-actions">
+          {/* Account / Orders */}
+          <Link href="/account" className="header-action-btn" title="Track Orders">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </Link>
 
-          {/* Wishlist Button */}
-          <button
-            onClick={openWishlist}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "44px",
-              height: "44px",
-              borderRadius: "var(--radius-pill)",
-              color: "var(--color-text-primary)",
-            }}
-            title="Saved Wishlist"
-            aria-label="Open Wishlist"
-          >
-            <Heart size={20} />
+          {/* Wishlist */}
+          <button onClick={openWishlist} className="header-action-btn open-wishlist-btn" title="Wishlist">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
             {totalWishlistCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "6px",
-                  right: "6px",
-                  backgroundColor: "var(--color-category-pots)",
-                  color: "var(--color-white)",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  width: "18px",
-                  height: "18px",
-                  borderRadius: "999px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {totalWishlistCount}
-              </span>
+              <span className="action-badge wishlist-badge">{totalWishlistCount}</span>
             )}
           </button>
 
-          {/* Shopping Cart Button */}
-          <button
-            onClick={openCart}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "44px",
-              height: "44px",
-              borderRadius: "var(--radius-pill)",
-              color: "var(--color-text-primary)",
-            }}
-            title="Shopping Cart"
-            aria-label="Open Cart"
-          >
-            <ShoppingBag size={20} />
+          {/* Cart */}
+          <button onClick={openCart} className="header-action-btn open-cart-btn" title="Shopping Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
             {totalCartCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "6px",
-                  right: "6px",
-                  backgroundColor: "var(--color-brand-forest)",
-                  color: "var(--color-white)",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  width: "18px",
-                  height: "18px",
-                  borderRadius: "999px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {totalCartCount}
-              </span>
+              <span className="action-badge cart-badge">{totalCartCount}</span>
             )}
           </button>
         </div>

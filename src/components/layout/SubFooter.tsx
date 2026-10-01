@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
 
 export function SubFooter() {
   const [activePolicy, setActivePolicy] = useState<string | null>(null);
@@ -23,48 +22,35 @@ export function SubFooter() {
 
   return (
     <>
-      <aside
-        style={{
-          backgroundColor: "var(--color-brand-deep)",
-          color: "rgba(255, 255, 255, 0.75)",
-          padding: "var(--space-4) 0",
-          fontSize: "var(--text-caption)",
-          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-        }}
-        aria-label="Legal & Policies"
-      >
-        <div
-          className="container"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "var(--space-3)",
-          }}
-        >
-          <div>
-            © {new Date().getFullYear()} Flora Fusion. All rights reserved.
+      <aside className="site-subfooter" aria-label="Legal & Policies">
+        <div className="container subfooter-inner">
+          <div className="subfooter-copyright">
+            © <span className="current-year">{new Date().getFullYear()}</span> Flora Fusion. All rights reserved.
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+          <div className="subfooter-legal-links">
             <button
+              type="button"
+              className="subfooter-legal-link"
               onClick={() => setActivePolicy("terms")}
-              style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: "var(--text-caption)", padding: 0 }}
+              style={{ background: "none", border: "none", font: "inherit", padding: 0 }}
             >
               Terms & Conditions
             </button>
-            <span>•</span>
+            <span className="subfooter-separator">•</span>
             <button
+              type="button"
+              className="subfooter-legal-link"
               onClick={() => setActivePolicy("shipping")}
-              style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: "var(--text-caption)", padding: 0 }}
+              style={{ background: "none", border: "none", font: "inherit", padding: 0 }}
             >
               Shipping Policy
             </button>
-            <span>•</span>
+            <span className="subfooter-separator">•</span>
             <button
+              type="button"
+              className="subfooter-legal-link"
               onClick={() => setActivePolicy("privacy")}
-              style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: "var(--text-caption)", padding: 0 }}
+              style={{ background: "none", border: "none", font: "inherit", padding: 0 }}
             >
               Privacy Policy
             </button>
@@ -75,40 +61,28 @@ export function SubFooter() {
       {/* Policy Modal */}
       {activePolicy && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(4px)",
-            zIndex: "var(--z-modal)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "var(--space-4)",
+          id="policy-modal"
+          className="modal-backdrop open"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setActivePolicy(null);
           }}
-          onClick={() => setActivePolicy(null)}
         >
-          <div
-            style={{
-              backgroundColor: "var(--color-surface)",
-              borderRadius: "var(--radius-md)",
-              padding: "var(--space-6)",
-              maxWidth: "500px",
-              width: "100%",
-              boxShadow: "var(--shadow-lg)",
-              position: "relative",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-3)" }}>
-              <h3 style={{ margin: 0, fontSize: "var(--text-h4)" }}>{policyContent[activePolicy].title}</h3>
-              <button onClick={() => setActivePolicy(null)} style={{ padding: "4px" }}>
-                <X size={18} />
-              </button>
+          <div className="modal-container policy-modal-container" style={{ maxWidth: "560px" }}>
+            <button
+              type="button"
+              id="policy-modal-close"
+              className="modal-close-btn"
+              title="Close"
+              onClick={() => setActivePolicy(null)}
+            >
+              ✕
+            </button>
+            <h2 id="policy-modal-title" className="policy-modal-title" style={{ marginBottom: "16px" }}>
+              {policyContent[activePolicy]?.title}
+            </h2>
+            <div id="policy-modal-body" className="policy-modal-body" style={{ lineHeight: 1.7, fontSize: "0.9375rem" }}>
+              <p>{policyContent[activePolicy]?.body}</p>
             </div>
-            <p style={{ fontSize: "var(--text-body-sm)", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
-              {policyContent[activePolicy].body}
-            </p>
           </div>
         </div>
       )}

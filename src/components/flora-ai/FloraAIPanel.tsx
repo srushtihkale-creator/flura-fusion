@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { X, Send, Sparkles, ShoppingBag } from "lucide-react";
 import { useFloraStore } from "@/store/useFloraStore";
 import { ProductService } from "@/services/product.service";
 import { Product } from "@/types/product";
@@ -37,14 +35,15 @@ export function FloraAIPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isThinking]);
 
-  if (!mounted) return null;
 
-  const suggestionChips = [
-    { label: "Low Light Plants 🌙", query: "low light plants" },
-    { label: "Under ₹500 💰", query: "under 500" },
-    { label: "Help me choose 🌿", query: "beginner plants" },
-    { label: "Ceramic Pots 🏺", query: "ceramic pots" },
-    { label: "Kitchen Herbs 🥗", query: "herbs" },
+  const quickQuestionChips = [
+    { label: "Low Light Plants 🌙", query: "Find a plant for low light" },
+    { label: "Plants under ₹500 💰", query: "Plants under 500" },
+    { label: "Help me choose 🌿", query: "Help me choose a plant for my apartment" },
+    { label: "Beginner Friendly 🌱", query: "Easy plants for beginners" },
+    { label: "Ceramic Pots 🏺", query: "Which pot fits a Snake Plant" },
+    { label: "Kitchen Herbs 🥗", query: "Easy herb seeds" },
+    { label: "Snake Plant Care 💧", query: "How to water Snake Plant" },
   ];
 
   async function handleSend(queryText?: string) {
@@ -61,7 +60,6 @@ export function FloraAIPanel() {
     if (!queryText) setInput("");
     setIsThinking(true);
 
-    // Natural botanical matchmaking
     setTimeout(async () => {
       const lower = q.toLowerCase();
       let replyText = "";
@@ -101,300 +99,160 @@ export function FloraAIPanel() {
     }, 600);
   }
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSend();
+  };
+
   return (
     <>
       {/* Floating Botanical Launcher Button */}
       <div
+        id="flora-ai-launcher"
+        className="flora-ai-launcher"
+        title="Ask Flora AI"
         onClick={openAI}
-        style={{
-          position: "fixed",
-          bottom: "24px",
-          right: "24px",
-          zIndex: "var(--z-ai)",
-          cursor: "pointer",
-        }}
-        title="Ask Flora AI — Your Plant Guide"
       >
-        <div style={{ position: "relative" }}>
-          {/* Animated pulse ring */}
-          <div
-            className="animate-pulse-ring"
-            style={{
-              position: "absolute",
-              inset: "-6px",
-              borderRadius: "999px",
-              backgroundColor: "rgba(36, 88, 59, 0.35)",
-            }}
-          />
-          <div
-            style={{
-              width: "var(--ai-button-size)",
-              height: "var(--ai-button-size)",
-              borderRadius: "999px",
-              backgroundColor: "var(--color-brand-forest)",
-              color: "var(--color-white)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "var(--shadow-floating)",
-              fontSize: "1.6rem",
-              transition: "transform 0.3s var(--ease-standard)",
-            }}
-          >
-            🌿
-          </div>
-        </div>
+        <div className="ai-launcher-pulse" />
+        <span className="ai-leaf-icon" style={{ fontSize: "1.6rem" }}>
+          🌿
+        </span>
       </div>
 
-      {/* Slide-out AI Panel Backdrop */}
-      {isAIOpen && (
-        <div
-          onClick={closeAI}
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(18, 50, 34, 0.4)",
-            backdropFilter: "blur(4px)",
-            zIndex: "var(--z-drawer)",
-            animation: "fadeIn 0.2s ease-out",
-          }}
-        />
-      )}
+      {/* Backdrop */}
+      <div
+        id="flora-ai-backdrop"
+        className={`drawer-backdrop ${isAIOpen ? "open" : ""}`}
+        onClick={closeAI}
+      />
 
-      {/* Slide-out AI Panel */}
-      {isAIOpen && (
-        <aside
-          style={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: "100%",
-            maxWidth: "var(--ai-panel-width)",
-            backgroundColor: "var(--color-surface)",
-            zIndex: "var(--z-drawer)",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "var(--shadow-lg)",
-            animation: "slideInRight 0.3s var(--ease-standard)",
-          }}
-          aria-label="Flora AI Botanical Assistant"
-        >
-          {/* Panel Header */}
-          <div
-            style={{
-              padding: "var(--space-4) var(--space-6)",
-              backgroundColor: "var(--color-brand-forest)",
-              color: "var(--color-white)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-              <div
-                style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "999px",
-                  backgroundColor: "rgba(255, 255, 255, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.25rem",
-                }}
-              >
-                🌿
-              </div>
-              <div>
-                <h4 style={{ margin: 0, fontSize: "var(--text-body)", color: "var(--color-white)" }}>
-                  Flora AI
-                </h4>
-                <p style={{ margin: 0, fontSize: "var(--text-caption)", color: "var(--color-brand-sage-light)" }}>
-                  Your Plant Guide
-                </p>
-              </div>
+      {/* AI Panel */}
+      <aside
+        id="flora-ai-panel"
+        className={`flora-ai-panel ${isAIOpen ? "open" : ""}`}
+        aria-label="Flora AI Customer Assistant"
+      >
+        {/* AI Header */}
+        <div className="flora-ai-header">
+          <div className="flora-ai-title-wrap">
+            <div className="flora-ai-avatar">🌿</div>
+            <div>
+              <h4 className="flora-ai-panel-title">Flora AI</h4>
+              <p className="flora-ai-panel-sub">Your Plant Guide</p>
             </div>
-            <button
-              onClick={closeAI}
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "999px",
-                backgroundColor: "rgba(255, 255, 255, 0.15)",
-                color: "var(--color-white)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              aria-label="Close Flora AI"
-            >
-              <X size={18} />
-            </button>
           </div>
-
-          {/* Quick Suggestion Chips */}
-          <div
-            style={{
-              padding: "var(--space-3) var(--space-4)",
-              backgroundColor: "var(--color-surface-soft)",
-              borderBottom: "1px solid var(--color-border-light)",
-              display: "flex",
-              gap: "var(--space-2)",
-              overflowX: "auto",
-            }}
+          <button
+            type="button"
+            id="flora-ai-close"
+            className="modal-close-btn"
+            style={{ position: "static", background: "rgba(255,255,255,0.2)", color: "#fff" }}
+            title="Close AI"
+            onClick={closeAI}
           >
-            {suggestionChips.map((chip) => (
-              <button
-                key={chip.label}
-                onClick={() => handleSend(chip.query)}
-                className="filter-chip"
-                style={{
-                  fontSize: "var(--text-caption)",
-                  height: "30px",
-                  padding: "0 var(--space-3)",
-                  flexShrink: 0,
-                }}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
+            ✕
+          </button>
+        </div>
 
-          {/* Chat Messages Body */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-            {messages.map((msg) => {
-              const isUser = msg.sender === "user";
-              return (
-                <div
-                  key={msg.id}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: isUser ? "flex-end" : "flex-start",
-                  }}
-                >
-                  <div
-                    style={{
-                      maxWidth: "85%",
-                      padding: "var(--space-3) var(--space-4)",
-                      borderRadius: isUser ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
-                      backgroundColor: isUser ? "var(--color-brand-forest)" : "var(--ai-surface)",
-                      color: isUser ? "var(--color-white)" : "var(--color-text-primary)",
-                      fontSize: "var(--text-body-sm)",
-                      lineHeight: "1.5",
-                      border: isUser ? "none" : "1px solid var(--ai-border)",
-                    }}
-                  >
-                    {msg.text}
-                  </div>
+        {/* Quick Question Chips */}
+        <div className="flora-ai-chips-strip">
+          {quickQuestionChips.map((chip) => (
+            <button
+              key={chip.query}
+              type="button"
+              className="flora-ai-chip"
+              onClick={() => handleSend(chip.query)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
 
-                  {/* Embedded Interactive Product Cards */}
-                  {msg.products && msg.products.length > 0 && (
-                    <div style={{ marginTop: "var(--space-3)", width: "100%", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                      {msg.products.map((prod) => (
-                        <div
-                          key={prod.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "var(--space-3)",
-                            backgroundColor: "var(--color-white)",
-                            border: "1px solid var(--color-border-light)",
-                            borderRadius: "var(--radius-sm)",
-                            padding: "var(--space-2)",
-                            boxShadow: "var(--shadow-xs)",
+        {/* Message Stream */}
+        <div id="flora-ai-messages" className="flora-ai-body">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`flora-ai-message ${m.sender === "user" ? "flora-ai-user" : "flora-ai-bot"}`}
+            >
+              <div className={`message-bubble ${m.sender === "user" ? "user-bubble" : "bot-bubble"}`}>
+                <p style={{ margin: 0 }}>{m.text}</p>
+                {m.products && m.products.length > 0 && (
+                  <div className="flora-ai-recommendations">
+                    {m.products.map((prod) => (
+                      <div key={prod.id} className="ai-product-card">
+                        <img
+                          src={prod.image}
+                          alt={prod.name}
+                          className="ai-prod-img"
+                          onError={(e) => {
+                            if (prod.refImage) {
+                              (e.currentTarget as HTMLImageElement).src = prod.refImage;
+                            }
                           }}
-                        >
-                          <div style={{ width: "48px", height: "48px", position: "relative", borderRadius: "var(--radius-xs)", overflow: "hidden", flexShrink: 0 }}>
-                            <Image src={prod.image} alt={prod.name} fill style={{ objectFit: "cover" }} />
+                        />
+                        <div className="ai-prod-info">
+                          <span className="ai-prod-category">{prod.category.toUpperCase()}</span>
+                          <h5 className="ai-prod-name">{prod.name}</h5>
+                          <div className="ai-prod-meta">
+                            <span className="ai-prod-price">₹{prod.price}</span>
+                            <span className="ai-prod-rating">★ {prod.rating}</span>
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="ai-prod-actions">
                             <Link
                               href={`/product/${prod.slug}`}
+                              className="ai-btn-view"
                               onClick={closeAI}
-                              style={{ fontSize: "var(--text-body-sm)", fontWeight: 600, display: "block" }}
                             >
-                              {prod.name}
+                              View Details
                             </Link>
-                            <span style={{ fontSize: "var(--text-caption)", color: "var(--color-brand-green)", fontWeight: 600 }}>
-                              ₹{prod.price}
-                            </span>
+                            <button
+                              type="button"
+                              className="ai-btn-add"
+                              onClick={() => addToCart(prod, 1)}
+                            >
+                              Add 🛒
+                            </button>
                           </div>
-                          <button
-                            onClick={() => addToCart(prod, 1)}
-                            className="btn-primary"
-                            style={{ height: "32px", padding: "0 12px", fontSize: "var(--text-caption)" }}
-                          >
-                            <ShoppingBag size={12} /> Add
-                          </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {isThinking && (
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 14px",
-                  borderRadius: "16px",
-                  backgroundColor: "var(--ai-surface)",
-                  fontSize: "var(--text-caption)",
-                  color: "var(--color-brand-forest)",
-                }}
-              >
-                <Sparkles size={14} /> Flora AI is thinking...
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+            </div>
+          ))}
 
-          {/* Input Bar */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            style={{
-              padding: "var(--space-3) var(--space-4)",
-              borderTop: "1px solid var(--color-border-light)",
-              backgroundColor: "var(--color-white)",
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--space-2)",
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Ask Flora anything about plants..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              style={{
-                flex: 1,
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-pill)",
-                padding: "8px 16px",
-                fontSize: "var(--text-body-sm)",
-                outline: "none",
-              }}
-            />
-            <button
-              type="submit"
-              className="btn-primary"
-              style={{ width: "40px", height: "40px", borderRadius: "999px", padding: 0 }}
-              aria-label="Send message"
-            >
-              <Send size={16} />
-            </button>
-          </form>
-        </aside>
-      )}
+          {isThinking && (
+            <div className="flora-ai-message flora-ai-bot">
+              <div className="message-bubble bot-bubble" style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                <span>Flora AI is thinking</span>
+                <span className="animate-pulse">...</span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Bar */}
+        <form id="flora-ai-form" className="flora-ai-input-bar" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            id="flora-ai-input"
+            className="flora-ai-input"
+            placeholder="Ask Flora anything about plants, pots, or seeds..."
+            autoComplete="off"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <button type="submit" className="flora-ai-send-btn" title="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </form>
+      </aside>
     </>
   );
 }

@@ -8,7 +8,6 @@ interface BadgeData {
   theme: "forest" | "cream" | "terracotta";
   label: string;
   pathId: string;
-  pathD: string;
   motto: string;
   motif: React.ReactNode;
 }
@@ -19,10 +18,9 @@ const BADGES: BadgeData[] = [
     theme: "forest",
     label: "People Grow Plants • Plants Grow People",
     pathId: "ff-p-0",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
     motto: "• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE",
     motif: (
-      <g transform="translate(60,60) scale(1.15)">
+      <g className="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
         <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
         <path d="M0,6 C6,2 10,6 0,11" fill="currentColor" />
         <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor" />
@@ -36,10 +34,9 @@ const BADGES: BadgeData[] = [
     theme: "cream",
     label: "Flora Fusion • Nature Meets Your Space",
     pathId: "ff-p-1",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
     motto: "• FLORA FUSION • NATURE MEETS YOUR SPACE",
     motif: (
-      <g transform="translate(60,60) scale(1.1)">
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
         <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" strokeWidth="1.3" />
         <path d="M0,14 V-8" stroke="currentColor" strokeWidth="1.1" />
         <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
@@ -52,10 +49,9 @@ const BADGES: BadgeData[] = [
     theme: "terracotta",
     label: "A Greener Tomorrow • Flora Fusion",
     pathId: "ff-p-2",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
     motto: "• A GREENER TOMORROW • FLORA FUSION",
     motif: (
-      <g transform="translate(60,60) scale(1.15)">
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
         <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
         <path d="M0,4 C5,1 9,5 0,10" fill="currentColor" />
         <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor" />
@@ -68,53 +64,11 @@ const BADGES: BadgeData[] = [
   {
     id: "badge-3",
     theme: "forest",
-    label: "Grow Good Vibes • Pure Nursery Living",
+    label: "People Grow Plants • Plants Grow People",
     pathId: "ff-p-3",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
-    motto: "• GROW GOOD VIBES • PURE NURSERY LIVING",
+    motto: "• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE",
     motif: (
-      <g transform="translate(60,60) scale(1.1)">
-        <circle cx="0" cy="0" r="12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2" />
-        <path d="M0,8 C-5,3 -7,-2 0,-9 C7,-2 5,3 0,8 Z" fill="currentColor" />
-      </g>
-    ),
-  },
-  {
-    id: "badge-4",
-    theme: "cream",
-    label: "Breathe Clean Air • Indian Plant Care",
-    pathId: "ff-p-4",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
-    motto: "• BREATHE CLEAN AIR • INDIAN PLANT CARE",
-    motif: (
-      <g transform="translate(60,60) scale(1.15)">
-        <path d="M0,12 C-6,7 -9,2 0,-12 C9,2 6,7 0,12 Z" fill="currentColor" />
-        <path d="M0,12 V-10" stroke="#FBF9F4" strokeWidth="1" />
-      </g>
-    ),
-  },
-  {
-    id: "badge-5",
-    theme: "terracotta",
-    label: "Hand-Nurtured With Love • 100% Organic",
-    pathId: "ff-p-5",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
-    motto: "• HAND-NURTURED • 100% ORGANIC NURSERY",
-    motif: (
-      <g transform="translate(60,60) scale(1.1)">
-        <path d="M0,14 C-1,6 -8,2 -8,-7 C-8,-12 -3,-15 0,-7 C3,-15 8,-12 8,-7 C8,2 1,6 0,14 Z" fill="currentColor" />
-      </g>
-    ),
-  },
-  {
-    id: "badge-6",
-    theme: "forest",
-    label: "Nature In Every Home • Flora Fusion 2026",
-    pathId: "ff-p-6",
-    pathD: "M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0",
-    motto: "• NATURE IN EVERY HOME • FLORA FUSION",
-    motif: (
-      <g transform="translate(60,60) scale(1.15)">
+      <g className="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
         <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
         <path d="M0,6 C6,2 10,6 0,11" fill="currentColor" />
         <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor" />
@@ -123,64 +77,185 @@ const BADGES: BadgeData[] = [
       </g>
     ),
   },
+  {
+    id: "badge-4",
+    theme: "cream",
+    label: "Flora Fusion • Nature Meets Your Space",
+    pathId: "ff-p-4",
+    motto: "• FLORA FUSION • NATURE MEETS YOUR SPACE",
+    motif: (
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+        <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M0,14 V-8" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
+        <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-5",
+    theme: "terracotta",
+    label: "A Greener Tomorrow • Flora Fusion",
+    pathId: "ff-p-5",
+    motto: "• A GREENER TOMORROW • FLORA FUSION",
+    motif: (
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+        <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <path d="M0,4 C5,1 9,5 0,10" fill="currentColor" />
+        <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor" />
+        <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor" />
+        <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor" />
+        <circle cx="0" cy="-14" r="2.2" fill="currentColor" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-6",
+    theme: "forest",
+    label: "People Grow Plants • Plants Grow People",
+    pathId: "ff-p-6",
+    motto: "• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE",
+    motif: (
+      <g className="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+        <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <path d="M0,6 C6,2 10,6 0,11" fill="currentColor" />
+        <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor" />
+        <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor" />
+        <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-7",
+    theme: "cream",
+    label: "Flora Fusion • Nature Meets Your Space",
+    pathId: "ff-p-7",
+    motto: "• FLORA FUSION • NATURE MEETS YOUR SPACE",
+    motif: (
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+        <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M0,14 V-8" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
+        <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-8",
+    theme: "terracotta",
+    label: "A Greener Tomorrow • Flora Fusion",
+    pathId: "ff-p-8",
+    motto: "• A GREENER TOMORROW • FLORA FUSION",
+    motif: (
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+        <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <path d="M0,4 C5,1 9,5 0,10" fill="currentColor" />
+        <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor" />
+        <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor" />
+        <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor" />
+        <circle cx="0" cy="-14" r="2.2" fill="currentColor" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-9",
+    theme: "forest",
+    label: "People Grow Plants • Plants Grow People",
+    pathId: "ff-p-9",
+    motto: "• PEOPLE GROW PLANTS • PLANTS GROW PEOPLE",
+    motif: (
+      <g className="badge-motif badge-motif--sage" transform="translate(60,60) scale(1.15)">
+        <path d="M0,15 Q-1,4 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <path d="M0,6 C6,2 10,6 0,11" fill="currentColor" />
+        <path d="M0,-1 C-6,-5 -10,-1 0,4" fill="currentColor" />
+        <path d="M0,-8 C6,-12 10,-8 0,-3" fill="currentColor" />
+        <path d="M0,-13 C-2,-19 2,-19 0,-13" fill="currentColor" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-10",
+    theme: "cream",
+    label: "Flora Fusion • Nature Meets Your Space",
+    pathId: "ff-p-10",
+    motto: "• FLORA FUSION • NATURE MEETS YOUR SPACE",
+    motif: (
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.1)">
+        <path d="M0,14 C-1,6 -10,2 -10,-8 C-10,-14 -4,-18 0,-8 C4,-18 10,-14 10,-8 C10,2 1,6 0,14 Z" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M0,14 V-8" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M0,-2 C-4,-5 -7,-4 -7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
+        <path d="M0,-2 C4,-5 7,-4 7,-7" stroke="currentColor" strokeWidth="0.9" fill="none" />
+      </g>
+    ),
+  },
+  {
+    id: "badge-11",
+    theme: "terracotta",
+    label: "A Greener Tomorrow • Flora Fusion",
+    pathId: "ff-p-11",
+    motto: "• A GREENER TOMORROW • FLORA FUSION",
+    motif: (
+      <g className="badge-motif badge-motif--forest" transform="translate(60,60) scale(1.15)">
+        <path d="M0,15 C0,4 -1,-5 0,-13" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <path d="M0,4 C5,1 9,5 0,10" fill="currentColor" />
+        <path d="M0,4 C-5,1 -9,5 0,10" fill="currentColor" />
+        <path d="M0,-5 C6,-8 9,-4 0,1" fill="currentColor" />
+        <path d="M0,-5 C-6,-8 -9,-4 0,1" fill="currentColor" />
+        <circle cx="0" cy="-14" r="2.2" fill="currentColor" />
+      </g>
+    ),
+  },
 ];
 
 export function RotatingBadgeStrip() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isReducedMotion() || !containerRef.current) return;
+    if (isReducedMotion() || !trackRef.current) return;
 
-    const items = containerRef.current.querySelectorAll<HTMLElement>(".rotating-badge-wrapper");
-    const cleanups: Array<() => void> = [];
+    const items = trackRef.current.querySelectorAll<HTMLElement>(".overlapping-badge-item");
+    const cleanups: (() => void)[] = [];
 
     items.forEach((item, index) => {
-      const svg = item.querySelector<SVGSVGElement>("svg");
+      const svg = item.querySelector<SVGElement>(".overlapping-badge-svg");
       if (!svg) return;
 
-      const direction = index % 2 === 0 ? 1 : -1;
-      const duration = 24 + (index % 4) * 3;
-      let loopTween: gsap.core.Tween | null = null;
+      const duration = 22 + (index % 5) * 3;
+      const direction = index % 2 === 0 ? 360 : -360;
+
+      let loopTween: gsap.core.Tween | null = gsap.to(svg, {
+        rotation: direction,
+        duration: duration,
+        repeat: -1,
+        ease: "none",
+        transformOrigin: "50% 50%",
+      });
+
       let isSpinningOnClick = false;
-
-      const startRotation = () => {
-        if (loopTween) loopTween.kill();
-        loopTween = gsap.to(svg, {
-          rotation: `+=${direction * 360}`,
-          duration: duration,
-          ease: "none",
-          repeat: -1,
-          transformOrigin: "50% 50%",
-        });
-      };
-
-      startRotation();
 
       const handleClick = () => {
         if (isSpinningOnClick) return;
         isSpinningOnClick = true;
 
-        if (loopTween) {
-          loopTween.kill();
-          loopTween = null;
-        }
+        if (loopTween) loopTween.kill();
 
-        gsap.to(item, {
-          scale: 1.12,
-          duration: 0.18,
-          yoyo: true,
-          repeat: 1,
-          ease: "power1.out",
-        });
+        const currentRot = gsap.getProperty(svg, "rotation") as number;
+        const targetRot = currentRot + (direction > 0 ? 360 : -360);
 
         gsap.to(svg, {
-          rotation: `+=${direction * 360}`,
-          duration: 0.85,
-          ease: "power2.out",
+          rotation: targetRot,
+          duration: 0.9,
+          ease: "back.out(1.7)",
           transformOrigin: "50% 50%",
           onComplete: () => {
             isSpinningOnClick = false;
-            startRotation();
+            loopTween = gsap.to(svg, {
+              rotation: `${direction > 0 ? "+=360" : "-=360"}`,
+              duration: duration,
+              repeat: -1,
+              ease: "none",
+              transformOrigin: "50% 50%",
+            });
           },
         });
       };
@@ -199,72 +274,41 @@ export function RotatingBadgeStrip() {
   }, []);
 
   return (
-    <section
-      style={{
-        width: "100%",
-        overflow: "hidden",
-        backgroundColor: "var(--color-brand-forest)",
-        padding: "var(--space-6) 0",
-        borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-      }}
-      aria-label="Botanical Rotating Badges"
-    >
-      <div
-        ref={containerRef}
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: "var(--space-4)",
-          flexWrap: "nowrap",
-          overflowX: "hidden",
-          padding: "0 var(--space-4)",
-        }}
-      >
+    <section className="overlapping-badges-strip" aria-label="Botanical Emblems">
+      <div ref={trackRef} className="overlapping-badges-track">
         {BADGES.map((b) => {
           const isForest = b.theme === "forest";
           const isCream = b.theme === "cream";
-          const isTerracotta = b.theme === "terracotta";
-
-          const bgFill = isForest ? "#173F2B" : isCream ? "#FBF9F4" : "#F1E1D4";
-          const ringStroke = isForest ? "#A9BDA3" : "#173F2B";
-          const textColor = isForest ? "#FBF9F4" : "#173F2B";
-          const motifColor = isForest ? "#A9BDA3" : "#173F2B";
 
           return (
             <div
               key={b.id}
-              className="rotating-badge-wrapper"
-              style={{
-                width: "108px",
-                height: "108px",
-                flexShrink: 0,
-                cursor: "pointer",
-                borderRadius: "999px",
-                boxShadow: "0 6px 16px rgba(0, 0, 0, 0.2)",
-                transition: "transform 0.2s var(--ease-standard)",
-              }}
+              className={`overlapping-badge-item badge--${b.theme}`}
+              role="img"
+              aria-label={b.label}
               title={b.label}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.currentTarget.click();
-                }
-              }}
             >
-              <svg viewBox="0 0 120 120" style={{ width: "100%", height: "100%", display: "block" }}>
+              <svg className="overlapping-badge-svg" viewBox="0 0 120 120">
                 <defs>
-                  <path id={b.pathId} d={b.pathD} />
+                  <path id={b.pathId} d="M 60,60 m -42,0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0" />
                 </defs>
-                <circle cx="60" cy="60" r="58" fill={bgFill} />
-                <circle cx="60" cy="60" r="51" fill="none" stroke={ringStroke} strokeWidth="1" strokeDasharray="3 2" />
-                <text fill={textColor} fontSize="8.5px" fontFamily="var(--font-body)" fontWeight="600" letterSpacing="0.05em">
+                <circle cx="60" cy="60" r="58" className={`badge-bg badge-bg--${b.theme}`} />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="51"
+                  className={`badge-ring ${isForest ? "badge-ring--sage" : "badge-ring--forest"}`}
+                />
+                <text
+                  className={`badge-text ${isForest ? "badge-text--cream" : "badge-text--forest"}`}
+                  textLength="250"
+                  lengthAdjust="spacing"
+                >
                   <textPath href={`#${b.pathId}`} startOffset="3px">
                     {b.motto}
                   </textPath>
                 </text>
-                <g color={motifColor}>{b.motif}</g>
+                {b.motif}
               </svg>
             </div>
           );

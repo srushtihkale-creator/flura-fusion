@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { gsap, isReducedMotion } from "@/lib/motion";
 
 export function HeroSection() {
@@ -13,12 +11,14 @@ export function HeroSection() {
     if (isReducedMotion() || !heroCardRef.current) return;
 
     const card = heroCardRef.current;
+    const heroSection = card.closest<HTMLElement>(".hero-section");
+    if (!heroSection) return;
+
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = card.getBoundingClientRect();
+      const rect = heroSection.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
 
-      // Restrained 3D tilt (max +-3 degrees per specification)
       gsap.to(card, {
         rotationY: x * 6,
         rotationX: -y * 6,
@@ -37,126 +37,63 @@ export function HeroSection() {
       });
     };
 
-    card.addEventListener("mousemove", handleMouseMove);
-    card.addEventListener("mouseleave", handleMouseLeave);
+    heroSection.addEventListener("mousemove", handleMouseMove);
+    heroSection.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      card.removeEventListener("mousemove", handleMouseMove);
-      card.removeEventListener("mouseleave", handleMouseLeave);
+      heroSection.removeEventListener("mousemove", handleMouseMove);
+      heroSection.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, []);
 
   return (
-    <section
-      style={{
-        paddingTop: "var(--space-12)",
-        paddingBottom: "var(--space-12)",
-        backgroundColor: "var(--color-cream)",
-      }}
-    >
-      <div className="container">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "var(--space-12)",
-            alignItems: "center",
-          }}
-        >
-          {/* Hero Copy */}
-          <div>
-            <div className="eyebrow" style={{ marginBottom: "var(--space-3)" }}>
-              <span>🍃</span> GREEN SPACES. HAPPIER PLACES.
-            </div>
-            <h1 className="display-xl" style={{ marginBottom: "var(--space-4)" }}>
-              Bring Nature <br />
-              <span style={{ color: "var(--color-brand-green)" }}>Home</span>
-            </h1>
-            <p
-              style={{
-                fontSize: "var(--text-body-lg)",
-                color: "var(--color-text-secondary)",
-                lineHeight: 1.7,
-                maxWidth: "520px",
-                marginBottom: "var(--space-8)",
-              }}
-            >
-              Discover a wide range of healthy plants, beautiful pots and quality seeds — all in one place.
-            </p>
-
-            <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", alignItems: "center" }}>
-              <Link href="/plants" className="btn-primary" style={{ padding: "0 var(--space-8)", height: "52px" }}>
-                Shop Now <ArrowRight size={18} />
-              </Link>
-              <Link href="/plant-care" className="btn-secondary" style={{ padding: "0 var(--space-6)", height: "52px" }}>
-                Plant Care Guide
-              </Link>
-            </div>
+    <section className="hero-section">
+      <div className="container hero-grid">
+        {/* Hero Text */}
+        <div className="hero-text-content">
+          <div className="hero-eyebrow">
+            <span>🍃</span> GREEN SPACES. HAPPIER PLACES.
           </div>
+          <h1 className="hero-title">
+            Bring Nature<br />
+            <span>Home</span>
+          </h1>
+          <p className="hero-description">
+            Discover a wide range of healthy plants, beautiful pots and quality seeds — all in one place.
+          </p>
+          <div className="hero-cta-group">
+            <Link href="/plants" className="btn-primary">
+              Shop Now →
+            </Link>
+          </div>
+        </div>
 
-          {/* Hero Visual with Restrained 3D & Zero Gravity Floating Badge */}
-          <div style={{ display: "flex", justifyContent: "center", position: "relative" }}>
-            <div
-              ref={heroCardRef}
-              style={{
-                borderRadius: "var(--radius-xl)",
-                overflow: "hidden",
-                boxShadow: "var(--shadow-lg)",
-                position: "relative",
-                maxWidth: "560px",
-                width: "100%",
-                aspectRatio: "4 / 3",
-                backgroundColor: "var(--color-cream-soft)",
-                transformStyle: "preserve-3d",
-              }}
-            >
-              <Image
-                src="/assets/hero/hero_lush.jpg"
-                alt="Flora Fusion Sunlit Arched Room with Lush Plants"
-                fill
-                priority
-                style={{ objectFit: "cover" }}
-              />
+        {/* Hero Visual & Floating Badge */}
+        <div className="hero-visual-wrapper">
+          {/* Decorative Floating SVG Leaves */}
+          <svg className="floating-leaf-svg leaf-1 animate-levitate" viewBox="0 0 64 64" fill="currentColor">
+            <path d="M12 54C28 54 52 42 54 10C34 12 10 32 12 54Z" fill="#A9BDA3" fillOpacity="0.3"></path>
+            <path d="M12 54C28 42 42 28 54 10" stroke="#173F2B" strokeWidth="2"></path>
+          </svg>
+          <svg className="floating-leaf-svg leaf-2 animate-levitate" viewBox="0 0 64 64" fill="currentColor">
+            <path d="M52 54C36 54 12 42 10 10C30 12 54 32 52 54Z" fill="#24583B" fillOpacity="0.25"></path>
+            <path d="M52 54C36 42 22 28 10 10" stroke="#24583B" strokeWidth="2"></path>
+          </svg>
 
-              {/* Floating Nursery Fresh Badge */}
-              <div
-                className="animate-float-badge"
-                style={{
-                  position: "absolute",
-                  bottom: "var(--space-6)",
-                  left: "var(--space-6)",
-                  backgroundColor: "rgba(255, 255, 255, 0.94)",
-                  backdropFilter: "blur(8px)",
-                  borderRadius: "var(--radius-lg)",
-                  padding: "var(--space-3) var(--space-4)",
-                  boxShadow: "var(--shadow-md)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "var(--space-3)",
-                }}
-              >
-                <div
-                  style={{
-                    width: "42px",
-                    height: "42px",
-                    borderRadius: "999px",
-                    backgroundColor: "var(--color-brand-sage-light)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.3rem",
-                  }}
-                >
-                  🌿
-                </div>
-                <div>
-                  <h4 style={{ fontSize: "var(--text-body)", fontWeight: 600, margin: 0 }}>
-                    100% Nursery Fresh
-                  </h4>
-                  <p style={{ fontSize: "var(--text-caption)", color: "var(--color-text-muted)", margin: 0 }}>
-                    Transit-safe bio packaging
-                  </p>
-                </div>
+          {/* Main Hero Card */}
+          <div ref={heroCardRef} className="hero-main-card">
+            <img
+              src="/assets/hero/hero_lush.jpg"
+              alt="Flora Fusion Botanical Collection"
+              className="hero-image"
+            />
+
+            {/* Floating Nursery Badge */}
+            <div className="hero-floating-badge animate-levitate">
+              <div className="floating-badge-icon">🌿</div>
+              <div>
+                <h4 className="floating-badge-title">100% Nursery Fresh</h4>
+                <p className="floating-badge-sub">Transit-safe bio packaging</p>
               </div>
             </div>
           </div>

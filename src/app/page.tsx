@@ -1,27 +1,25 @@
 import { HeroSection } from "@/components/home/HeroSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
-import { CategoryBanners } from "@/components/home/CategoryBanners";
 import { FeaturedCatalogSections } from "@/components/home/FeaturedCatalogSections";
+import { CategoryBanners } from "@/components/home/CategoryBanners";
 import { StoriesAndCareSection } from "@/components/home/StoriesAndCareSection";
 
 export default function HomePage() {
   return (
-    <div style={{ backgroundColor: "var(--color-cream)" }}>
-      {/* 1. Hero Section with Restrained 3D & Nursery Fresh Badge */}
+    <div id="home-view" className="app-view">
+      {/* 1. HERO SECTION */}
       <HeroSection />
 
-      {/* 2. Trust Strip with 4 Anti-Gravity Floating Feature Cards */}
+      {/* 2. TRUST STRIP */}
       <TrustStrip />
 
-      {/* 3. Promotional Category Banners (Plants, Pots, Seeds) */}
+      {/* 3. CATALOG SECTIONS (Plants, Pots, Seeds) */}
+      <FeaturedCatalogSections />
+
+      {/* 4. PROMOTIONAL CATEGORY BANNERS */}
       <CategoryBanners />
 
-      {/* 4. Filterable Featured Catalog Grids (Plants, Pots, Seeds) */}
-      <div style={{ padding: "var(--space-8) 0" }}>
-        <FeaturedCatalogSections />
-      </div>
-
-      {/* 5. Botanical Stories & Plant Care Guide Section */}
+      {/* 5. BOTANICAL STORIES & PLANT CARE */}
       <StoriesAndCareSection />
     </div>
   );

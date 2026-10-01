@@ -1,34 +1,297 @@
 /* ==========================================================================
-   FLORA FUSION — RESPONSIVE FOUNDATION
-   Breakpoints: Desktop (1440px/1024px), Tablet (768px), Mobile (480px, 360px)
+   FLORA FUSION — RESPONSIVE STYLES
+   Mobile Bottom Navigation, 2-Column Grid, Drawers & Tablet Rules
    ========================================================================== */
 
-/* Mobile First Helpers */
-.hide-desktop {
-  display: none !important;
+/* --- TABLET BREAKPOINT (max-width: 1024px) --- */
+@media (max-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: var(--space-8);
+  }
+
+  .hero-description {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-cta-group {
+    justify-content: center;
+  }
+
+  .hero-visual-wrapper {
+    margin-top: var(--space-4);
+  }
+
+  .trust-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .product-modal-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.hide-mobile {
-  display: block;
+/* --- MOBILE BOTTOM NAVIGATION --- */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height);
+  background: var(--bottom-nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--bottom-nav-border);
+  z-index: var(--z-bottom-nav);
+  padding: 0 12px;
 }
 
+.mobile-nav-items {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 100%;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  position: relative;
+  min-width: 48px;
+  height: 48px;
+  transition: color var(--duration-fast);
+}
+
+.mobile-nav-btn.active, .mobile-nav-btn:hover {
+  color: var(--color-brand-forest);
+}
+
+.mobile-nav-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mobile-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  background-color: var(--color-brand-forest);
+  color: #fff;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+/* --- MOBILE BREAKPOINT (max-width: 768px) --- */
 @media (max-width: 768px) {
-  .hide-desktop {
-    display: block !important;
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav {
+    display: block;
   }
-  
-  .hide-mobile {
-    display: none !important;
-  }
-  
+
   body {
-    padding-bottom: var(--bottom-nav-height); /* Clear sticky mobile bottom nav */
+    padding-bottom: var(--bottom-nav-height);
+  }
+
+  /* Header adjustments */
+  .site-header {
+    height: var(--header-height-mobile);
+  }
+
+  .brand-logo-img {
+    width: var(--logo-width-mobile, 120px);
+    max-height: 40px;
+  }
+
+  .nav-links, .header-search {
+    display: none; /* Accessible via mobile nav and category pills */
+  }
+
+  .mobile-search-row {
+    display: block;
+    padding: 12px var(--page-padding-mobile);
+    background-color: var(--color-cream);
+  }
+
+  /* 2-Column Product Grid strictly per mobile spec */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .product-card {
+    padding: 10px;
+  }
+
+  .product-name {
+    font-size: 0.875rem;
+  }
+
+  .product-short-desc {
+    font-size: 0.75rem;
+  }
+
+  .product-price {
+    font-size: 0.9375rem;
+  }
+
+  /* Promo Banners Stack */
+  .promo-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .promo-card {
+    min-height: 160px;
+    padding: var(--space-6);
+  }
+
+  .promo-category-name {
+    font-size: 1.5rem;
+  }
+
+  /* Trust Strip */
+  .trust-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+
+  .trust-item {
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .trust-icon-box {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .trust-title {
+    font-size: 0.8125rem;
+  }
+
+  .trust-desc {
+    font-size: 0.6875rem;
+  }
+
+  /* Hero on Mobile */
+  .hero-section {
+    padding: var(--space-8) 0 var(--space-10);
+  }
+
+  .hero-title {
+    font-size: clamp(2.25rem, 8vw, 3rem);
+  }
+
+  .hero-description {
+    font-size: 0.9375rem;
+  }
+
+  .hero-main-card .hero-image {
+    height: 280px;
+  }
+
+  .hero-floating-badge {
+    bottom: -15px;
+    left: 10px;
+    padding: 10px 14px;
+  }
+
+  /* Flora AI Panel as Mobile Bottom Sheet */
+  .flora-ai-panel {
+    bottom: var(--bottom-nav-height);
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: calc(85vh - var(--bottom-nav-height));
+    border-radius: 20px 20px 0 0;
+    border: none;
+  }
+
+  .flora-ai-launcher {
+    bottom: calc(var(--bottom-nav-height) + 16px);
+    right: 16px;
+    width: 50px;
+    height: 50px;
+  }
+
+  /* Cart Drawer Fullscreen Mobile */
+  .cart-drawer {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Product Modal as Fullsheet */
+  .modal-container {
+    max-height: 95vh;
+    padding: var(--space-5);
+    border-radius: 20px 20px 0 0;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  /* Sub-footer mobile clean stacking (Prompt 2 Final Section 42) */
+  .subfooter-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .subfooter-legal-links {
+    justify-content: center;
+    gap: 12px;
+  }
+
+  /* Overlapping circular badges mobile scale */
+  .overlapping-badges-strip {
+    padding: var(--space-4) 0 var(--space-6);
+  }
+
+  .overlapping-badge-item {
+    width: 84px;
+    height: 84px;
+    margin-right: -18px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  }
+
+  .overlapping-badge-item:hover {
+    transform: none;
   }
 }
 
-/* Touch optimization */
-@media (hover: none) and (pointer: coarse) {
-  button, a, input, select {
-    min-height: 44px;
-  }
-}

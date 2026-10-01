@@ -126,6 +126,8 @@
   --logo-width-mobile: 120px;
   --header-height-desktop: 76px;
   --header-height-mobile: 64px;
+  --header-bg: rgba(251, 249, 244, 0.95);
+  --header-border: var(--color-border-light);
   --bottom-nav-height: 68px;
 
   --product-card-radius: 12px;
@@ -164,4 +166,15 @@
   --duration-fast: 200ms;
   --duration-normal: 350ms;
   --duration-slow: 600ms;
+
+  /* --- Header & Footer & Drawer UI Tokens --- */
+  --header-bg: rgba(255, 255, 255, 0.96);
+  --header-border: var(--color-border-light);
+  --footer-bg: var(--color-surface-soft);
+  --footer-border: var(--color-border-light);
+  --footer-padding-desktop: var(--space-12);
+  --drawer-width: 420px;
+  --bottom-nav-bg: rgba(255, 255, 255, 0.94);
+  --bottom-nav-border: var(--color-border-light);
 }
+

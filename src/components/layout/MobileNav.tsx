@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Grid, Heart, User } from "lucide-react";
 import { useFloraStore } from "@/store/useFloraStore";
 
 export function MobileNav() {
@@ -18,91 +17,48 @@ export function MobileNav() {
   const totalWishlistCount = mounted ? wishlist.length : 0;
 
   return (
-    <nav
-      className="hide-desktop"
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: "var(--bottom-nav-height)",
-        backgroundColor: "var(--color-surface)",
-        borderTop: "1px solid var(--color-border-light)",
-        zIndex: "var(--z-bottom-nav)",
-        boxShadow: "0 -4px 16px rgba(23, 63, 43, 0.06)",
-      }}
-      aria-label="Mobile Navigation"
-    >
-      <div
-        style={{
-          display: "flex",
-          height: "100%",
-          alignItems: "center",
-          justifyContent: "space-around",
-        }}
-      >
-        {/* Home */}
+    <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+      <div className="mobile-nav-items">
         <Link
           href="/"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            color: pathname === "/" ? "var(--color-brand-forest)" : "var(--color-text-muted)",
-            fontSize: "11px",
-            fontWeight: pathname === "/" ? 600 : 500,
-            width: "56px",
-            height: "100%",
-          }}
+          className={`mobile-nav-btn ${pathname === "/" ? "active" : ""}`}
+          title="Home"
         >
-          <Home size={20} />
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
           <span>Home</span>
         </Link>
 
-        {/* Catalog */}
         <Link
           href="/plants"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            color: pathname.startsWith("/plants") || pathname.startsWith("/pots") || pathname.startsWith("/seeds")
-              ? "var(--color-brand-forest)"
-              : "var(--color-text-muted)",
-            fontSize: "11px",
-            fontWeight: 500,
-            width: "56px",
-            height: "100%",
-          }}
+          className={`mobile-nav-btn ${
+            pathname.startsWith("/plants") || pathname.startsWith("/pots") || pathname.startsWith("/seeds")
+              ? "active"
+              : ""
+          }`}
+          title="Catalog"
         >
-          <Grid size={20} />
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
           <span>Catalog</span>
         </Link>
 
-        {/* Flora AI Floating Center Button */}
         <button
+          type="button"
+          className="mobile-nav-btn"
           onClick={openAI}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            color: "var(--color-brand-forest)",
-            fontSize: "11px",
-            fontWeight: 600,
-            width: "56px",
-            height: "100%",
-          }}
-          aria-label="Open Flora AI"
+          style={{ color: "var(--color-brand-forest)" }}
+          title="Ask Flora AI"
         >
           <div
             style={{
-              backgroundColor: "var(--color-brand-sage-light)",
+              background: "var(--color-brand-sage-light)",
               width: "32px",
               height: "32px",
               borderRadius: "999px",
@@ -117,66 +73,30 @@ export function MobileNav() {
           <span>Flora AI</span>
         </button>
 
-        {/* Wishlist */}
         <button
+          type="button"
+          className="mobile-nav-btn open-wishlist-btn"
           onClick={openWishlist}
-          style={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            color: "var(--color-text-muted)",
-            fontSize: "11px",
-            fontWeight: 500,
-            width: "56px",
-            height: "100%",
-          }}
-          aria-label="Open Wishlist"
+          title="Wishlist"
         >
-          <Heart size={20} />
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
           <span>Wishlist</span>
           {totalWishlistCount > 0 && (
-            <span
-              style={{
-                position: "absolute",
-                top: "8px",
-                right: "12px",
-                backgroundColor: "var(--color-category-pots)",
-                color: "var(--color-white)",
-                fontSize: "10px",
-                fontWeight: 700,
-                width: "16px",
-                height: "16px",
-                borderRadius: "999px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {totalWishlistCount}
-            </span>
+            <span className="mobile-badge wishlist-badge">{totalWishlistCount}</span>
           )}
         </button>
 
-        {/* Account */}
         <Link
           href="/account"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            color: pathname === "/account" ? "var(--color-brand-forest)" : "var(--color-text-muted)",
-            fontSize: "11px",
-            fontWeight: pathname === "/account" ? 600 : 500,
-            width: "56px",
-            height: "100%",
-          }}
+          className={`mobile-nav-btn ${pathname === "/account" ? "active" : ""}`}
+          title="Account & Orders"
         >
-          <User size={20} />
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
           <span>Account</span>
         </Link>
       </div>
