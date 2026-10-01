@@ -442,3 +442,32 @@ Adhering to `frontendprompt.md` Section 5 & 26:
 3. **ESLint (`npm run lint`):** Clean pass with 0 errors and 0 warnings.
 4. **Production Build (`npm run build`):** 52 static and dynamic routes pre-rendered successfully.
 
+---
+
+## 13. High-Resolution Catalog Studio Photography & Hero Asset Pipeline
+
+### 13.1 Catalog Image Quality Transformation (31/31 Products at 1:1 HD)
+To eliminate blurriness and ensure crisp, professional presentation on desktop (high-DPI / Retina) and mobile screens:
+* **Audited 31 Catalog Items:** 22 items were already crisp 800×800 photography; 9 items with tiny crops (168×120 / 172×98) or invalid placeholders were completely upgraded to studio-grade 1024×1024 square botanical photography:
+  * **Marigold Seeds (`marigold-seeds.jpg`):** Specifically replaced placeholder with a clean, professional, high-resolution botanical photograph of vibrant golden-orange marigold blooms with an artisan craft seed packet.
+  * **Basil Seeds (`basil-seeds.jpg`):** Upgraded from 166×98 (5.3 KB) to 1024×1024 (772 KB) sharp botanical studio photography.
+  * **Snake Plant (`snake-plant.jpg`):** Upgraded from 168×120 (4.9 KB) to 1024×1024 (521 KB) crisp architectural foliage photography.
+  * **Monstera Deliciosa (`monstera-deliciosa.jpg`):** Upgraded from 168×120 (7.7 KB) to 1024×1024 (706 KB) split-leaf studio photography.
+  * **Peace Lily (`peace-lily.jpg`):** Upgraded from 168×120 (6.3 KB) to 1024×1024 (599 KB) blooming white spathe photography.
+  * **Areca Palm (`areca-palm.jpg`):** Upgraded from 168×120 (6.1 KB) to 1024×1024 (738 KB) golden cane palm photography.
+  * **ZZ Plant (`zz-plant.jpg`):** Upgraded from 168×120 (5.4 KB) to 1024×1024 (691 KB) glossy waxy foliage photography.
+  * **Ribbed Ceramic Pot (`ribbed-ceramic-pot.jpg`):** Upgraded from 172×98 (3.6 KB) to 1024×1024 (534 KB) textured ceramic photography.
+  * **Minimal White Pot (`minimal-white-pot.jpg`):** Upgraded from 172×98 (3.6 KB) to 1024×1024 (584 KB) matte porcelain photography.
+* **Dual Asset Synchronization:** All image files are synchronized simultaneously to `assets/products/` (prototype) and `public/assets/products/` (Next.js production runtime).
+* **Geometric & CSS Harmony:**
+  * Every image possesses a native 1:1 square aspect ratio matching `.product-img-wrapper` (`aspect-ratio: 1 / 1;`).
+  * `.product-card-img` applies `width: 100%; height: 100%; object-fit: cover;` ensuring seamless responsiveness without distortion, letterboxing, or blur.
+
+### 13.2 Hero Asset Alignment & Webpack Dev-Cache Resilience
+* **Hero Image Asset:** Set to `/assets/hero/hero_plants.png` in [`src/components/home/HeroSection.tsx`](file:///d:/flora%20fusion/src/components/home/HeroSection.tsx) and [`index.html`](file:///d:/flora%20fusion/index.html).
+* **Cache Collision Diagnosis:** Documented that running `next dev` directly on an existing production `.next` build folder can cause Next.js's internal `PackFileCacheStrategy` to fail, serving 404 for `layout.css`. Flushing `.next` and taking a clean build resolves chunk mapping instantly and permanently.
+
+### 13.3 Non-Destructive Integrity Protocol
+* **Strict Visual Immutability:** Product card dimensions, spacing, typography tokens, pricing, ratings, badges, add-to-cart buttons, header, footer, animations, and responsive breakpoints were kept 100% untouched.
+* **Git Status:** Committed to `main` (`b2134a2`) and verified against remote repository.
+
