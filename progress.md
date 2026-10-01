@@ -192,18 +192,47 @@
   - Committed (`9c8344e`) and pushed to `main` branch on GitHub `https://github.com/srushtihkale-creator/flura-fusion.git`.
   - Preserved 100% untouched state of original prototype files (`index.html`, `js/`, `styles/`, `assets/`).
 
+### Milestone 16: Complete Implementation of Phases 4 through 15 (`frontendprompt.md`)
+- [x] **Phase 4 — Catalog / Listing (`/plants`, `/pots`, `/seeds`):**
+  - Built `CategoryCatalogView.tsx` with high-resolution category hero banners, responsive breadcrumbs, dynamic filter chips (Indoor, Outdoor, Flowering, Air Purifying, Succulents; Ceramic, Terracotta, Self-Watering; Herbs, Vegetables, Flowers), sorting select (Price, Rating, Featured), and inline search filter.
+  - Implemented SSR page routes `src/app/plants/page.tsx`, `src/app/pots/page.tsx`, `src/app/seeds/page.tsx` with dynamic SEO metadata.
+- [x] **Phase 5 — Product Details (`/product/[slug]`):**
+  - Built `ProductDetailView.tsx` with HD photography gallery, thumbnail switching, botanical specifications table, care guide cards (Watering, Sunlight, Repotting, Pro Tip), quantity stepper, Add to Cart, Buy Now, and Frequently Paired cross-selling.
+  - Implemented `generateStaticParams()` pre-rendering all 31 product pages with dynamic SEO openGraph tags and 404 guards.
+- [x] **Phase 6 — Search / Discovery (`/search`):**
+  - Built `SearchService.ts` and `SearchPageView.tsx` with real-time debounced query params, category tabs, popular suggestion chips, and exact Section 25 empty state (*"We couldn't find that plant yet."*).
+- [x] **Phase 7 — Wishlist & Shopping Cart (`/wishlist`, `/cart`):**
+  - Built `CartService.ts`, `WishlistService.ts`, `CartPageView.tsx`, and `WishlistPageView.tsx`.
+  - Integrated dynamic free shipping threshold bar (₹799), coupon engine (`FLORA10`, `NATURE20`), line-item steppers, and approved empty states (*"Your cart is ready for something green."*, *"Your green wishlist is waiting."*).
+- [x] **Phase 8 — Secure Checkout Stepper (`/checkout`):**
+  - Built `OrderService.ts` and `CheckoutPageView.tsx` featuring a 3-step checkout stepper (Shipping Address with form validation ➔ Delivery Speed [Eco Free vs Priority ₹99] ➔ Payment Method [UPI, Card, NetBanking, COD]).
+  - Simulates order creation (`FF-XXXXXX`), updates store state, flushes active cart, and redirects to live tracking.
+- [x] **Phase 9 — Customer Account & Order Tracking (`/account`, `/account/orders`, `/account/orders/[id]`):**
+  - Built `AccountPageView.tsx`, `OrdersListView.tsx`, and `OrderDetailView.tsx`.
+  - Implemented 6-stage live visual tracking timeline (*Placed ➔ Confirmed ➔ Packed ➔ Dispatched ➔ Out for Delivery ➔ Delivered*), saved delivery addresses, and customer botanical profile.
+- [x] **Phase 10 — Plant Care Knowledge Hub (`/plant-care`, `/plant-care/[slug]`, `/about`):**
+  - Created CMS-ready dataset `src/data/plantCareArticles.ts` and `PlantCareService.ts`.
+  - Built `PlantCareListingView.tsx` with topic filter chips and `PlantCareDetailView.tsx` with statically pre-rendered guides (`generateStaticParams`).
+  - Built `/about` page detailing Flora Fusion's botanical nursery story, acclimatization process, and sustainability values.
+- [x] **Phase 11 — Dedicated Flora AI Customer Experience (`/flora-ai`):**
+  - Built `FloraAIService.ts` and full-page `FloraAIPageView.tsx` featuring intent recognition, thinking indicator (*"Flora AI is thinking..."*), suggestion chips, and embedded interactive product recommendation cards with direct Add-to-Cart.
+- [x] **Phase 12 — Responsive & Accessibility QA:**
+  - Verified touch targets (>= 44px), semantic HTML elements, ARIA labels, focus states, and `prefers-reduced-motion` compliance across all 320px–1440px viewports.
+- [x] **Phase 13 — Performance & Dynamic SEO Metadata:**
+  - Implemented Next.js App Router metadata across all pages with OpenGraph images, canonical URLs, and full SSG pre-rendering (all 52 static routes generated).
+- [x] **Phase 14 — Automated Testing Suite:**
+  - Created `scripts/verify-services.ts` and wired `npm test`. 14 unit and integration tests passing with 0 failures covering catalog integrity, slug lookups, category filters, cart math, free delivery thresholds, coupon validation, order generation, and search.
+- [x] **Phase 15 — Production Verification:**
+  - Executed `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` (52/52 static pages generated successfully).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
 
-1. **Backend Integration (Optional Phase 2):**
-   - Connect client state with REST / GraphQL backend (Node.js, FastAPI, or Firebase).
-   - Real payment gateway integration (Razorpay / Stripe sandbox).
-2. **Enhanced Catalog Filters:**
-   - Multi-select filters (e.g. Filter by both "Low Light" AND "Under ₹500").
-   - Price range slider component.
-3. **Customer Accounts & Order History:**
-   - Saved multiple delivery addresses.
-   - Complete past orders list with downloadable invoices.
-4. **Interactive Plant Quiz:**
-   - 3-step interactive room quiz matching user space conditions to specific plants.
+1. **Spring Boot Backend Integration (Future Phase):**
+   - Connect typed services (`product.service.ts`, `cart.service.ts`, `order.service.ts`, `floraAI.service.ts`) with Spring Boot REST endpoints.
+   - Authoritative PostgreSQL transactional database and Razorpay payment gateway sandbox.
+2. **Headless CMS Integration:**
+   - Connect `PlantCareService` and marketing banners to a headless CMS (Strapi / Sanity).
+3. **Advanced Customer Personalization:**
+   - Multi-device customer accounts with JWT authentication and downloadable order invoices.

@@ -402,3 +402,43 @@ The Next.js application imports the exact CSS hierarchy from the verified protot
 - Validated via direct HTTP request: `http://localhost:3000` returns HTTP 200 with 93,869 bytes of clean HTML confirming all 17 prototype classes present.
 - Production bundle verification (`npm run build`) generates static prerendered routes with zero build or lint warnings.
 
+---
+
+## 12. Complete Routing, Domain Services & Production Delivery (Phases 4–15)
+
+### 12.1 End-to-End Application Routes
+| Route | Page Component | Rendering Strategy | Key Capabilities |
+| :--- | :--- | :--- | :--- |
+| `/` | `src/app/page.tsx` | Static (`SSG`) | Hero, trust strip, featured categories, promo banners, stories |
+| `/plants` | `src/app/plants/page.tsx` | Static (`SSG`) | 11 Plants, category hero banner, filters, sort, quick search |
+| `/pots` | `src/app/pots/page.tsx` | Static (`SSG`) | 10 Pots, material filters (ceramic, terracotta, etc.), sort |
+| `/seeds` | `src/app/seeds/page.tsx` | Static (`SSG`) | 10 Seeds, type filters (herb, vegetable, flower), germination info |
+| `/product/[slug]` | `src/app/product/[slug]/page.tsx` | Statically Generated (`31 paths`) | HD gallery, botanical specs, care guide, Add to Cart, Buy Now |
+| `/search` | `src/app/search/page.tsx` | Dynamic / Client Suspense | Real-time debounced query, category tabs, suggestions, empty state |
+| `/cart` | `src/app/cart/page.tsx` | Static (`SSG`) | Free shipping progress (₹799), coupon engine, summary, checkout CTA |
+| `/wishlist` | `src/app/wishlist/page.tsx` | Static (`SSG`) | Saved wishlist items, Section 25 empty state, 1-click cart move |
+| `/checkout` | `src/app/checkout/page.tsx` | Static (`SSG`) | 3-step checkout stepper (Address, Delivery Speed, Payment) |
+| `/account` | `src/app/account/page.tsx` | Static (`SSG`) | Customer profile, stats, recent order, saved addresses |
+| `/account/orders` | `src/app/account/orders/page.tsx` | Static (`SSG`) | Orders list with status badges, order dates, and tracking links |
+| `/account/orders/[id]` | `src/app/account/orders/[id]/page.tsx` | Server-Rendered on demand | 6-stage live visual tracking timeline, order invoice details |
+| `/plant-care` | `src/app/plant-care/page.tsx` | Static (`SSG`) | Knowledge hub, topic filter chips, arborist guidance |
+| `/plant-care/[slug]` | `src/app/plant-care/[slug]/page.tsx` | Statically Generated (`5 paths`) | Full article markdown reader, care illustrations, Flora AI trigger |
+| `/about` | `src/app/about/page.tsx` | Static (`SSG`) | Botanical nursery story, sustainability values, philosophy |
+| `/flora-ai` | `src/app/flora-ai/page.tsx` | Static (`SSG`) | Full-page customer assistant, suggestion chips, interactive cards |
+
+### 12.2 Domain Service Layer Architecture (`src/services/`)
+Adhering to `frontendprompt.md` Section 5 & 26:
+- **`ProductService.ts`**: Pure abstraction for catalog retrieval, subcategory filtering, sorting (`price-low`, `price-high`, `rating`, `featured`), slug lookups, and related-product cross-selling.
+- **`SearchService.ts`**: Text matching across names, descriptions, and botanical metadata; category filtering; and popular query suggestions.
+- **`CartService.ts`**: Calculation engine managing subtotal, ₹799 free shipping threshold, ₹79 standard fee, and coupon validation (`FLORA10`, `NATURE20`).
+- **`WishlistService.ts`**: Resolves stored product IDs to typed `Product` domain records.
+- **`OrderService.ts`**: Realistic order generator with `FF-XXXXXX` IDs, timestamps, delivery date projections, and 6 tracking milestones.
+- **`PlantCareService.ts`**: CMS-ready content provider for editorial plant guides.
+- **`FloraAIService.ts`**: Botanical knowledge retrieval matching customer intents (low light, under 500, beginner, clean air, pots, herbs) to verified product recommendations.
+
+### 12.3 Quality, Lint & Build Verification
+1. **Automated Test Suite (`scripts/verify-services.ts`):** 14 unit and integration tests passing with 0 failures (`npm test`).
+2. **Type Safety (`npx tsc --noEmit`):** Complete TypeScript strict mode compliance with 0 errors.
+3. **ESLint (`npm run lint`):** Clean pass with 0 errors and 0 warnings.
+4. **Production Build (`npm run build`):** 52 static and dynamic routes pre-rendered successfully.
+

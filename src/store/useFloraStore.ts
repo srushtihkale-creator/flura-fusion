@@ -43,6 +43,7 @@ interface FloraState {
   // Flora AI Panel
   isAIOpen: boolean;
   openAI: () => void;
+  openFloraAI: () => void;
   closeAI: () => void;
 
   // Search
@@ -208,6 +209,7 @@ export const useFloraStore = create<FloraState>()(
       // Flora AI
       isAIOpen: false,
       openAI: () => set({ isAIOpen: true }),
+      openFloraAI: () => set({ isAIOpen: true }),
       closeAI: () => set({ isAIOpen: false }),
 
       // Search
