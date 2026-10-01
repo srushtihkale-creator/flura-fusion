@@ -1,6 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { MobileNav } from "@/components/layout/MobileNav";
+import { CartDrawer } from "@/components/layout/CartDrawer";
+import { WishlistModal } from "@/components/layout/WishlistModal";
+import { FloraAIPanel } from "@/components/flora-ai/FloraAIPanel";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SubFooter } from "@/components/layout/SubFooter";
+import { RotatingBadgeStrip } from "@/components/layout/RotatingBadgeStrip";
+import { ToastContainer } from "@/components/ui/ToastContainer";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -58,7 +67,20 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
       <body>
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <SmoothScrollProvider>
+          <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+            <SiteHeader />
+            <main style={{ flex: 1 }}>{children}</main>
+            <SiteFooter />
+            <SubFooter />
+            <RotatingBadgeStrip />
+            <MobileNav />
+            <CartDrawer />
+            <WishlistModal />
+            <FloraAIPanel />
+            <ToastContainer />
+          </div>
+        </SmoothScrollProvider>
       </body>
     </html>
   );

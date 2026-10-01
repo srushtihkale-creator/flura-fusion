@@ -144,6 +144,25 @@
 - [x] Consolidated all approved brand assets (logo, hero photography, product studio shots) in `public/assets/`.
 - [x] Validated production build (`npm run build`) and verified dev server at `http://localhost:3000` (HTTP 200).
 
+### Milestone 13: Phase 2 — Global Layout (frontendprompt.md Phase 2)
+- [x] Implemented `SiteHeader` with official brand logo (`/assets/logo.png`), desktop navigation, live search dropdown, and reactive badge counters.
+- [x] Implemented `MobileNav` with sticky 5-item bottom bar (Home, Catalog, Flora AI, Wishlist, Account) clearing mobile viewport boundaries.
+- [x] Implemented `CartDrawer` with quantity steppers, live subtotal/total math, dynamic free shipping bar (>= ₹799), and coupon engine (`FLORA10`, `NATURE20`).
+- [x] Implemented `WishlistModal` with persistent wishlist state and 1-click add-to-cart.
+- [x] Implemented customer-facing `FloraAIPanel` with floating pulsing launcher, suggestion chips, and interactive mini product cards.
+- [x] Implemented `SiteFooter` and `SubFooter` with legal modal links (Terms, Shipping, Privacy).
+- [x] Implemented full-width `RotatingBadgeStrip` with individual center-axis GSAP rotation loops (24s-36s) and tactile 360° spin-on-click interaction.
+- [x] Implemented accessible `ToastContainer` with automated dismissal.
+
+### Milestone 14: Phase 3 — Homepage Experience (frontendprompt.md Phase 3)
+- [x] Implemented `HeroSection` with restored authentic copy (*"Bring Nature Home"*), primary CTA, sunlit bay window photography, and floating nursery badge with restrained 3D mouse parallax.
+- [x] Implemented `TrustStrip` with 4 feature cards featuring staggered zero-gravity levitation loops (`animate-float-a/b`) and dynamic elevation shadows.
+- [x] Implemented `CategoryBanners` featuring high-resolution crops for Plants, Pots, and Seeds.
+- [x] Implemented `FeaturedCatalogSections` with instant SSR loading for all 31 products across Plants, Pots, and Seeds, with interactive category filter chips.
+- [x] Implemented `StoriesAndCareSection` with brand narrative and quick botanical care essentials.
+- [x] Implemented modular `ProductCard` with high-definition imagery, star ratings, price comparisons, botanical metadata tags, wishlist toggle, and quick add-to-cart.
+- [x] Validated production build (`npm run build`) and verified dev server at `http://localhost:3000` (HTTP 200).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
