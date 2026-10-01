@@ -83,7 +83,7 @@ export function HeroSection() {
           {/* Main Hero Card */}
           <div ref={heroCardRef} className="hero-main-card">
             <img
-              src="/assets/hero/hero_plants.png"
+              src="/assets/hero/hero_lush.jpg"
               alt="Flora Fusion Botanical Collection"
               className="hero-image"
             />
