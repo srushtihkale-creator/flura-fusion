@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/home/HeroSection";
+import { ExploreByPlantType } from "@/components/home/ExploreByPlantType";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { FeaturedCatalogSections } from "@/components/home/FeaturedCatalogSections";
 import { CategoryBanners } from "@/components/home/CategoryBanners";
@@ -10,7 +11,10 @@ export default function HomePage() {
       {/* 1. HERO SECTION */}
       <HeroSection />
 
-      {/* 2. TRUST STRIP */}
+      {/* 2. EXPLORE BY PLANT TYPE */}
+      <ExploreByPlantType />
+
+      {/* 3. TRUST STRIP */}
       <TrustStrip />
 
       {/* 3. CATALOG SECTIONS (Plants, Pots, Seeds) */}

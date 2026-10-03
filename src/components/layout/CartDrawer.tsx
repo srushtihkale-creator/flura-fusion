@@ -28,17 +28,18 @@ export function CartDrawer() {
   }, []);
 
 
-  const subtotal = getSubtotal();
-  const shipping = getShipping();
-  const discount = getDiscount();
-  const total = getTotal();
+  const activeCart = mounted ? cart : [];
+  const subtotal = mounted ? getSubtotal() : 0;
+  const shipping = mounted ? getShipping() : 0;
+  const discount = mounted ? getDiscount() : 0;
+  const total = mounted ? getTotal() : 0;
 
   const freeShippingThreshold = 799;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 
   let shippingText = "Add items for Free Delivery!";
-  if (cart.length === 0) {
+  if (activeCart.length === 0) {
     shippingText = "Add items for Free Delivery!";
   } else if (subtotal >= freeShippingThreshold) {
     shippingText = "🎉 Congratulations! You have unlocked Free Delivery!";
@@ -101,14 +102,14 @@ export function CartDrawer() {
 
           {/* Items Container */}
           <div id="cart-items-container">
-            {cart.length === 0 ? (
+            {activeCart.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--color-text-secondary)" }}>
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: "12px" }}>🌿</span>
                 <p style={{ fontWeight: 600, fontSize: "1.1rem", marginBottom: "6px" }}>Your cart is empty</p>
                 <p style={{ fontSize: "0.85rem" }}>Explore our botanical collection to bring nature home.</p>
               </div>
             ) : (
-              cart.map((item) => (
+              activeCart.map((item) => (
                 <div key={item.id} className="cart-item-row" data-id={item.id}>
                   <img
                     src={item.image}
@@ -167,7 +168,7 @@ export function CartDrawer() {
             </button>
           </form>
 
-          {coupon && (
+          {mounted && coupon && (
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--color-brand-green)", marginBottom: "8px" }}>
               <span>Coupon <strong>{coupon.code}</strong> applied ({coupon.discountPercentage}% off)</span>
               <button
@@ -204,7 +205,7 @@ export function CartDrawer() {
           <Link
             href="/checkout"
             className="btn-primary"
-            style={{ width: "100%", marginTop: "14px", padding: "14px", textAlign: "center", display: "block" }}
+            style={{ width: "100%", marginTop: "14px", padding: "14px", display: "flex", justifyContent: "center", alignItems: "center" }}
             onClick={closeCart}
           >
             Proceed to Checkout →

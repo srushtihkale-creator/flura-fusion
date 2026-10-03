@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Product } from "@/types/product";
@@ -18,7 +18,290 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(product.image);
 
-  const isWished = isInWishlist(product.id);
+  const galleryImages = useMemo(() => {
+    return product.images && product.images.length > 0
+      ? product.images
+      : product.refImage
+      ? [product.image, product.refImage]
+      : [];
+  }, [product.images, product.image, product.refImage]);
+
+  // 4-angle rotation is strictly allowed ONLY for Plants or Pots when exactly 4 verified separate images exist:
+  // 1. Front, 2. Right, 3. Back, 4. Left.
+  // Seeds must NEVER rotate. Reference crops (*-ref.png) must never be treated as rotation angles.
+  const isRotatableCategory = product.category === "plants" || product.category === "pots";
+  const rotationFrames = useMemo(() => {
+    if (!isRotatableCategory) return [];
+    if (product.images && product.images.length === 4) {
+      // Must be 4 genuine distinct angle images of the exact same product, not reference crops
+      const hasRefCrop = product.images.some((img) => img.includes("-ref."));
+      if (!hasRefCrop) {
+        return product.images;
+      }
+    }
+    return [];
+  }, [isRotatableCategory, product.images]);
+  const canRotate = rotationFrames.length === 4;
+
+  const rotateStartRef = useRef<{ startX: number; startIdx: number } | null>(null);
+
+  // Product image zoom state (scale 1x - 3x)
+  const [zoomScale, setZoomScale] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number }>({ x: 0, y: 0, panX: 0, panY: 0 });
+  const pinchStartDistRef = useRef<number | null>(null);
+  const pinchStartScaleRef = useRef<number>(1);
+  const lastTapRef = useRef<number>(0);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      setPrefersReducedMotion(mediaQuery.matches);
+      const listener = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+      mediaQuery.addEventListener("change", listener);
+      return () => mediaQuery.removeEventListener("change", listener);
+    }
+  }, []);
+
+  // Reset zoom whenever active image changes
+  useEffect(() => {
+    setZoomScale(1);
+    setPanOffset({ x: 0, y: 0 });
+  }, [activeImage]);
+
+  // Preload verified 4-angle rotation images immediately on mount so rotation is instant, crisp, and flicker-free
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (canRotate && rotationFrames.length === 4) {
+      rotationFrames.forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+    } else if (galleryImages && galleryImages.length > 1) {
+      galleryImages.forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+    }
+  }, [canRotate, rotationFrames, galleryImages]);
+
+  // Clamps pan offsets to prevent empty space around the image
+  const clampPan = useCallback((x: number, y: number, scale: number) => {
+    if (!imageContainerRef.current || scale <= 1) return { x: 0, y: 0 };
+    const rect = imageContainerRef.current.getBoundingClientRect();
+    const maxPanX = (rect.width * (scale - 1)) / 2;
+    const maxPanY = (rect.height * (scale - 1)) / 2;
+    return {
+      x: Math.max(-maxPanX, Math.min(maxPanX, x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, y)),
+    };
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoomScale(1);
+    setPanOffset({ x: 0, y: 0 });
+  }, []);
+
+  // Keyboard Escape or 0 listener to reset zoom
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === "Escape" || e.key === "0") && zoomScale > 1) {
+        handleResetZoom();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zoomScale, handleResetZoom]);
+
+  // Mouse wheel zoom on desktop
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || zoomScale > 1) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.25 : -0.25;
+      setZoomScale((prev) => {
+        const next = Math.max(1, Math.min(3, Number((prev + delta).toFixed(2))));
+        if (next === 1) {
+          setPanOffset({ x: 0, y: 0 });
+        } else {
+          setPanOffset((curPan) => clampPan(curPan.x, curPan.y, next));
+        }
+        return next;
+      });
+    }
+  };
+
+  // Mouse drag handlers for desktop pan or frame rotation
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    setIsDragging(true);
+    if (zoomScale > 1) {
+      dragStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        panX: panOffset.x,
+        panY: panOffset.y,
+      };
+    } else if (canRotate) {
+      const currentIdx = Math.max(0, rotationFrames.indexOf(activeImage));
+      rotateStartRef.current = {
+        startX: e.clientX,
+        startIdx: currentIdx,
+      };
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    if (zoomScale > 1) {
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      const newX = dragStartRef.current.panX + dx;
+      const newY = dragStartRef.current.panY + dy;
+      setPanOffset(clampPan(newX, newY, zoomScale));
+    } else if (rotateStartRef.current && canRotate) {
+      const deltaX = e.clientX - rotateStartRef.current.startX;
+      const sensitivity = 40;
+      const frameDelta = Math.floor(deltaX / sensitivity);
+      const total = rotationFrames.length;
+      const nextIdx = (rotateStartRef.current.startIdx - frameDelta + total * 1000) % total;
+      if (rotationFrames[nextIdx] && rotationFrames[nextIdx] !== activeImage) {
+        setActiveImage(rotationFrames[nextIdx]);
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      rotateStartRef.current = null;
+    }
+  };
+
+  // Desktop double-click to zoom in/out
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (zoomScale > 1) {
+      handleResetZoom();
+    } else {
+      if (imageContainerRef.current) {
+        const rect = imageContainerRef.current.getBoundingClientRect();
+        const clickX = e.clientX - (rect.left + rect.width / 2);
+        const clickY = e.clientY - (rect.top + rect.height / 2);
+        const nextScale = 2;
+        setZoomScale(nextScale);
+        setPanOffset(clampPan(-clickX, -clickY, nextScale));
+      } else {
+        setZoomScale(2);
+      }
+    }
+  };
+
+  // Touch handlers for mobile (pinch-to-zoom, double-tap, pan, frame rotation)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      pinchStartDistRef.current = dist;
+      pinchStartScaleRef.current = zoomScale;
+      setIsDragging(false);
+      rotateStartRef.current = null;
+    } else if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapRef.current;
+
+      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+        e.preventDefault();
+        if (zoomScale > 1) {
+          handleResetZoom();
+        } else {
+          if (imageContainerRef.current) {
+            const rect = imageContainerRef.current.getBoundingClientRect();
+            const tapX = touch.clientX - (rect.left + rect.width / 2);
+            const tapY = touch.clientY - (rect.top + rect.height / 2);
+            const nextScale = 2;
+            setZoomScale(nextScale);
+            setPanOffset(clampPan(-tapX, -tapY, nextScale));
+          } else {
+            setZoomScale(2);
+          }
+        }
+        lastTapRef.current = 0;
+        rotateStartRef.current = null;
+        return;
+      }
+      lastTapRef.current = now;
+
+      setIsDragging(true);
+      if (zoomScale > 1) {
+        dragStartRef.current = {
+          x: touch.clientX,
+          y: touch.clientY,
+          panX: panOffset.x,
+          panY: panOffset.y,
+        };
+      } else if (canRotate) {
+        const currentIdx = Math.max(0, rotationFrames.indexOf(activeImage));
+        rotateStartRef.current = {
+          startX: touch.clientX,
+          startIdx: currentIdx,
+        };
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchStartDistRef.current !== null) {
+      if (e.cancelable) e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const ratio = dist / pinchStartDistRef.current;
+      const newScale = Math.max(1, Math.min(3, Number((pinchStartScaleRef.current * ratio).toFixed(2))));
+      setZoomScale(newScale);
+      setPanOffset((curPan) => clampPan(curPan.x, curPan.y, newScale));
+    } else if (e.touches.length === 1 && isDragging) {
+      const touch = e.touches[0];
+      if (zoomScale > 1) {
+        if (e.cancelable) e.preventDefault();
+        const dx = touch.clientX - dragStartRef.current.x;
+        const dy = touch.clientY - dragStartRef.current.y;
+        const newX = dragStartRef.current.panX + dx;
+        const newY = dragStartRef.current.panY + dy;
+        setPanOffset(clampPan(newX, newY, zoomScale));
+      } else if (rotateStartRef.current && canRotate) {
+        const deltaX = touch.clientX - rotateStartRef.current.startX;
+        if (Math.abs(deltaX) > 10 && e.cancelable) {
+          e.preventDefault();
+        }
+        const sensitivity = 36;
+        const frameDelta = Math.floor(deltaX / sensitivity);
+        const total = rotationFrames.length;
+        const nextIdx = (rotateStartRef.current.startIdx - frameDelta + total * 1000) % total;
+        if (rotationFrames[nextIdx] && rotationFrames[nextIdx] !== activeImage) {
+          setActiveImage(rotationFrames[nextIdx]);
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    pinchStartDistRef.current = null;
+    setIsDragging(false);
+    rotateStartRef.current = null;
+  };
+
+  const isWished = mounted ? isInWishlist(product.id) : false;
   const meta = (product.metadata || {}) as any;
 
   const handleAddToCart = () => {
@@ -65,7 +348,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
             gap: "var(--space-12)",
             alignItems: "start",
             marginBottom: "var(--space-16)",
@@ -74,6 +357,17 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
           {/* Gallery Column */}
           <div>
             <div
+              ref={imageContainerRef}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onDoubleClick={handleDoubleClick}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
               style={{
                 position: "relative",
                 width: "100%",
@@ -84,6 +378,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 border: "1px solid var(--color-border-light)",
                 boxShadow: "var(--shadow-sm)",
                 marginBottom: "var(--space-4)",
+                touchAction: zoomScale > 1 ? "none" : "pan-y",
               }}
             >
               {product.badge && (
@@ -117,11 +412,17 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
               <img
                 src={activeImage}
                 alt={product.name}
+                draggable={false}
                 style={{
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
-                  transition: "transform var(--duration-normal)",
+                  transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
+                  transformOrigin: "center center",
+                  transition: isDragging || prefersReducedMotion ? "none" : "transform var(--duration-normal)",
+                  cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
                 }}
                 onError={() => {
                   if (product.refImage && activeImage !== product.refImage) {
@@ -131,47 +432,47 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
               />
             </div>
 
-            {/* Thumbnail selector if refImage differs */}
-            {product.refImage && (
-              <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
-                <button
-                  type="button"
-                  onClick={() => setActiveImage(product.image)}
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "var(--radius-sm)",
-                    overflow: "hidden",
-                    border:
-                      activeImage === product.image
-                        ? "2px solid var(--color-brand-forest)"
-                        : "1px solid var(--color-border-light)",
-                    padding: 0,
-                    cursor: "pointer",
-                    background: "#fff",
-                  }}
-                >
-                  <img src={product.image} alt="Studio view" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveImage(product.refImage)}
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "var(--radius-sm)",
-                    overflow: "hidden",
-                    border:
-                      activeImage === product.refImage
-                        ? "2px solid var(--color-brand-forest)"
-                        : "1px solid var(--color-border-light)",
-                    padding: 0,
-                    cursor: "pointer",
-                    background: "#fff",
-                  }}
-                >
-                  <img src={product.refImage} alt="Reference view" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </button>
+            {/* Thumbnail selector */}
+            {galleryImages.length > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  marginTop: "12px",
+                  overflowX: "auto",
+                  paddingBottom: "4px",
+                  WebkitOverflowScrolling: "touch",
+                }}
+              >
+                {galleryImages.map((imgSrc, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImage(imgSrc)}
+                    style={{
+                      width: "64px",
+                      height: "64px",
+                      borderRadius: "var(--radius-sm)",
+                      overflow: "hidden",
+                      border:
+                        activeImage === imgSrc
+                          ? "2px solid var(--color-brand-forest)"
+                          : "1px solid var(--color-border-light)",
+                      padding: 0,
+                      cursor: "pointer",
+                      background: "#fff",
+                      flexShrink: 0,
+                      transition: "border-color var(--duration-fast), transform var(--duration-fast)",
+                    }}
+                    aria-label={idx === 0 ? "Studio view" : idx === 1 && !product.images ? "Reference view" : `View ${idx + 1}`}
+                  >
+                    <img
+                      src={imgSrc}
+                      alt={idx === 0 ? "Studio view" : idx === 1 && !product.images ? "Reference view" : `View ${idx + 1}`}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </button>
+                ))}
               </div>
             )}
           </div>

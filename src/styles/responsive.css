@@ -28,6 +28,11 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .explore-types-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+  }
+
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -48,13 +53,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   background: var(--bottom-nav-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--bottom-nav-border);
   z-index: var(--z-bottom-nav);
-  padding: 0 12px;
+  padding: 0 12px env(safe-area-inset-bottom, 0px);
 }
 
 .mobile-nav-items {
@@ -113,7 +118,7 @@
   }
 
   body {
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   }
 
   /* Header adjustments */
@@ -177,6 +182,33 @@
   .trust-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-4);
+  }
+
+  /* Explore by Plant Type Mobile */
+  .explore-plant-types-section {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-6);
+  }
+
+  .explore-types-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .plant-type-card {
+    padding: 8px 8px 12px;
+  }
+
+  .plant-type-img-box {
+    border-radius: 50%;
+  }
+
+  .plant-type-name {
+    font-size: 0.9375rem;
+  }
+
+  .plant-type-desc {
+    font-size: 0.6875rem;
   }
 
   .trust-item {

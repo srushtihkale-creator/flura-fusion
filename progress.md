@@ -249,17 +249,223 @@
   - Synced all 9 HD image assets across both `assets/products/` and `public/assets/products/`.
   - Maintained exact 1:1 aspect ratio matching `.product-img-wrapper` and `object-fit: cover` with zero stretching or blurriness.
   - Preserved 100% of product card sizes, layout, spacing, typography, prices, ratings, filters, header, footer, hero, and other pages untouched.
-  - Validated full production build (`npm run build`, 52/52 SSG pages) and committed to git (`b2134a2`) and pushed to `main`.
-  - Active Next.js production server running on `http://localhost:3000` (HTTP 200 OK).
+### Milestone 19: Future-Ready Features — Flora AI Space Visualizer & 360° Architecture
+- [x] **Flora AI — "Visualize My Space" (`VisualizeMySpaceModal.tsx`):**
+  - Integrated into both the dedicated `/flora-ai` page and the global slide-out `FloraAIPanel`.
+  - Frontend workflow: customer uploads room/balcony/patio photo, specifies styling preferences (*"Minimal balcony with white pots"*, *"Lush low-light plants"*), matches real Flora Fusion catalog plants/pots via `spaceVisualization.service.ts`, and presents a mock photorealistic preview with direct "View Product" links.
+  - Architecture ready for future generative AI/inpainting API integration.
+- [x] **Product 360° Viewer Architecture (`Product360Viewer.tsx`):**
+  - Added optional `images360?: string[]` to `Product` interface in `src/types/product.ts`.
+  - Built high-performance non-WebGL 360° turntable modal with desktop mouse drag, mobile swipe, zoom (1x–2.5x), keyboard navigation, frame preloading, and reduced-motion support.
+  - Wired into `ProductDetailView.tsx` with conditional display guard (`has360View = Boolean(product.images360 && product.images360.length >= 4)`).
+  - Clean fallback: standard high-resolution studio gallery renders gracefully when 360 assets are not provided.
+- [x] **Secondary Image Gallery Quality Fix:**
+  - Resolved secondary thumbnail blurriness in `ProductDetailView.tsx` by ensuring only genuine high-resolution alternate photography is displayed, avoiding low-res `-ref.png` assets.
+
+### Milestone 20: 360° Turntable Asset Inspection & Blocker Documentation (`monstera-deliciosa`)
+- [x] **24-Frame Turntable Inspection (`assets/Plant Rotation Contact Sheet - Copy.gif`):**
+  - Extracted and audited all 24 frames of the proof-of-concept contact sheet for `monstera-deliciosa`.
+  - **Quality Gate Failed:** Identified critical discrepancies:
+    - Resolution deficit: 252×252 px (fails the required 800×800 px studio quality).
+    - UI watermarks: Large dark numbered badges ("1" to "24") baked directly into foliage.
+    - Plant identity swap: Frames 19–22 abruptly morph from Monstera into a Haworthia succulent in a cyan pot.
+    - Missing subject: Frames 23–24 display an empty wooden tabletop with no plant or pot.
+  - **Strict Quality Enforcement:** Adhered to project safety rules — zero fake/distorted assets created, `catalog.ts` left untouched, and the 360° viewer remains cleanly disabled with the high-res 1024×1024 studio gallery active.
+
+### Milestone 21: Native Product Image Zoom & UI/UX Restoration
+- [x] **Native Image Zoom & Pan Engine in `ProductDetailView.tsx`:**
+  - **Desktop:** Double-click to zoom to 2.0x centered on mouse cursor, smooth wheel zooming (1.0x to 3.0x), click-and-drag panning when zoomed with bounded clamping (`maxPan = (dimension * (scale - 1)) / 2`), and quick reset via <kbd>Escape</kbd>, <kbd>0</kbd>, or double-click.
+  - **Mobile:** Dual-finger pinch-to-zoom gesture tracking, double-tap (<300ms) to toggle between 1.0x and 2.0x, single-finger panning when zoomed, and `touchAction: zoomScale > 1 ? "none" : "pan-y"` to prevent page bounce or horizontal overflow.
+  - **Motion & A11y:** Respects `prefers-reduced-motion` with instant transitions; uses semantic ARIA attributes.
+- [x] **100% UI/UX Restoration:**
+  - Removed all newly introduced floating button overlays to preserve the authentic, untouched design of the product detail page.
+  - At rest (1.0x), the gallery, badge, wishlist button, thumbnails, and layout are 100% visually identical to the approved design.
+- [x] **Dev Server Build Cache Collision Resolution:**
+  - Identified webpack dev cache conflict (`ENOENT: Cannot find module './682.js'`) caused by running `next build` concurrently with an active `next dev` server.
+  - Stopped stale dev process, cleared `.next` cache, and launched a fresh dev server on port 3000. Verified HTTP 200 on `/`, `/about`, and `/product/monstera-deliciosa`.
+- [x] **Full Quality Verification:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+
+### Milestone 22: Monstera Deliciosa Multi-Angle Studio Gallery Expansion
+- [x] **Approved 4-Angle Showcase Ingestion (`assets/Monstera Deliciosa_ Four-Angle Studio Showcase.png`):**
+  - Ingested 1254×1254 studio showcase featuring 4 consistent angles of Monstera Deliciosa in a concrete/grey ceramic pot on an oak table.
+  - Verified primary image #1 matches Angle 1 and preserved [`public/assets/products/plants/monstera-deliciosa.jpg`](file:///d:/flora%20fusion/public/assets/products/plants/monstera-deliciosa.jpg) (1024×1024) as #1.
+  - Extracted and cropped 3 additional clean angles omitting center dividers:
+    - [`monstera-deliciosa-2.jpg`](file:///d:/flora%20fusion/public/assets/products/plants/monstera-deliciosa-2.jpg) (Angle 2, ~45°/90° rotation, 1024×1024).
+    - [`monstera-deliciosa-3.jpg`](file:///d:/flora%20fusion/public/assets/products/plants/monstera-deliciosa-3.jpg) (Angle 3, ~135°/180° rotation, 1024×1024).
+    - [`monstera-deliciosa-4.jpg`](file:///d:/flora%20fusion/public/assets/products/plants/monstera-deliciosa-4.jpg) (Angle 4, back/side rotation, 1024×1024).
+  - Synchronized assets across both `assets/products/plants/` and `public/assets/products/plants/`.
+  - Strictly excluded Haworthia / mint-pot image and 2×2 contact sheet as a single image.
+- [x] **Minimal Non-Breaking Architecture Integration (Option B):**
+  - Extended [`src/types/product.ts`](file:///d:/flora%20fusion/src/types/product.ts) with optional `images?: string[];` in `Product` interface.
+  - Updated [`src/data/catalog.ts`](file:///d:/flora%20fusion/src/data/catalog.ts) for `monstera-deliciosa` with all 4 verified studio image paths.
+  - Updated [`src/components/product/ProductDetailView.tsx`](file:///d:/flora%20fusion/src/components/product/ProductDetailView.tsx) to map `galleryImages` using the exact existing 64×64 thumbnail buttons with active green border, hover states, and click selection.
+  - Maintained 100% untouched UI/UX: identical desktop zoom (1x–3x double-click/wheel/drag-pan), mobile pinch-to-zoom/double-tap, <kbd>Escape</kbd> reset, untouched 360 viewer, and untouched 30 other products.
+- [x] **Verification Suite Passing:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+
+### Milestone 23: React Hydration Error Resolution & Persistent State Guarding
+- [x] **Hydration Mismatch Diagnosis:**
+  - **Symptom:** Next.js runtime error `Error: Text content does not match server-rendered HTML. See more info here: https://nextjs.org/docs/messages/react-hydration-error`.
+  - **Root Cause:** Next.js generates static HTML on the server where browser `localStorage` does not exist (`cart = []`, `wishlist = []`). When the browser client loaded, Zustand's `persist` middleware populated stored cart and wishlist state immediately during initial render, producing a text and attribute mismatch between the server-rendered HTML and client DOM (specifically wishlist button state in [`ProductDetailView.tsx`](file:///d:/flora%20fusion/src/components/product/ProductDetailView.tsx) and cart drawer counter/totals in [`CartDrawer.tsx`](file:///d:/flora%20fusion/src/components/layout/CartDrawer.tsx)).
+- [x] **Zero-Regression Resolution:**
+  - Applied two-pass client mounting guard (`const [mounted, setMounted] = useState(false); useEffect(() => setMounted(true), []);`) across `ProductDetailView.tsx` and `CartDrawer.tsx`.
+  - Ensures initial render passes identical server-matched empty state to React hydration, then updates client-persisted wishlist and cart states cleanly upon mount without hydration warnings or layout flickers.
+- [x] **Full Quality Verification:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+  - Verified Next.js dev server on `http://localhost:3000` responding with HTTP 200 OK.
+
+### Milestone 24: Final UI/UX Cleanup & Production Polish
+- [x] **Button Styling & Interaction Standardization:**
+  - Standardized `.btn-primary`, `.btn-secondary`, `.coupon-btn`, `.modal-close-btn`, and `.header-action-btn` in `src/styles/components.css` with explicit `cursor: pointer`, border resets, line-height normalization, and smooth `:hover` elevation transitions.
+- [x] **Eliminated Cumulative Layout Shift (CLS) on Product Cards:**
+  - Upgraded `.card-quick-add` from abrupt `display: none` / `display: block` to smooth CSS opacity, max-height, and padding transitions, completely removing the ~38px card height jump on hover.
+- [x] **Product Detail Gallery & Mobile Grid Polish:**
+  - Updated main product grid in `ProductDetailView.tsx` with `gridTemplateColumns: repeat(auto-fit, minmax(min(100%, 320px), 1fr))` preventing overflow on narrow (<320px) screens.
+  - Added `overflowX: auto`, `flexShrink: 0`, and `paddingBottom: 4px` to the 64×64 gallery thumbnail selector, ensuring thumbnails maintain exact geometry without distortion or page overflow.
+- [x] **Mobile Safe-Area Inset Architecture:**
+  - Updated `.mobile-bottom-nav` and mobile `body` padding in `src/styles/responsive.css` to incorporate `env(safe-area-inset-bottom, 0px)` for modern iOS and Android navigation bars.
+- [x] **Cart Drawer & Checkout Polish:**
+  - Standardized `.btn-primary` in `CartDrawer.tsx` with unified flex centering (`display: flex; justify-content: center; align-items: center;`).
+- [x] **Complete Quality Verification:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+  - Dev server verified and running on `http://localhost:3000` (HTTP 200 OK).
+
+### Milestone 25: Direct Main Image Drag/Swipe Rotation (Zero UI/UX Modification)
+- [x] **Direct Interactive Image Drag/Swipe Rotation:**
+  - Connected the 4 studio frames (`monstera-deliciosa.jpg`, `monstera-deliciosa-2.jpg`, `monstera-deliciosa-3.jpg`, `monstera-deliciosa-4.jpg`) directly to drag and swipe interactions on the existing main product image in `ProductDetailView.tsx`.
+  - Zero new UI added: completely removed the "360 View" button and modal to keep the product page layout, spacing, and controls 100% identical to the final design.
+  - Bidirectional rotation on direct main-image drag/swipe:
+    - Forward rotation: 1 → 2 → 3 → 4 → 1 (dragging left / swiping left).
+    - Reverse rotation: 1 → 4 → 3 → 2 → 1 (dragging right / swiping right).
+  - Preserved existing zoom & pan when zoomed (`zoomScale > 1`), double-click/double-tap zoom, mouse wheel zoom, and thumbnail clicking.
+- [x] **Full Quality Verification:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+  - Dev server verified and running on `http://localhost:3000` (HTTP 200 OK).
+
+### Milestone 26: Preloading Architecture & 4-Angle Asset Verification Audit
+- [x] **Instant, Smooth Image Preloading Engine:**
+  - Integrated an automatic background preloader in `ProductDetailView.tsx` via `useEffect` ensuring all gallery angle frames are preloaded into browser memory upon mount.
+  - Guarantees zero blur, zero flicker, and zero loading delays during interactive drag/swipe rotation.
+  - Memoized `galleryImages` with `useMemo` to eliminate ESLint hook dependency warnings.
+- [x] **4-Angle Plant & Pot Asset Verification Audit:**
+  - Audited `Plant and Pot Product Angle Catalog.png` against catalog standards and Section 4 Asset Safety criteria:
+    - **Resolution Barrier:** Entire 21-product sheet is 1536×1024; each individual angle tile is only 60×110 px. Cropping them would degrade resolution by 17× compared to our 1024×1024 studio assets, causing severe blur during dragging.
+    - **Identity & Pot Inconsistency:** Plant angles feature generic white cylinder pots contradicting catalog items (Money Plant ceramic bowl, Snake Plant diamond lattice, ZZ Plant black pot, Lavender terracotta pot).
+    - **Pot Discrepancies:** Key catalog pots (`metal-pot`, `bamboo-pot`, `decorative-pot`) are absent; `ribbed-ceramic-pot` is pink in catalog vs cream in sheet.
+  - **Asset Safety Rule Enforcement:** In accordance with Section 4 (*"If a provided/generated angle does NOT clearly match: Do not use it. Keep the existing image and report that angle as missing"*), original high-resolution catalog photography was preserved 100% untouched without forcing blurry or mismatched replacements.
+  - Monstera 4-image rotation remained completely preserved and functional.
+  - Seeds remained 100% untouched.
+- [x] **Full Quality Verification:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+  - Dev server verified and running on `http://localhost:3000` (HTTP 200 OK).
+
+### Milestone 27: Strict 4-Angle Rotation Verification & Image Mapping Lock
+- [x] **Strict 4-Angle Rotation Logic Enforced (`ProductDetailView.tsx`):**
+  - Enforced required image logic: rotation is strictly allowed ONLY for Plants or Pots when exactly 4 separate images of that exact same product exist (1. Front, 2. Right, 3. Back, 4. Left).
+  - Explicitly decoupled rotation frames (`rotationFrames`) from the thumbnail gallery (`galleryImages`).
+  - Reference crops (`*-ref.png`) and catalog reference images are strictly prohibited from acting as rotation frames.
+  - Zero fake rotation: products without 4 verified angle images keep their existing image and gallery behavior untouched (no rotation invented or forced).
+  - Seeds are 100% untouched and never rotate.
+  - Monstera Deliciosa preserved 100% with its existing verified 4-image studio set (`monstera-deliciosa.jpg`, `monstera-deliciosa-2.jpg`, `monstera-deliciosa-3.jpg`, `monstera-deliciosa-4.jpg`).
+  - In-memory preloading targets verified 4-angle sets ensuring sharp, instant, zero-flicker transitions.
+- [x] **100% UI/UX Lock Maintained:**
+  - Zero changes to layout, gallery structure, thumbnails, zoom controls, buttons, CSS, typography, colors, or responsiveness.
+  - No 360 buttons, modals, or controls added.
+- [x] **Full Quality Verification:**
+  - `npm test`: 14/14 tests passing.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint warnings or errors.
+  - `npm run build`: All 52 static routes generated cleanly.
+
+### Milestone 28: Complete 4-Angle Rotation Sets for All 11 Catalog Plants
+- [x] **11 Plant 4-Angle Studio Datasets Ingested & Mapped:**
+  - Connected the authentic 4-angle studio photography sets (1 = Front, 2 = Right, 3 = Back, 4 = Left) across all 11 catalog plants in `src/data/catalog.ts`:
+    1. **Money Plant** (`money-plant-1.jpg` → `2` → `3` → `4`)
+    2. **Lavender** (`lavender-1.jpg` → `2` → `3` → `4`)
+    3. **Snake Plant** (`snake-plant-1.jpg` → `2` → `3` → `4`)
+    4. **Peace Lily** (`peace-lily-1.jpg` → `2` → `3` → `4`)
+    5. **Aloe Vera** (`aloe-vera-1.jpg` → `2` → `3` → `4`)
+    6. **ZZ Plant** (`zz-plant-1.jpg` → `2` → `3` → `4`)
+    7. **Jade Plant** (`jade-plant-1.jpg` → `2` → `3` → `4`)
+    8. **Ficus Elastica** (`ficus-elastica-1.jpg` → `2` → `3` → `4`)
+    9. **Areca Palm** (`areca-palm-1.jpg` → `2` → `3` → `4`)
+    10. **Rubber Plant** (`rubber-plant-1.jpg` → `2` → `3` → `4`)
+    11. **Monstera Deliciosa** (`monstera-deliciosa.jpg` → `2` → `3` → `4`)
+  - Products rotate strictly within their own 4 angle images (zero product cross-mixing).
+  - Bidirectional drag/swipe rotation: Forward (1 → 2 → 3 → 4 → 1), Reverse (1 → 4 → 3 → 2 → 1).
+  - Background image preloading guarantees instantaneous, blur-free, zero-flicker rotation transitions.
+- [x] **Strict UI/UX Lock Maintained:**
+  - Product page visuals, gallery layout, zoom, controls, thumbnails, buttons, and responsive layout remained 100% untouched.
+
+### Milestone 29: Header Brand Logo Seamless Blend & Transparent Asset Integration
+- [x] **Logo Presentation Rectangular Background Elimination:**
+  - Fixed visible rectangular image background around the Flora Fusion logo in the site header.
+  - Converted and seamlessly integrated an authentic 32-bit RGBA transparent PNG (`assets/logo.png`), blending naturally into `var(--header-bg)`.
+  - Preserved original artwork, aspect ratio, proportions, and positions across both desktop (`150px`) and mobile (`120px`).
+
+### Milestone 30: "Explore by Plant Type" Section with Horizontal Oval Images & Staggered Levitation
+- [x] **Homepage Section Integration (`src/app/page.tsx` & `src/components/home/ExploreByPlantType.tsx`):**
+  - Added new section directly beneath the Hero section:
+    - Title: **Explore by Plant Type**
+    - Subtitle: **Find a plant that fits your space.**
+    - Eyebrow: `Botanical Spaces`
+    - View All link: `View all plants →`
+- [x] **6 Soft-Rounded Horizontal Oval Image Cards:**
+  - **Indoor Plants** (`/plants?filter=indoor`) — Monstera Deliciosa
+  - **Low Light Plants** (`/plants?filter=low-light`) — ZZ Plant
+  - **Flowering Plants** (`/plants?filter=flowering`) — Peace Lily
+  - **Air Purifying Plants** (`/plants?filter=air-purifying`) — Snake Plant
+  - **Easy Care Plants** (`/plants?filter=easy-care`) — Jade Plant
+  - **Large Plants** (`/plants?filter=large`) — Areca Palm
+- [x] **Geometric Horizontal Oval Shape & Floating Levitation Motion (`src/styles/components.css`):**
+  - Oval geometry: `aspect-ratio: 1.35 / 1` and `border-radius: 50%` forming a geometric horizontal oval (distinctly wider than tall, NOT circular).
+  - Centered studio plant crop (`object-fit: cover; object-position: center; overflow: hidden;`).
+  - Organic ambient levitation via CSS keyframes `plantOvalFloatA` and `plantOvalFloatB` with small vertical movement (`-3.5px` to `-4px`).
+  - Staggered cycle durations (4.6s–5.6s) and offset delays (`0s`, `0.9s`, `1.8s`, `0.5s`, `1.3s`, `2.2s`) preventing synchronized movement.
+  - Zero rotation, zero blur (`will-change: transform`), zero layout shifting, and pause-on-hover elevation (`translateY(-5px)`).
+  - Full `prefers-reduced-motion: reduce` override in both `components.css` and `animations.css`.
+- [x] **Catalog Deep Linking & Filter Synchronization:**
+  - Extended `ProductService.getByCategory` with normalized matches for `lowlight`, `easycare`, and `large`.
+  - Updated `PlantsPage` (`src/app/plants/page.tsx`) to accept `searchParams` and pass `initialFilter` and `initialSearch`.
+  - Updated `CategoryCatalogView.tsx` with matching filter chips and automatic URL query parameter state syncing.
+- [x] **Responsive System Consistency (`src/styles/responsive.css`):**
+  - Desktop: 6 equal columns.
+  - Tablet: 3 columns × 2 rows (`repeat(3, 1fr)`).
+  - Mobile: 2 columns × 3 rows (`repeat(2, 1fr)`), matching Flora Fusion's standard 2-column mobile layout without horizontal overflow.
+- [x] **Quality Verification:**
+  - All 14 tests in test suite passed (`npm test`).
+  - TypeScript type-check passed with 0 errors (`npx tsc --noEmit`).
+  - Active Next.js dev server responding with HTTP 200 on all routes.
 
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
 
-1. **Spring Boot Backend Integration (Future Phase):**
-   - Connect typed services (`product.service.ts`, `cart.service.ts`, `order.service.ts`, `floraAI.service.ts`) with Spring Boot REST endpoints.
+1. **Monstera 360° Asset Acquisition:**
+   - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography (or 3D model render) for `monstera-deliciosa` without UI overlays or species morphing.
+2. **Spring Boot Backend Integration (Future Phase):**
+   - Connect typed services (`product.service.ts`, `cart.service.ts`, `order.service.ts`, `floraAI.service.ts`, `spaceVisualization.service.ts`) with Spring Boot REST endpoints.
    - Authoritative PostgreSQL transactional database and Razorpay payment gateway sandbox.
-2. **Headless CMS Integration:**
+3. **Headless CMS Integration:**
    - Connect `PlantCareService` and marketing banners to a headless CMS (Strapi / Sanity).
-3. **Advanced Customer Personalization:**
+4. **Advanced Customer Personalization:**
    - Multi-device customer accounts with JWT authentication and downloadable order invoices.

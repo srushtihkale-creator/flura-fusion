@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useFloraStore } from "@/store/useFloraStore";
 import { ProductService } from "@/services/product.service";
 import { Product } from "@/types/product";
+import { VisualizeMySpaceModal } from "./VisualizeMySpaceModal";
 
 interface Message {
   id: string;
@@ -15,6 +16,7 @@ interface Message {
 
 export function FloraAIPanel() {
   const { isAIOpen, closeAI, openAI, addToCart } = useFloraStore();
+  const [isVisualizeModalOpen, setIsVisualizeModalOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "initial",
@@ -155,6 +157,19 @@ export function FloraAIPanel() {
 
         {/* Quick Question Chips */}
         <div className="flora-ai-chips-strip">
+          <button
+            type="button"
+            className="flora-ai-chip"
+            onClick={() => setIsVisualizeModalOpen(true)}
+            style={{
+              background: "var(--color-brand-sage-light)",
+              color: "var(--color-brand-forest)",
+              borderColor: "var(--color-brand-forest)",
+              fontWeight: 600,
+            }}
+          >
+            📷 Visualize My Space
+          </button>
           {quickQuestionChips.map((chip) => (
             <button
               key={chip.query}
@@ -253,6 +268,12 @@ export function FloraAIPanel() {
           </button>
         </form>
       </aside>
+
+      {/* Visualize My Space Modal */}
+      <VisualizeMySpaceModal
+        isOpen={isVisualizeModalOpen}
+        onClose={() => setIsVisualizeModalOpen(false)}
+      />
     </>
   );
 }

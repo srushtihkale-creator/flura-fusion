@@ -9,11 +9,11 @@ export function StoriesAndCareSection() {
   const { openAI } = useFloraStore();
 
   return (
-    <section style={{ padding: "var(--space-16) 0", backgroundColor: "var(--color-cream-soft)" }}>
+    <section style={{ padding: "var(--space-16) 0", backgroundColor: "var(--color-cream-soft)", borderTopLeftRadius: "clamp(24px, 4vw, 44px)", borderTopRightRadius: "clamp(24px, 4vw, 44px)" }}>
       <div className="container" style={{ maxWidth: "var(--container-reading)" }}>
         <div style={{ textAlign: "center", marginBottom: "var(--space-10)" }}>
           <span style={{ fontSize: "2rem" }}>🌿</span>
-          <h2 style={{ fontSize: "var(--text-display-md)", marginTop: "8px", marginBottom: "8px" }}>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-display-md)", fontWeight: 500, letterSpacing: "-0.015em", color: "var(--color-brand-forest)", marginTop: "8px", marginBottom: "8px" }}>
             Nature Meets Your Space
           </h2>
           <p style={{ fontSize: "var(--text-body-lg)", color: "var(--color-brand-green)", fontStyle: "italic" }}>

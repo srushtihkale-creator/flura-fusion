@@ -55,6 +55,36 @@ export const ProductService = {
         if (normalizedFilter === "outdoor") {
           return String(meta.placement || "").toLowerCase().includes("outdoor") || sub.includes("outdoor");
         }
+        if (normalizedFilter === "lowlight" || normalizedFilter === "low" || normalizedFilter === "lowlightplants") {
+          return (
+            String(meta.light || "").toLowerCase().includes("low") ||
+            name.includes("zz") ||
+            name.includes("snake") ||
+            name.includes("peace lily")
+          );
+        }
+        if (normalizedFilter === "easycare" || normalizedFilter === "easy" || normalizedFilter === "easycareplants") {
+          return (
+            String(meta.difficulty || "").toLowerCase().includes("easy") ||
+            String(meta.difficulty || "").toLowerCase().includes("indestructible") ||
+            String(meta.difficulty || "").toLowerCase().includes("beginner") ||
+            name.includes("money") ||
+            name.includes("snake") ||
+            name.includes("zz") ||
+            name.includes("jade") ||
+            name.includes("aloe")
+          );
+        }
+        if (normalizedFilter === "large" || normalizedFilter === "largeplants") {
+          return (
+            String(meta.size || "").toLowerCase().includes("large") ||
+            String(meta.size || "").toLowerCase().includes("tall") ||
+            name.includes("monstera") ||
+            name.includes("areca") ||
+            name.includes("ficus") ||
+            name.includes("rubber")
+          );
+        }
 
         if (sub.includes(normalizedFilter)) return true;
         if (name.includes(normalizedFilter)) return true;

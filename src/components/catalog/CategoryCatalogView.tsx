@@ -9,6 +9,8 @@ import { ProductCard } from "@/components/product/ProductCard";
 interface CategoryCatalogViewProps {
   category: ProductCategory;
   initialProducts: Product[];
+  initialFilter?: string;
+  initialSearch?: string;
 }
 
 const CATEGORY_CONFIG: Record<
@@ -27,9 +29,12 @@ const CATEGORY_CONFIG: Record<
     filters: [
       { label: "All", value: "all" },
       { label: "Indoor", value: "indoor" },
-      { label: "Outdoor", value: "outdoor" },
+      { label: "Low Light", value: "low-light" },
       { label: "Flowering", value: "flowering" },
       { label: "Air Purifying", value: "air-purifying" },
+      { label: "Easy Care", value: "easy-care" },
+      { label: "Large", value: "large" },
+      { label: "Outdoor", value: "outdoor" },
       { label: "Succulents", value: "succulents" },
     ],
   },
@@ -63,13 +68,27 @@ const CATEGORY_CONFIG: Record<
 export function CategoryCatalogView({
   category,
   initialProducts,
+  initialFilter = "all",
+  initialSearch = "",
 }: CategoryCatalogViewProps) {
   const config = CATEGORY_CONFIG[category];
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState(initialFilter);
   const [sortBy, setSortBy] = useState("featured");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialFilter) {
+      setActiveFilter(initialFilter);
+    }
+  }, [initialFilter]);
+
+  useEffect(() => {
+    if (initialSearch !== undefined) {
+      setSearchQuery(initialSearch);
+    }
+  }, [initialSearch]);
 
   useEffect(() => {
     let isMounted = true;

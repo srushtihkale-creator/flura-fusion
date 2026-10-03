@@ -183,11 +183,13 @@
   .pulse-glow::after,
   .animate-marquee,
   .overlapping-badge-svg,
-  .trust-item {
+  .trust-item,
+  .plant-type-img-box {
     animation: none !important;
     transform: none !important;
   }
-  .trust-item:hover {
+  .trust-item:hover,
+  .plant-type-card:hover .plant-type-img-box {
     transform: none !important;
   }
 }

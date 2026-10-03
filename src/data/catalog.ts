@@ -19,8 +19,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 499,
       rating: 4.8,
       reviewCount: 124,
-      image: "/assets/products/plants/money-plant.jpg",
+      image: "/assets/products/plants/money-plant-1.jpg",
       refImage: "/assets/products/plants/money-plant-ref.png",
+      images: [
+        "/assets/products/plants/money-plant-1.jpg",
+        "/assets/products/plants/money-plant-2.jpg",
+        "/assets/products/plants/money-plant-3.jpg",
+        "/assets/products/plants/money-plant-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/money-plant-1.jpg",
+        "/assets/products/plants/money-plant-2.jpg",
+        "/assets/products/plants/money-plant-3.jpg",
+        "/assets/products/plants/money-plant-4.jpg"
+      ],
       badge: "Bestseller",
       inStock: true,
       metadata: {
@@ -51,8 +63,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 599,
       rating: 4.9,
       reviewCount: 210,
-      image: "/assets/products/plants/snake-plant.jpg",
+      image: "/assets/products/plants/snake-plant-1.jpg",
       refImage: "/assets/products/plants/snake-plant-ref.png",
+      images: [
+        "/assets/products/plants/snake-plant-1.jpg",
+        "/assets/products/plants/snake-plant-2.jpg",
+        "/assets/products/plants/snake-plant-3.jpg",
+        "/assets/products/plants/snake-plant-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/snake-plant-1.jpg",
+        "/assets/products/plants/snake-plant-2.jpg",
+        "/assets/products/plants/snake-plant-3.jpg",
+        "/assets/products/plants/snake-plant-4.jpg"
+      ],
       badge: "Popular",
       inStock: true,
       metadata: {
@@ -83,8 +107,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 899,
       rating: 4.7,
       reviewCount: 98,
-      image: "/assets/products/plants/peace-lily.jpg",
+      image: "/assets/products/plants/peace-lily-1.jpg",
       refImage: "/assets/products/plants/peace-lily-ref.png",
+      images: [
+        "/assets/products/plants/peace-lily-1.jpg",
+        "/assets/products/plants/peace-lily-2.jpg",
+        "/assets/products/plants/peace-lily-3.jpg",
+        "/assets/products/plants/peace-lily-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/peace-lily-1.jpg",
+        "/assets/products/plants/peace-lily-2.jpg",
+        "/assets/products/plants/peace-lily-3.jpg",
+        "/assets/products/plants/peace-lily-4.jpg"
+      ],
       badge: "Clean Air",
       inStock: true,
       metadata: {
@@ -115,8 +151,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 849,
       rating: 4.6,
       reviewCount: 76,
-      image: "/assets/products/plants/areca-palm.jpg",
+      image: "/assets/products/plants/areca-palm-1.jpg",
       refImage: "/assets/products/plants/areca-palm-ref.png",
+      images: [
+        "/assets/products/plants/areca-palm-1.jpg",
+        "/assets/products/plants/areca-palm-2.jpg",
+        "/assets/products/plants/areca-palm-3.jpg",
+        "/assets/products/plants/areca-palm-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/areca-palm-1.jpg",
+        "/assets/products/plants/areca-palm-2.jpg",
+        "/assets/products/plants/areca-palm-3.jpg",
+        "/assets/products/plants/areca-palm-4.jpg"
+      ],
       badge: null,
       inStock: true,
       metadata: {
@@ -147,8 +195,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 699,
       rating: 4.5,
       reviewCount: 65,
-      image: "/assets/products/plants/zz-plant.jpg",
+      image: "/assets/products/plants/zz-plant-1.jpg",
       refImage: "/assets/products/plants/zz-plant-ref.png",
+      images: [
+        "/assets/products/plants/zz-plant-1.jpg",
+        "/assets/products/plants/zz-plant-2.jpg",
+        "/assets/products/plants/zz-plant-3.jpg",
+        "/assets/products/plants/zz-plant-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/zz-plant-1.jpg",
+        "/assets/products/plants/zz-plant-2.jpg",
+        "/assets/products/plants/zz-plant-3.jpg",
+        "/assets/products/plants/zz-plant-4.jpg"
+      ],
       badge: "Hardy",
       inStock: true,
       metadata: {
@@ -179,8 +239,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 599,
       rating: 4.6,
       reviewCount: 87,
-      image: "/assets/products/plants/jade-plant.jpg",
+      image: "/assets/products/plants/jade-plant-1.jpg",
       refImage: "/assets/products/plants/jade-plant-ref.png",
+      images: [
+        "/assets/products/plants/jade-plant-1.jpg",
+        "/assets/products/plants/jade-plant-2.jpg",
+        "/assets/products/plants/jade-plant-3.jpg",
+        "/assets/products/plants/jade-plant-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/jade-plant-1.jpg",
+        "/assets/products/plants/jade-plant-2.jpg",
+        "/assets/products/plants/jade-plant-3.jpg",
+        "/assets/products/plants/jade-plant-4.jpg"
+      ],
       badge: "Lucky",
       inStock: true,
       metadata: {
@@ -211,8 +283,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 499,
       rating: 4.6,
       reviewCount: 72,
-      image: "/assets/products/plants/lavender.jpg",
+      image: "/assets/products/plants/lavender-1.jpg",
       refImage: "/assets/products/plants/lavender-ref.png",
+      images: [
+        "/assets/products/plants/lavender-1.jpg",
+        "/assets/products/plants/lavender-2.jpg",
+        "/assets/products/plants/lavender-3.jpg",
+        "/assets/products/plants/lavender-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/lavender-1.jpg",
+        "/assets/products/plants/lavender-2.jpg",
+        "/assets/products/plants/lavender-3.jpg",
+        "/assets/products/plants/lavender-4.jpg"
+      ],
       badge: "Aromatic",
       inStock: true,
       metadata: {
@@ -243,8 +327,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 949,
       rating: 4.5,
       reviewCount: 61,
-      image: "/assets/products/plants/ficus-elastica.jpg",
+      image: "/assets/products/plants/ficus-elastica-1.jpg",
       refImage: "/assets/products/plants/ficus-elastica-ref.png",
+      images: [
+        "/assets/products/plants/ficus-elastica-1.jpg",
+        "/assets/products/plants/ficus-elastica-2.jpg",
+        "/assets/products/plants/ficus-elastica-3.jpg",
+        "/assets/products/plants/ficus-elastica-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/ficus-elastica-1.jpg",
+        "/assets/products/plants/ficus-elastica-2.jpg",
+        "/assets/products/plants/ficus-elastica-3.jpg",
+        "/assets/products/plants/ficus-elastica-4.jpg"
+      ],
       badge: null,
       inStock: true,
       metadata: {
@@ -277,6 +373,18 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       reviewCount: 103,
       image: "/assets/products/plants/monstera-deliciosa.jpg",
       refImage: "/assets/products/plants/monstera-deliciosa-ref.png",
+      images: [
+        "/assets/products/plants/monstera-deliciosa.jpg",
+        "/assets/products/plants/monstera-deliciosa-2.jpg",
+        "/assets/products/plants/monstera-deliciosa-3.jpg",
+        "/assets/products/plants/monstera-deliciosa-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/monstera-deliciosa.jpg",
+        "/assets/products/plants/monstera-deliciosa-2.jpg",
+        "/assets/products/plants/monstera-deliciosa-3.jpg",
+        "/assets/products/plants/monstera-deliciosa-4.jpg"
+      ],
       badge: "Trending",
       inStock: true,
       metadata: {
@@ -307,8 +415,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 399,
       rating: 4.6,
       reviewCount: 92,
-      image: "/assets/products/plants/aloe-vera.jpg",
+      image: "/assets/products/plants/aloe-vera-1.jpg",
       refImage: "/assets/products/plants/aloe-vera-ref.png",
+      images: [
+        "/assets/products/plants/aloe-vera-1.jpg",
+        "/assets/products/plants/aloe-vera-2.jpg",
+        "/assets/products/plants/aloe-vera-3.jpg",
+        "/assets/products/plants/aloe-vera-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/aloe-vera-1.jpg",
+        "/assets/products/plants/aloe-vera-2.jpg",
+        "/assets/products/plants/aloe-vera-3.jpg",
+        "/assets/products/plants/aloe-vera-4.jpg"
+      ],
       badge: "Medicinal",
       inStock: true,
       metadata: {
@@ -339,8 +459,20 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       originalPrice: 799,
       rating: 4.5,
       reviewCount: 67,
-      image: "/assets/products/plants/rubber-plant.jpg",
+      image: "/assets/products/plants/rubber-plant-1.jpg",
       refImage: "/assets/products/plants/rubber-plant-ref.png",
+      images: [
+        "/assets/products/plants/rubber-plant-1.jpg",
+        "/assets/products/plants/rubber-plant-2.jpg",
+        "/assets/products/plants/rubber-plant-3.jpg",
+        "/assets/products/plants/rubber-plant-4.jpg"
+      ],
+      images360: [
+        "/assets/products/plants/rubber-plant-1.jpg",
+        "/assets/products/plants/rubber-plant-2.jpg",
+        "/assets/products/plants/rubber-plant-3.jpg",
+        "/assets/products/plants/rubber-plant-4.jpg"
+      ],
       badge: null,
       inStock: true,
       metadata: {

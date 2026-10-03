@@ -14,8 +14,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function PlantsPage() {
-  const initialProducts = await ProductService.getByCategory("plants");
+export default async function PlantsPage({
+  searchParams,
+}: {
+  searchParams?: { filter?: string; search?: string };
+}) {
+  const filter = typeof searchParams?.filter === "string" ? searchParams.filter : "all";
+  const search = typeof searchParams?.search === "string" ? searchParams.search : "";
+  const initialProducts = await ProductService.getByCategory("plants", filter);
 
-  return <CategoryCatalogView category="plants" initialProducts={initialProducts} />;
+  return (
+    <CategoryCatalogView
+      category="plants"
+      initialProducts={initialProducts}
+      initialFilter={filter}
+      initialSearch={search}
+    />
+  );
 }

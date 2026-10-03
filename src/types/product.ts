@@ -53,9 +53,11 @@ export interface Product {
   reviewCount: number;
   image: string;            // Primary HD photography path
   refImage: string;         // Fallback reference crop path
+  images?: string[];        // Optional gallery photography paths
   badge?: string | null;    // "Bestseller" | "Popular" | "Classic" | null
   inStock: boolean;
   metadata: PlantMetadata | PotMetadata | SeedMetadata;
   careGuide?: CareGuide;
   relatedProducts?: string[]; // Array of product slugs/IDs
+  images360?: string[];       // Optional sequential multi-angle images for 360 viewer (>= 4 angles)
 }

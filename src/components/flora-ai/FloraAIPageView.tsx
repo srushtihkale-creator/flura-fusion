@@ -4,9 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { FloraAIService, FloraAIMessage } from "@/services/floraAI.service";
 import { useFloraStore } from "@/store/useFloraStore";
+import { VisualizeMySpaceModal } from "./VisualizeMySpaceModal";
 
 export function FloraAIPageView() {
   const { addToCart } = useFloraStore();
+  const [isVisualizeModalOpen, setIsVisualizeModalOpen] = useState(false);
   const [messages, setMessages] = useState<FloraAIMessage[]>([
     {
       id: "welcome",
@@ -131,6 +133,19 @@ export function FloraAIPageView() {
             gap: "8px",
           }}
         >
+          <button
+            type="button"
+            className="home-filter-chip"
+            onClick={() => setIsVisualizeModalOpen(true)}
+            style={{
+              backgroundColor: "var(--color-brand-sage-light)",
+              color: "var(--color-brand-forest)",
+              borderColor: "var(--color-brand-forest)",
+              fontWeight: 600,
+            }}
+          >
+            📷 Visualize My Space
+          </button>
           {chips.map((chip) => (
             <button
               key={chip}
@@ -347,6 +362,12 @@ export function FloraAIPageView() {
           </form>
         </div>
       </div>
+
+      {/* Visualize My Space Modal */}
+      <VisualizeMySpaceModal
+        isOpen={isVisualizeModalOpen}
+        onClose={() => setIsVisualizeModalOpen(false)}
+      />
     </div>
   );
 }
