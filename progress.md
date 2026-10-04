@@ -22,6 +22,9 @@
 | **Anti-Gravity Floating Cards** | ✅ Complete | `styles/animations.css`, `styles/components.css` | Staggered 4-card levitation & dynamic shadows |
 | **Hero Opening Experience** | ✅ Complete | `assets/hero/hero_plants.png` + authentic copy & CTA | High-definition botanical composition |
 | **Next.js 14 Production Suite** | ✅ Complete | 52 SSG pre-rendered routes, 14 automated tests | 100% pixel-perfect prototype match |
+| **Pot & Seed Ref Removal** | ✅ Complete | Removed 40 blurry `*-ref.png` assets, kept studio photos | 100% Sharp photography across catalog |
+| **Plant Rotation & Hint** | ✅ Complete | Multi-angle drag/swipe + discoverability overlay | Non-blocking, auto/permanent dismiss |
+| **GitHub Remote Sync** | ✅ Synced | Branch `main`, Commit `2d32d0e` | 100% Clean tree, pushed to `origin/main` |
 
 ---
 
