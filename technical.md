@@ -663,6 +663,29 @@ To support multi-angle studio photography without disrupting existing catalog la
   - Server Component `PlantsPage` accepts `searchParams` and passes `initialFilter` and `initialSearch`.
   - Client Component `CategoryCatalogView` synchronizes URL parameters with active filter chip state, rendering matching existing products in the standard `ProductCard` component.
 
+### 14.14 Pot & Seed Blurry Reference Image Removal Architecture
+* **Strict Asset & Usage Isolation:**
+  - Removed all 10 Pot `*-ref.png` assets and all 10 Seed `*-ref.png` assets from both `public/assets/products/` and `assets/products/`.
+  - Removed corresponding `refImage` attributes from `src/data/catalog.ts` and `js/data.js` for all 10 pots and 10 seeds.
+  - Made `refImage?: string;` optional in `src/types/product.ts`.
+  - Primary `.jpg` high-definition studio photography for all 10 pots and all 10 seeds preserved 100% intact.
+  - Plants, all Plant photography, 4-angle rotation datasets, and Monstera multi-angle scrubbing remain 100% untouched.
+  - Product page galleries for Pots and Seeds cleanly render single sharp studio imagery without redundant thumbnail strips or blurry reference image fallbacks.
+  - Zero modifications to UI/UX, layouts, buttons, colors, typography, or responsiveness.
+
+### 14.15 Plant Image Rotation Discoverability Hint Architecture
+* **Component Implementation (`ProductDetailView.tsx` & `components.css`):**
+  - Renders a lightweight, non-blocking discoverability overlay pill centered near the bottom of rotatable plant image containers (`pointer-events: none`).
+  - Text Content:
+    - Desktop: `↔ Drag to rotate`
+    - Mobile / Touch: `↔ Swipe to rotate`
+  - Strict Category Gate: Rendered strictly when `product.category === 'plants' && canRotate`. Never rendered for Pots or Seeds.
+  - Auto-Dismiss: Fades out automatically after 3.8s via `setTimeout`.
+  - Permanent Dismiss: Immediately sets `hasRotatedRef.current = true` and fades out as soon as the user executes their first drag or swipe frame advance.
+  - Preserves 100% of existing rotation kinematics, zoom engine, gallery thumbnails, and page layout.
+
+
+
 
 
 

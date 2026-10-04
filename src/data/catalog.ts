@@ -507,7 +507,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.7,
       reviewCount: 82,
       image: "/assets/products/pots/ceramic-ripple-pot.jpg",
-      refImage: "/assets/products/pots/ceramic-ripple-pot-ref.png",
       badge: "Artisan",
       inStock: true,
       metadata: {
@@ -531,7 +530,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.6,
       reviewCount: 67,
       image: "/assets/products/pots/terracotta-pot.jpg",
-      refImage: "/assets/products/pots/terracotta-pot-ref.png",
       badge: "Classic",
       inStock: true,
       metadata: {
@@ -555,7 +553,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.5,
       reviewCount: 54,
       image: "/assets/products/pots/self-watering-pot.jpg",
-      refImage: "/assets/products/pots/self-watering-pot-ref.png",
       badge: "Smart Care",
       inStock: true,
       metadata: {
@@ -579,7 +576,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.6,
       reviewCount: 49,
       image: "/assets/products/pots/hanging-planter.jpg",
-      refImage: "/assets/products/pots/hanging-planter-ref.png",
       badge: null,
       inStock: true,
       metadata: {
@@ -603,7 +599,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.8,
       reviewCount: 73,
       image: "/assets/products/pots/marble-pot.jpg",
-      refImage: "/assets/products/pots/marble-pot-ref.png",
       badge: "Luxury",
       inStock: true,
       metadata: {
@@ -627,7 +622,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.4,
       reviewCount: 38,
       image: "/assets/products/pots/metal-pot.jpg",
-      refImage: "/assets/products/pots/metal-pot-ref.png",
       badge: null,
       inStock: true,
       metadata: {
@@ -651,7 +645,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.6,
       reviewCount: 60,
       image: "/assets/products/pots/ribbed-ceramic-pot.jpg",
-      refImage: "/assets/products/pots/ribbed-ceramic-pot-ref.png",
       badge: "Trending",
       inStock: true,
       metadata: {
@@ -675,7 +668,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.5,
       reviewCount: 42,
       image: "/assets/products/pots/bamboo-pot.jpg",
-      refImage: "/assets/products/pots/bamboo-pot-ref.png",
       badge: "Eco Choice",
       inStock: true,
       metadata: {
@@ -699,7 +691,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.7,
       reviewCount: 56,
       image: "/assets/products/pots/decorative-pot.jpg",
-      refImage: "/assets/products/pots/decorative-pot-ref.png",
       badge: null,
       inStock: true,
       metadata: {
@@ -723,7 +714,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.5,
       reviewCount: 47,
       image: "/assets/products/pots/minimal-white-pot.jpg",
-      refImage: "/assets/products/pots/minimal-white-pot-ref.png",
       badge: "Versatile",
       inStock: true,
       metadata: {
@@ -750,7 +740,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.7,
       reviewCount: 89,
       image: "/assets/products/seeds/basil-seeds.jpg",
-      refImage: "/assets/products/seeds/basil-seeds-ref.png",
       badge: "Heirloom",
       inStock: true,
       metadata: {
@@ -775,7 +764,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.6,
       reviewCount: 76,
       image: "/assets/products/seeds/tomato-seeds.jpg",
-      refImage: "/assets/products/seeds/tomato-seeds-ref.png",
       badge: "High Yield",
       inStock: true,
       metadata: {
@@ -800,7 +788,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.5,
       reviewCount: 68,
       image: "/assets/products/seeds/sunflower-seeds.jpg",
-      refImage: "/assets/products/seeds/sunflower-seeds-ref.png",
       badge: "Pollinator",
       inStock: true,
       metadata: {
@@ -825,7 +812,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.6,
       reviewCount: 54,
       image: "/assets/products/seeds/marigold-seeds.jpg",
-      refImage: "/assets/products/seeds/marigold-seeds-ref.png",
       badge: "Pest Shield",
       inStock: true,
       metadata: {
@@ -850,7 +836,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.5,
       reviewCount: 47,
       image: "/assets/products/seeds/mint-seeds.jpg",
-      refImage: "/assets/products/seeds/mint-seeds-ref.png",
       badge: "Fast Grow",
       inStock: true,
       metadata: {
@@ -875,7 +860,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.4,
       reviewCount: 38,
       image: "/assets/products/seeds/lettuce-seeds.jpg",
-      refImage: "/assets/products/seeds/lettuce-seeds-ref.png",
       badge: null,
       inStock: true,
       metadata: {
@@ -900,7 +884,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.3,
       reviewCount: 32,
       image: "/assets/products/seeds/chilli-seeds.jpg",
-      refImage: "/assets/products/seeds/chilli-seeds-ref.png",
       badge: "Spicy",
       inStock: true,
       metadata: {
@@ -925,7 +908,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.4,
       reviewCount: 41,
       image: "/assets/products/seeds/coriander-seeds.jpg",
-      refImage: "/assets/products/seeds/coriander-seeds-ref.png",
       badge: "Kitchen Must",
       inStock: true,
       metadata: {
@@ -950,7 +932,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.2,
       reviewCount: 28,
       image: "/assets/products/seeds/carrot-seeds.jpg",
-      refImage: "/assets/products/seeds/carrot-seeds-ref.png",
       badge: null,
       inStock: true,
       metadata: {
@@ -975,7 +956,6 @@ const FLORA_CATALOG: { plants: Product[]; pots: Product[]; seeds: Product[] } = 
       rating: 4.6,
       reviewCount: 52,
       image: "/assets/products/seeds/wildflower-seeds.jpg",
-      refImage: "/assets/products/seeds/wildflower-seeds-ref.png",
       badge: "Eco Mix",
       inStock: true,
       metadata: {

@@ -52,7 +52,7 @@ export interface Product {
   rating: number;           // e.g. 4.8
   reviewCount: number;
   image: string;            // Primary HD photography path
-  refImage: string;         // Fallback reference crop path
+  refImage?: string;        // Fallback reference crop path
   images?: string[];        // Optional gallery photography paths
   badge?: string | null;    // "Bestseller" | "Popular" | "Classic" | null
   inStock: boolean;

@@ -456,6 +456,38 @@
   - TypeScript type-check passed with 0 errors (`npx tsc --noEmit`).
   - Active Next.js dev server responding with HTTP 200 on all routes.
 
+### Milestone 31: Pot & Seed Blurry Reference Image Removal (Strict Asset/Usage Removal)
+- [x] **Removed All 10 Pot `*-ref.png` Images:**
+  - Removed files from both `public/assets/products/pots/` and `assets/products/pots/`: `bamboo-pot-ref.png`, `ceramic-ripple-pot-ref.png`, `decorative-pot-ref.png`, `hanging-planter-ref.png`, `marble-pot-ref.png`, `metal-pot-ref.png`, `minimal-white-pot-ref.png`, `ribbed-ceramic-pot-ref.png`, `self-watering-pot-ref.png`, `terracotta-pot-ref.png`.
+  - Removed corresponding `refImage` entries from `src/data/catalog.ts` and `js/data.js`.
+  - Kept all 10 sharp primary studio `.jpg` pot images 100% intact.
+- [x] **Removed All 10 Seed `*-ref.png` Images:**
+  - Removed files from both `public/assets/products/seeds/` and `assets/products/seeds/`: `basil-seeds-ref.png`, `carrot-seeds-ref.png`, `chilli-seeds-ref.png`, `coriander-seeds-ref.png`, `lettuce-seeds-ref.png`, `marigold-seeds-ref.png`, `mint-seeds-ref.png`, `sunflower-seeds-ref.png`, `tomato-seeds-ref.png`, `wildflower-seeds-ref.png`.
+  - Removed corresponding `refImage` entries from `src/data/catalog.ts` and `js/data.js`.
+  - Kept all 10 sharp primary studio `.jpg` seed images 100% intact.
+- [x] **Absolute UI/UX & Feature Protection:**
+  - Made `refImage?: string;` optional in `src/types/product.ts`.
+  - Plants, all Plant images, 4-angle rotation sets, and Monstera Deliciosa rotation remain 100% untouched.
+  - Zero changes to layout, styling, buttons, gallery, responsive grids, zoom, or animations.
+  - Verification: `npm test` (14/14 passed), `npx tsc --noEmit` (0 errors), `npm run lint` (0 warnings/errors), `npm run build` (52/52 SSG routes), dev server responding with HTTP 200 on `http://localhost:3000`.
+
+### Milestone 32: Plant Image Rotation Discoverability Hint (Strict Overlay Only)
+- [x] **Small Temporary Rotation Overlay Implemented (`ProductDetailView.tsx`):**
+  - Displays “↔ Drag to rotate” on desktop viewports.
+  - Displays “↔ Swipe to rotate” on mobile and touch viewports via `.rotation-hint-desktop` / `.rotation-hint-mobile`.
+  - Condition: Rendered strictly for Plants with rotation (`product.category === 'plants' && canRotate`).
+  - Never rendered for Pots or Seeds.
+  - Non-blocking: `pointer-events: none` guarantees zero interference with click, drag, pinch, or double-click interactions.
+  - Auto-dismiss: Fades out smoothly after 3.8 seconds.
+  - Permanent dismiss: Disappears immediately upon the user's first successful drag or swipe frame change.
+  - Zero UI/UX redesign: Retains exact existing layout, image order, gallery, zoom, and catalog data untouched.
+- [x] **Full Quality Verification:**
+  - Automated tests: 14/14 passed (`npm test`).
+  - TypeScript strict check: 0 errors (`npx tsc --noEmit`).
+  - ESLint: 0 warnings, 0 errors (`npm run lint`).
+  - Production build: All 52 static routes generated cleanly (`npm run build`).
+  - Active Dev Server: Running on `http://localhost:3000` (HTTP 200 OK).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps

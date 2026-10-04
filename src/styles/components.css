@@ -2409,3 +2409,19 @@
     transform: none !important;
   }
 }
+
+/* Plant Image Rotation Discoverability Hint */
+.rotation-hint-desktop {
+  display: inline;
+}
+.rotation-hint-mobile {
+  display: none;
+}
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .rotation-hint-desktop {
+    display: none;
+  }
+  .rotation-hint-mobile {
+    display: inline;
+  }
+}
