@@ -1,12 +1,14 @@
 /**
  * Flora Fusion — Order Service Layer
  * Domain boundary per frontendprompt.md Section 26
- * Current: Client mock order engine with realistic tracking progression
+ * Current: Client mock order engine with realistic tracking progression & authoritative validation
  * Future: Spring Boot /api/v1/orders REST API
  */
 
 import { CartItem, Order, OrderTrackingStep, ShippingAddress } from "@/types/cart";
 import { CartService } from "./cart.service";
+import { getProductById } from "@/data/catalog";
+import { apiFetch, IS_BACKEND_CONFIGURED } from "@/lib/api";
 
 export interface CreateOrderParams {
   items: CartItem[];
@@ -18,11 +20,37 @@ export interface CreateOrderParams {
 
 export const OrderService = {
   /**
-   * Create and format a new nursery order
+   * Create and format a new nursery order with authoritative stock & price validation
    */
-  createOrder(params: CreateOrderParams): Order {
+  async createOrder(params: CreateOrderParams): Promise<Order> {
+    if (IS_BACKEND_CONFIGURED) {
+      return apiFetch<Order>("orders", {
+        method: "POST",
+        body: JSON.stringify(params),
+      });
+    }
+
     const { items, shippingAddress, deliveryMethod, paymentMethod, couponCode } = params;
-    const totals = CartService.calculateTotals(items, couponCode);
+
+    // 1. Authoritative Stock Verification
+    for (const item of items) {
+      const catalogProduct = getProductById(item.id);
+      if (catalogProduct && !catalogProduct.inStock) {
+        throw new Error(`"${item.name}" is currently out of stock.`);
+      }
+    }
+
+    // 2. Authoritative Price Resolution
+    const authoritativeItems = items.map((item) => {
+      const catalogProduct = getProductById(item.id);
+      return {
+        ...item,
+        price: catalogProduct ? catalogProduct.price : item.price,
+      };
+    });
+
+    // 3. Authoritative Order Calculations
+    const totals = CartService.calculateTotals(authoritativeItems, couponCode);
 
     // If express delivery is chosen, add ₹99
     const deliveryFee = deliveryMethod === "Express" ? 99 : totals.shipping;
@@ -82,7 +110,7 @@ export const OrderService = {
       orderId,
       date: formattedDate,
       timestamp: now.getTime(),
-      items: [...items],
+      items: authoritativeItems,
       subtotal: totals.subtotal,
       shipping: deliveryFee,
       discount: totals.discount,
@@ -94,5 +122,19 @@ export const OrderService = {
       estimatedDelivery,
       trackingSteps,
     };
+  },
+
+  /**
+   * Fetch single order by ID (with future Spring Boot endpoint fallback)
+   */
+  async getById(orderId: string): Promise<Order | null> {
+    if (IS_BACKEND_CONFIGURED) {
+      try {
+        return await apiFetch<Order>(`orders/${orderId}`);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   },
 };

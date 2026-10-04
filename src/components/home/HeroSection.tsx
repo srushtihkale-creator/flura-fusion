@@ -41,6 +41,7 @@ export function HeroSection() {
     heroSection.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
+      gsap.killTweensOf(card);
       heroSection.removeEventListener("mousemove", handleMouseMove);
       heroSection.removeEventListener("mouseleave", handleMouseLeave);
     };

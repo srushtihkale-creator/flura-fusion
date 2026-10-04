@@ -85,11 +85,11 @@ export function CheckoutPageView() {
     }
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const newOrder = OrderService.createOrder({
+    try {
+      const newOrder = await OrderService.createOrder({
         items: cart,
         shippingAddress: address,
         deliveryMethod,
@@ -100,10 +100,12 @@ export function CheckoutPageView() {
       addOrder(newOrder);
       clearCart();
       addToast(`Order ${newOrder.orderId} placed successfully! 🎉`, "success");
-      setIsSubmitting(false);
-
       router.push(`/account/orders/${newOrder.orderId}`);
-    }, 800);
+    } catch (err: any) {
+      addToast(err?.message || "Failed to place order. Please try again.", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

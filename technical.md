@@ -686,6 +686,28 @@ To support multi-angle studio photography without disrupting existing catalog la
   - Permanent Dismiss: Immediately sets `hasRotatedRef.current = true` and fades out as soon as the user executes their first drag or swipe frame advance.
   - Preserves 100% of existing rotation kinematics, zoom engine, gallery thumbnails, and page layout.
 
+### 14.16 Frontend Backend-Readiness & Authoritative Commerce Architecture
+* **Layered Clean Architecture Contract:**
+  - Standardized transition pipeline:
+    ```text
+    UI Views → Components → Domain Services → API Client (or Mock Fallback) → Spring Boot REST API → PostgreSQL
+    ```
+  - Enables zero-rewrite backend integration: components depend strictly on abstract service signatures (`ProductService`, `CartService`, `OrderService`, `SearchService`, `FloraAIService`, `PlantCareService`), never on direct mock data imports.
+* **Backend-Authoritative Commerce Rules (`src/services/order.service.ts`):**
+  - Converted `createOrder` to an asynchronous interface (`async createOrder(params: CreateOrderParams): Promise<Order>`).
+  - **Stock Authority:** Checks catalog records prior to order creation; rejects out-of-stock items with descriptive user feedback.
+  - **Price Integrity:** Prevents client-side price manipulation by resolving authoritative prices from the database/catalog.
+  - **Order Totals Recalculation:** Subtotal, delivery fee, coupon discounts, and grand totals are calculated authoritatively by the service layer rather than trusted from client state.
+  - **Spring Boot Endpoint Delegation:** When `NEXT_PUBLIC_API_URL` is set, calls `POST /api/v1/orders`. When absent, seamlessly falls back to the local order generation engine.
+* **Centralized API Client (`src/lib/api.ts` & `.env.example`):**
+  - Provides `apiFetch<T>(endpoint, options)` with automatic headers, status code parsing, and structured error payloads.
+  - Environment variable `NEXT_PUBLIC_API_URL` configured in `.env.example`.
+* **Crash & 404 Route Protection Boundaries (`src/app/not-found.tsx` & `src/app/error.tsx`):**
+  - Custom `not-found.tsx` renders botanical 404 page styled with Cormorant Garamond typography and brand forest buttons, replacing raw unstyled Next.js default pages.
+  - Custom `error.tsx` acts as a top-level client error boundary with interactive retry (`reset()`) and logging.
+* **Animation Lifecycle Safety (`src/components/home/HeroSection.tsx`):**
+  - Added `gsap.killTweensOf(card)` inside the unmount cleanup callback to prevent lingering tweens across route transitions.
+
 
 
 

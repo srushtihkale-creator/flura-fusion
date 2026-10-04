@@ -21,10 +21,11 @@
 | **Responsive Mobile Layout** | ✅ Complete | 2-col mobile catalog, sticky 5-item bottom nav | 360px to 1440px+ verified |
 | **Anti-Gravity Floating Cards** | ✅ Complete | `styles/animations.css`, `styles/components.css` | Staggered 4-card levitation & dynamic shadows |
 | **Hero Opening Experience** | ✅ Complete | `assets/hero/hero_plants.png` + authentic copy & CTA | High-definition botanical composition |
-| **Next.js 14 Production Suite** | ✅ Complete | 52 SSG pre-rendered routes, 14 automated tests | 100% pixel-perfect prototype match |
+| **Next.js 14 Production Suite** | ✅ Complete | 52 SSG pre-rendered routes, 15 automated tests | 100% pixel-perfect prototype match |
 | **Pot & Seed Ref Removal** | ✅ Complete | Removed 40 blurry `*-ref.png` assets, kept studio photos | 100% Sharp photography across catalog |
 | **Plant Rotation & Hint** | ✅ Complete | Multi-angle drag/swipe + discoverability overlay | Non-blocking, auto/permanent dismiss |
-| **GitHub Remote Sync** | ✅ Synced | Branch `main`, Commit `5e50f96` | 100% Clean tree, pushed to `origin/main` |
+| **Backend-Readiness Audit** | ✅ Complete | 17-point audit, async OrderService, stock/price authority, API client | 100% Ready for Spring Boot REST API |
+| **GitHub Remote Sync** | ✅ Synced | Branch `main`, Clean tree | 100% Synchronized with `origin/main` |
 
 ---
 
@@ -490,6 +491,31 @@
   - ESLint: 0 warnings, 0 errors (`npm run lint`).
   - Production build: All 52 static routes generated cleanly (`npm run build`).
   - Active Dev Server: Running on `http://localhost:3000` (HTTP 200 OK).
+
+### Milestone 33: Technical & Backend-Readiness Audit and Hardening (Pre-Spring Boot Integration)
+- [x] **Complete 17-Point Frontend Technical Audit:**
+  - Audited TypeScript typing, SSR/client boundaries, Next.js 14 production build, routes, assets, image references, Cart/Checkout/Orders, Search, Zustand stores, service decoupling, Spring Boot API contract readiness, environment variables/secrets, loading/error states, responsive/a11y, GSAP/Lenis cleanup, performance, and packages.
+- [x] **Backend-Authoritative Commerce & Order Service Hardening (`src/services/order.service.ts`):**
+  - Converted `OrderService.createOrder` to an asynchronous contract: `async createOrder(params: CreateOrderParams): Promise<Order>`.
+  - Enforced authoritative stock verification: iterates through order items and validates that every product is `inStock: true`. Throws clear descriptive error if out of stock.
+  - Enforced authoritative price integrity: cross-references items against catalog data, preventing client-side price tampering.
+  - Recalculates authoritative order subtotal, shipping, discounts, and final totals.
+  - Integrated Spring Boot REST API delegation: automatically routes to `POST /api/v1/orders` when `NEXT_PUBLIC_API_URL` is configured, while preserving the verified mock engine when in standalone mode.
+  - Updated `src/components/checkout/CheckoutPageView.tsx` to `await OrderService.createOrder` inside `try...catch` block with user-friendly error toast notifications.
+- [x] **Centralized API Client & Environment Configuration (`src/lib/api.ts` & `.env.example`):**
+  - Created `src/lib/api.ts` exporting `apiFetch<T>`, `IS_BACKEND_CONFIGURED`, and `API_BASE_URL` with robust error and status code parsing.
+  - Created `.env.example` documenting `NEXT_PUBLIC_API_URL` for Spring Boot backend integration.
+- [x] **Custom Error Boundaries & 404 Route Protection (`src/app/not-found.tsx` & `src/app/error.tsx`):**
+  - Built brand-styled botanical `NotFound` component matching Cormorant/Inter typography, brand forest palette, and navigation links.
+  - Built custom `GlobalError` client component with error logging and retry (`reset()`) capability.
+- [x] **GSAP Lifecycle Cleanup Hardening (`src/components/home/HeroSection.tsx`):**
+  - Added `gsap.killTweensOf(card)` in component unmount cleanup to eliminate any residual running tweens during fast navigation.
+- [x] **Unit & Service Verification Suite Expansion (`scripts/verify-services.ts`):**
+  - Updated test suite for asynchronous order creation.
+  - Added authoritative stock rejection test case.
+  - Result: 15/15 unit tests passing cleanly.
+- [x] **Strict UI/UX Immutability Maintained:**
+  - Zero UI layout, font, color, button, spacing, animation, or product image changes made.
 
 ---
 

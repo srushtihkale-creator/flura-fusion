@@ -129,8 +129,8 @@ async function runAllTests() {
 
   // 4. Order Service Creation & Tracking Steps
   console.log("\n--- 4. Order Service Creation & Tracking Tests ---");
-  await test("OrderService creates realistic order with 6 tracking stages", () => {
-    const order = OrderService.createOrder({
+  await test("OrderService creates realistic order with 6 tracking stages", async () => {
+    const order = await OrderService.createOrder({
       items: [
         { id: "plant-1", slug: "money-plant", name: "Money Plant", price: 399, image: "/test.jpg", category: "plants", quantity: 1 },
       ],
@@ -151,6 +151,41 @@ async function runAllTests() {
     assert.strictEqual(order.items.length, 1);
     assert.strictEqual(order.trackingSteps.length, 6, "Must have exactly 6 tracking stages");
     assert.strictEqual(order.status, "Confirmed");
+  });
+
+  await test("OrderService enforces authoritative stock validation", async () => {
+    // Mock an out-of-stock item
+    const outOfStockItems = [
+      { id: "non-existent-or-oos", slug: "rare-plant", name: "Rare Plant", price: 999, image: "", category: "plants", quantity: 1 },
+    ];
+    // Non-existent in catalog is treated gracefully, but if marked inStock: false it must throw
+    const catalogItem = getProductById("plant-1")!;
+    const originalStock = catalogItem.inStock;
+    (catalogItem as any).inStock = false;
+
+    let threw = false;
+    try {
+      await OrderService.createOrder({
+        items: [{ id: "plant-1", slug: "money-plant", name: "Money Plant", price: 399, image: "", category: "plants", quantity: 1 }],
+        shippingAddress: {
+          fullName: "Test User",
+          phone: "9876543210",
+          addressLine1: "123 Green St",
+          city: "Pune",
+          state: "Maharashtra",
+          pincode: "411001",
+        },
+        deliveryMethod: "Standard",
+        paymentMethod: "UPI",
+        couponCode: null,
+      });
+    } catch (err: any) {
+      threw = true;
+      assert.ok(err.message.includes("out of stock"));
+    } finally {
+      (catalogItem as any).inStock = originalStock; // restore
+    }
+    assert.ok(threw, "OrderService must throw when an item is out of stock");
   });
 
   // 5. Search Service Tests
