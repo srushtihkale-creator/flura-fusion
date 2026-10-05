@@ -7,8 +7,10 @@ import com.florafusion.exception.BadRequestException;
 import com.florafusion.exception.OutOfStockException;
 import com.florafusion.exception.ResourceNotFoundException;
 import com.florafusion.repository.*;
+import com.florafusion.service.email.EmailService;
 import com.florafusion.service.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -32,6 +35,8 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
     private final PaymentService paymentService;
+    private final InvoiceService invoiceService;
+    private final EmailService emailService;
     private final ObjectMapper objectMapper;
 
     @Value("${application.commerce.free-shipping-threshold:799.00}")
@@ -339,6 +344,35 @@ public class OrderService {
                 c.setTimesUsed(c.getTimesUsed() + 1);
                 couponRepository.save(c);
             });
+        }
+
+        // Asynchronously generate PDF and dispatch Order Confirmation & Invoice email
+        try {
+            byte[] invoicePdf = invoiceService.generateInvoicePdf(order);
+            emailService.sendOrderConfirmationEmail(order, invoicePdf);
+        } catch (Exception e) {
+            log.warn("[OrderService] Non-blocking email dispatch failed for order {}: {}", order.getOrderNumber(), e.getMessage());
+        }
+
+        return OrderResponse.fromEntity(order);
+    }
+
+    @Transactional
+    public OrderResponse updateOrderStatus(UUID orderId, String newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        String previousStatus = order.getOrderStatus();
+        if (newStatus != null && !newStatus.isBlank()) {
+            order.setOrderStatus(newStatus.trim());
+            order = orderRepository.save(order);
+
+            // Asynchronously dispatch Order Status Update email
+            try {
+                emailService.sendOrderStatusUpdateEmail(order, previousStatus, newStatus.trim());
+            } catch (Exception e) {
+                log.warn("[OrderService] Non-blocking status email dispatch failed for order {}: {}", order.getOrderNumber(), e.getMessage());
+            }
         }
 
         return OrderResponse.fromEntity(order);

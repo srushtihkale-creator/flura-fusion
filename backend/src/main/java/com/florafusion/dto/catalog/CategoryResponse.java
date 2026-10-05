@@ -10,7 +10,8 @@ public record CategoryResponse(
     String slug,
     String description,
     String imageUrl,
-    int displayOrder
+    int displayOrder,
+    boolean isActive
 ) {
     public static CategoryResponse fromEntity(Category category) {
         return new CategoryResponse(
@@ -19,7 +20,8 @@ public record CategoryResponse(
             category.getSlug(),
             category.getDescription(),
             category.getImageUrl(),
-            category.getDisplayOrder()
+            category.getDisplayOrder(),
+            category.isActive()
         );
     }
 }

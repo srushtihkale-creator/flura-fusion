@@ -29,7 +29,8 @@ public record ProductResponse(
     boolean inStock,
     int stockQuantity,
     Map<String, Object> metadata,
-    Map<String, Object> careGuide
+    Map<String, Object> careGuide,
+    String status
 ) {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -94,7 +95,8 @@ public record ProductResponse(
             product.isInStock() && product.getStockQuantity() > 0,
             product.getStockQuantity(),
             metadataMap,
-            careGuideMap
+            careGuideMap,
+            product.getStatus() != null ? product.getStatus() : "ACTIVE"
         );
     }
 }

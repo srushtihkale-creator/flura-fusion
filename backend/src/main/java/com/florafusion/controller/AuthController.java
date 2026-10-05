@@ -1,8 +1,6 @@
 package com.florafusion.controller;
 
-import com.florafusion.dto.auth.AuthResponse;
-import com.florafusion.dto.auth.LoginRequest;
-import com.florafusion.dto.auth.RegisterRequest;
+import com.florafusion.dto.auth.*;
 import com.florafusion.security.UserPrincipal;
 import com.florafusion.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Customer Registration, Login & Session")
+@Tag(name = "Authentication", description = "Customer Registration, Login, Password Reset & Email Verification")
 public class AuthController {
 
     private final AuthService authService;
@@ -36,6 +34,24 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request a password reset email")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.requestPasswordReset(request));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using verified security token")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(authService.resetPassword(request));
+    }
+
+    @PostMapping("/verify-email")
+    @Operation(summary = "Verify account email address using token")
+    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return ResponseEntity.ok(authService.verifyEmail(request));
     }
 
     @GetMapping("/me")

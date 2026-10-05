@@ -67,6 +67,28 @@ public class JwtService {
                 .getPayload();
     }
 
+    public String generateActionToken(String subject, String action, long expirationMs) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("action", action);
+        return Jwts.builder()
+                .claims(claims)
+                .subject(subject)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    public boolean isActionTokenValid(String token, String expectedAction) {
+        try {
+            Claims claims = extractAllClaims(token);
+            String action = (String) claims.get("action");
+            return expectedAction.equalsIgnoreCase(action) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private SecretKey getSignInKey() {
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);

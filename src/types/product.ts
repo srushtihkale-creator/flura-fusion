@@ -5,6 +5,8 @@
 
 export type ProductCategory = "plants" | "pots" | "seeds";
 
+export type ProductStatus = "ACTIVE" | "INACTIVE" | "ARCHIVED";
+
 export interface PlantMetadata {
   placement: string;        // "Indoor" | "Outdoor"
   water: string;            // "Low Water" | "Medium Water"
@@ -40,9 +42,10 @@ export interface CareGuide {
 }
 
 export interface Product {
-  id: string;               // e.g. "plant-1"
+  id: string;               // e.g. "plant-1" or UUID
   slug: string;             // e.g. "money-plant"
   name: string;             // e.g. "Money Plant"
+  sku?: string;             // e.g. "FF-PLN-001"
   category: ProductCategory;
   subCategory: string;      // e.g. "indoor", "ceramic", "herb"
   tagline: string;
@@ -56,8 +59,43 @@ export interface Product {
   images?: string[];        // Optional gallery photography paths
   badge?: string | null;    // "Bestseller" | "Popular" | "Classic" | null
   inStock: boolean;
-  metadata: PlantMetadata | PotMetadata | SeedMetadata;
+  stockQuantity?: number;
+  status?: ProductStatus;
+  metadata: PlantMetadata | PotMetadata | SeedMetadata | Record<string, any>;
   careGuide?: CareGuide;
   relatedProducts?: string[]; // Array of product slugs/IDs
   images360?: string[];       // Optional sequential multi-angle images for 360 viewer (>= 4 angles)
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminProductPayload {
+  name: string;
+  slug?: string;
+  categorySlug: string;
+  subCategory?: string;
+  tagline?: string;
+  description: string;
+  sku: string;
+  price: number;
+  originalPrice?: number;
+  badge?: string | null;
+  stockQuantity: number;
+  inStock?: boolean;
+  status?: ProductStatus;
+  primaryImage?: string;
+  images?: string[];
+  images360?: string[];
+  metadata?: Record<string, any>;
+  careGuide?: Record<string, any>;
+}
+
+export interface AdminCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  displayOrder: number;
+  isActive: boolean;
 }
