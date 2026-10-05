@@ -33,10 +33,6 @@
     gap: var(--space-4);
   }
 
-  .active-offers-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4);
-  }
 
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -205,20 +201,6 @@
     gap: 12px;
   }
 
-  /* Active Offers Section Mobile */
-  .active-offers-section {
-    margin-top: var(--space-6);
-    margin-bottom: var(--space-8);
-  }
-
-  .active-offers-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-  }
-
-  .offer-description {
-    font-size: 1.125rem;
-  }
 
   .plant-type-card {
     padding: 8px 8px 12px;

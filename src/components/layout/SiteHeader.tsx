@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useFloraStore } from "@/store/useFloraStore";
 import { ProductService } from "@/services/product.service";
@@ -10,17 +10,7 @@ import { Product } from "@/types/product";
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const {
-    cart,
-    wishlist,
-    openCart,
-    openWishlist,
-    user,
-    isAuthenticated,
-    openAuthModal,
-    logout,
-    initAuth,
-  } = useFloraStore();
+  const { cart, wishlist, openCart, openWishlist, initAuth } = useFloraStore();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -60,15 +50,12 @@ export function SiteHeader() {
   const totalCartCount = mounted ? cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
   const totalWishlistCount = mounted ? wishlist.length : 0;
 
-  const isAdmin = mounted && isAuthenticated && user?.role === "ADMIN";
-
   const navLinks = [
     { label: "Plants", href: "/plants" },
     { label: "Pots", href: "/pots" },
     { label: "Seeds", href: "/seeds" },
     { label: "About", href: "/about" },
     { label: "Plant Care", href: "/plant-care" },
-    ...(isAdmin ? [{ label: "Admin", href: "/admin", isAdminBadge: true }] : []),
   ];
 
   return (
@@ -82,26 +69,14 @@ export function SiteHeader() {
         {/* Desktop Navigation */}
         <nav className="nav-links" aria-label="Main Navigation">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href || (link.href === "/admin" && pathname.startsWith("/admin"));
+            const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`nav-link ${isActive ? "active" : ""}`}
-                style={
-                  (link as any).isAdminBadge
-                    ? {
-                        color: "var(--color-brand-terracotta, #B9825B)",
-                        fontWeight: 700,
-                        backgroundColor: "#FFF8F2",
-                        padding: "4px 10px",
-                        borderRadius: "var(--radius-pill, 999px)",
-                        border: "1px solid var(--color-brand-terracotta, #B9825B)",
-                      }
-                    : undefined
-                }
               >
-                {(link as any).isAdminBadge ? "👑 Admin" : link.label}
+                {link.label}
               </Link>
             );
           })}
@@ -200,81 +175,14 @@ export function SiteHeader() {
         </div>
 
         {/* Header Actions */}
-        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* User Sign In / Account state */}
-          {mounted && isAuthenticated && user ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Link
-                href="/account"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "0.8125rem",
-                  fontWeight: 600,
-                  color: "var(--color-brand-forest)",
-                  textDecoration: "none",
-                  padding: "4px 8px",
-                  borderRadius: "var(--radius-sm)",
-                }}
-                title="Manage Account & Orders"
-              >
-                <div
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    borderRadius: "50%",
-                    backgroundColor: "var(--color-brand-sage-light)",
-                    color: "var(--color-brand-forest)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  👤
-                </div>
-                <span>{user.name}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--color-text-muted)",
-                  fontSize: "0.75rem",
-                  cursor: "pointer",
-                  padding: "4px 6px",
-                  textDecoration: "underline",
-                }}
-                title="Sign Out"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openAuthModal("signin")}
-              style={{
-                background: "var(--color-cream-soft, #FBF9F4)",
-                border: "1px solid var(--color-brand-forest, #173F2B)",
-                color: "var(--color-brand-forest, #173F2B)",
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                padding: "6px 14px",
-                borderRadius: "var(--radius-pill, 999px)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                transition: "background var(--duration-fast)",
-              }}
-            >
-              <span>Sign In</span>
-            </button>
-          )}
+        <div className="header-actions">
+          {/* Account / Orders */}
+          <Link href="/account" className="header-action-btn" title="Track Orders">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </Link>
 
           {/* Wishlist */}
           <button onClick={openWishlist} className="header-action-btn open-wishlist-btn" title="Wishlist">

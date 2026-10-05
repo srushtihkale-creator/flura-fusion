@@ -78,11 +78,26 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showRotationHint, setShowRotationHint] = useState(false);
   const hasRotatedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Show plant rotation hint temporarily on mount; dismiss automatically after 3.8s
+  useEffect(() => {
+    hasRotatedRef.current = false;
+    if (mounted && (product.category === "plants" || product.category === "pots") && canRotate) {
+      setShowRotationHint(true);
+      const timer = setTimeout(() => {
+        setShowRotationHint(false);
+      }, 3800);
+      return () => clearTimeout(timer);
+    } else {
+      setShowRotationHint(false);
+    }
+  }, [mounted, product.slug, product.category, canRotate]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.matchMedia) {
@@ -456,48 +471,43 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 }}
               />
 
-              {/* Clear rotation instruction overlay for rotatable products */}
-              {canRotate && zoomScale === 1 && (
+              {/* Temporary discoverability hint for rotatable products */}
+              {canRotate && (
                 <div
                   style={{
                     position: "absolute",
                     bottom: "16px",
                     left: "50%",
-                    transform: "translateX(-50%)",
+                    transform:
+                      showRotationHint && zoomScale === 1
+                        ? "translateX(-50%) translateY(0)"
+                        : "translateX(-50%) translateY(6px)",
+                    opacity: showRotationHint && zoomScale === 1 ? 1 : 0,
+                    transition: prefersReducedMotion
+                      ? "none"
+                      : "opacity 0.4s ease, transform 0.4s ease",
                     pointerEvents: "none",
                     userSelect: "none",
                     WebkitUserSelect: "none",
                     zIndex: 3,
-                    backgroundColor: "rgba(23, 63, 43, 0.88)",
+                    backgroundColor: "rgba(23, 63, 43, 0.85)",
                     color: "#FFFFFF",
                     fontSize: "0.8125rem",
                     fontWeight: 500,
                     fontFamily: "var(--font-sans, 'Inter', sans-serif)",
                     padding: "6px 14px",
                     borderRadius: "999px",
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.18)",
                     letterSpacing: "0.02em",
                     whiteSpace: "nowrap",
                     display: "flex",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "4px",
                   }}
                   aria-hidden="true"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                  </svg>
-                  <span className="rotation-hint-desktop">Drag to rotate 360°</span>
-                  <span className="rotation-hint-mobile">Swipe to rotate 360°</span>
+                  <span className="rotation-hint-desktop">↔ Drag to rotate</span>
+                  <span className="rotation-hint-mobile">↔ Swipe to rotate</span>
                 </div>
               )}
             </div>
