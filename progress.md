@@ -729,6 +729,20 @@
   - All 17 automated tests passing (`npm test`).
   - TypeScript compilation completely clean (`npx tsc --noEmit`).
 
+### Milestone 26: Production Deployment Architecture (Supabase + Render + Vercel)
+- [x] **Supabase PostgreSQL & Storage Provisioning:**
+  - Idempotent Flyway migrations `V1__init_schema.sql`, `V2__seed_catalog_and_cms.sql`, `V3__offers_and_marquee.sql` validated for Supabase connection pooling (SSL enabled).
+  - Authored `backend/sql/04_supabase_storage_setup.sql` creating public bucket `flora-fusion-media` with RLS policies for secure asset storage.
+- [x] **Render Spring Boot Deployment Configuration:**
+  - Authored production multi-stage `backend/Dockerfile` (Eclipse Temurin Java 21) with embedded health check (`/actuator/health`).
+  - Authored `render.yaml` Infrastructure-as-Code blueprint configuring production environment variables, Flyway auto-migrate, and dynamic port binding.
+- [x] **Vercel Next.js Deployment Readiness:**
+  - Verified `npm run build` compiling all 53 static and dynamic routes cleanly with 0 TypeScript/ESLint warnings.
+  - Documented `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WHATSAPP_NUMBER=919890414379` in `DOCS/PRODUCTION_DEPLOYMENT_GUIDE.md`.
+- [x] **Zero UI/UX Modification & Regression Guarantee:**
+  - Preserved 100% of approved visual tokens, Cormorant/Inter typography, animations, 360° viewer, offer marquee, and responsive layouts.
+  - Verified customer session isolation, past order persistence, and cross-customer RBAC access controls (`HTTP 403 Forbidden`).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
