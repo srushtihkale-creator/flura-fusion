@@ -58,9 +58,10 @@ export interface CreateOrderParams {
   items: CartItem[];
   shippingAddress: ShippingAddress;
   deliveryMethod: "Standard" | "Express";
-  paymentMethod: "UPI" | "Card" | "NetBanking" | "COD";
+  paymentMethod: "UPI" | "Card" | "NetBanking" | "COD" | string;
   couponCode: string | null;
   guestEmail?: string | null;
+  paymentReference?: string | null;
 }
 
 export const OrderService = {
@@ -87,6 +88,7 @@ export const OrderService = {
         paymentMethod: params.paymentMethod,
         couponCode: params.couponCode || null,
         guestEmail: params.guestEmail || null,
+        paymentReference: params.paymentReference || null,
       };
 
       const backendRes = await apiFetch<any>("orders", {

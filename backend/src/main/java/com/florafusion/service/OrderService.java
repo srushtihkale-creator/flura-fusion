@@ -317,18 +317,23 @@ public class OrderService {
 
         order.setItems(orderItems);
 
-        // Process Mock Payment
-        PaymentService.PaymentResult paymentResult = paymentService.processPayment(
-                orderNumber,
-                validation.total(),
-                request.paymentMethod()
-        );
-
-        if (paymentResult.success()) {
+        // Process Payment (Razorpay Payment Reference or Payment Service)
+        if (request.paymentReference() != null && !request.paymentReference().isBlank()) {
             order.setPaymentStatus("COMPLETED");
-            order.setPaymentTransactionId(paymentResult.transactionId());
+            order.setPaymentTransactionId(request.paymentReference());
         } else {
-            order.setPaymentStatus("FAILED");
+            PaymentService.PaymentResult paymentResult = paymentService.processPayment(
+                    orderNumber,
+                    validation.total(),
+                    request.paymentMethod()
+            );
+
+            if (paymentResult.success()) {
+                order.setPaymentStatus("COMPLETED");
+                order.setPaymentTransactionId(paymentResult.transactionId());
+            } else {
+                order.setPaymentStatus("FAILED");
+            }
         }
 
         order = orderRepository.save(order);

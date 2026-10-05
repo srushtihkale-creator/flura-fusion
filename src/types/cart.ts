@@ -64,7 +64,7 @@ export interface Order {
   total: number;
   shippingAddress: ShippingAddress;
   deliveryMethod: "Standard" | "Express";
-  paymentMethod: "UPI" | "Card" | "NetBanking" | "COD";
+  paymentMethod: "UPI" | "Card" | "NetBanking" | "COD" | string;
   status: OrderStatus;
   estimatedDelivery: string;
   trackingSteps: OrderTrackingStep[];

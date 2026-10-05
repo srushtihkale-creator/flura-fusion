@@ -92,25 +92,108 @@ export function CheckoutPageView() {
     }
   };
 
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") return resolve(false);
+      if ((window as any).Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePlaceOrder = async () => {
     setIsSubmitting(true);
 
-    try {
-      const newOrder = await OrderService.createOrder({
-        items: cart,
-        shippingAddress: address,
-        deliveryMethod,
-        paymentMethod,
-        couponCode: coupon?.code || null,
-      });
+    // If Cash on Delivery, place directly without online popup
+    if (paymentMethod === "COD") {
+      try {
+        const newOrder = await OrderService.createOrder({
+          items: cart,
+          shippingAddress: address,
+          deliveryMethod,
+          paymentMethod: "COD",
+          couponCode: coupon?.code || null,
+        });
 
-      addOrder(newOrder);
-      clearCart();
-      addToast(`Order ${newOrder.orderId} placed successfully! 🎉`, "success");
-      router.push(`/account/orders/${newOrder.orderId}`);
+        addOrder(newOrder);
+        clearCart();
+        addToast(`Order ${newOrder.orderId} placed successfully! 🎉`, "success");
+        router.push(`/account/orders/${newOrder.orderId}`);
+      } catch (err: any) {
+        addToast(err?.message || "Failed to place order. Please try again.", "error");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Online Payment via Razorpay Gateway (UPI, Cards, NetBanking)
+    try {
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        throw new Error("Razorpay SDK failed to load. Please check your internet connection.");
+      }
+
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TkGZqDthTkR6pj";
+      const totalAmountPaise = Math.round(totals.total * 100);
+
+      const options = {
+        key: razorpayKey,
+        amount: totalAmountPaise,
+        currency: "INR",
+        name: "Flora Fusion",
+        description: "Plants, Pots & Greenery Order",
+        image: "/assets/logo.png",
+        prefill: {
+          name: address.fullName,
+          contact: address.phone,
+          email: user?.email || "customer@florafusion.com",
+        },
+        theme: {
+          color: "#173F2B",
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false);
+            addToast("Payment was cancelled. You can retry whenever you are ready.", "info");
+          },
+        },
+        handler: async (response: any) => {
+          try {
+            const paymentId = response.razorpay_payment_id;
+            const newOrder = await OrderService.createOrder({
+              items: cart,
+              shippingAddress: address,
+              deliveryMethod,
+              paymentMethod: `Razorpay (${paymentMethod})`,
+              paymentReference: paymentId,
+              couponCode: coupon?.code || null,
+            });
+
+            addOrder(newOrder);
+            clearCart();
+            addToast(`Payment verified! Order ${newOrder.orderId} placed successfully. 🎉`, "success");
+            router.push(`/account/orders/${newOrder.orderId}`);
+          } catch (err: any) {
+            addToast(err?.message || "Payment captured but order creation failed. Please contact support.", "error");
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", (response: any) => {
+        setIsSubmitting(false);
+        addToast(response.error?.description || "Payment failed. Please try another card or UPI app.", "error");
+      });
+      rzp.open();
     } catch (err: any) {
-      addToast(err?.message || "Failed to place order. Please try again.", "error");
-    } finally {
+      addToast(err?.message || "Failed to initialize payment gateway.", "error");
       setIsSubmitting(false);
     }
   };
@@ -476,6 +559,23 @@ export function CheckoutPageView() {
                     </span>
                   </label>
                 </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 14px",
+                    backgroundColor: "var(--color-surface-soft)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.8125rem",
+                    color: "var(--color-brand-forest)",
+                    fontWeight: 500,
+                  }}
+                >
+                  <span>🔒</span>
+                  <span>100% Encrypted &amp; Secure Payments powered by <strong>Razorpay</strong> (UPI, Cards, NetBanking)</span>
+                </div>
               </div>
             )}
 
@@ -514,7 +614,9 @@ export function CheckoutPageView() {
                 {isSubmitting
                   ? "Securing Order..."
                   : step === 3
-                  ? `Place Order (₹${finalTotal}) 🌿`
+                  ? paymentMethod === "COD"
+                    ? `Place Order (COD - ₹${finalTotal}) 🌿`
+                    : `Pay with Razorpay (₹${finalTotal}) 🔒`
                   : "Continue →"}
               </button>
             </div>

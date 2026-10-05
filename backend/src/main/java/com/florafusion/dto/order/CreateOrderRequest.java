@@ -23,5 +23,7 @@ public record CreateOrderRequest(
 
     String guestEmail,
 
-    String idempotencyKey
+    String idempotencyKey,
+
+    String paymentReference
 ) {}
