@@ -897,3 +897,55 @@ graph TD
 ### 16.3 UI/UX Freeze Contract
 * **Visual Stability:** The approved Flora Fusion design system (Cormorant Garamond + Inter typography, `#173F2B` brand palette, GSAP/Lenis animations, product cards, category pages, cart drawer, 3-step checkout, and 360° viewer) is 100% frozen.
 * **Header & Navigation:** Exact approved desktop header action buttons (account SVG link, wishlist badge, cart badge) and mobile 5-item bottom bar are preserved.
+
+---
+
+## 17. Admin Category Management, Razorpay Gateway & Verification Suite (Milestone 28)
+
+### 17.1 Category Active/Inactive Status Architecture & Catalog Visibility Filtering
+* **Root Cause & Diagnosis:** When an admin deactivated a category (e.g. `Seeds`), the database persisted `category.is_active = FALSE`. However, public storefront queries in `ProductRepository.java` (`findByCategorySlugAndStatus`, `findByStatus`, `searchProducts`, `findRelatedProducts`) filtered only by `p.status = 'ACTIVE'`, leaving products of inactive categories visible on the customer storefront. Additionally, `product.service.ts` fell back to local seed products whenever the backend returned an empty array for an inactive category.
+* **Backend Resolution:**
+  - Enforced `p.category.isActive = TRUE` across all customer catalog queries in `ProductRepository.java`.
+  - Added atomic `@Transactional` persistence in `CategoryService.java` (`toggleCategoryStatus`) and guarded `getCategoryBySlug(slug)` to ensure inactive categories return 404 for public storefront requests.
+  - Updated `AdminController.java` to flexibly parse both `{"isActive": boolean}` and `{"active": boolean}` request payloads.
+* **Frontend Resolution:**
+  - Updated `product.service.ts`: If the backend returns an empty product array for a category, it is preserved directly rather than falling back to default seed data.
+
+### 17.2 Razorpay Standard Checkout Architecture
+* **Integration Model:** Client-side Razorpay standard checkout popup loaded dynamically via `https://checkout.razorpay.com/v1/checkout.js` on customer demand, avoiding upfront script payload during initial page load.
+* **Environment Configuration:**
+  - `NEXT_PUBLIC_RAZORPAY_KEY_ID`: Configured in `.env.local` and `.env.example` as `rzp_test_TkGZqDthTkR6pj`.
+  - Backend `RAZORPAY_KEY_ID` & `RAZORPAY_KEY_SECRET`: Configured in `backend/.env`.
+* **Execution Flow:**
+  1. Customer completes shipping address and selects **Card / UPI / NetBanking**.
+  2. Frontend opens standard modal with brand styling (`#173F2B`), customer prefill (name, email, phone), and order total in paise (`amount = Math.round(total * 100)`).
+  3. Upon successful authorization in modal, the callback receives `razorpay_payment_id` (e.g., `pay_test_MUVH13GY`).
+  4. Frontend sends `paymentReference` to `POST /api/v1/orders`.
+  5. `OrderService.java` persists the order in PostgreSQL with `paymentStatus = "COMPLETED"`, `paymentTransactionId = paymentReference`, and `orderStatus = "CONFIRMED"`.
+  6. Asynchronous order confirmation email is dispatched to customer via `ResendEmailProvider`.
+
+### 17.3 RBI Domestic Card Compliance & Indian Test Card Specifications
+* **RBI Compliance Rule:** Indian Razorpay merchant accounts have international card acceptance disabled by default. Using generic international test cards (e.g. `4111 1111 1111 1111`) results in the error: *"Payment could not be completed: International cards are not supported"*.
+* **Supported Domestic Test Credentials:**
+  - **Domestic Visa Card:** `4718 6091 0820 4366` (Expiry: Any future date, CVV: `123`).
+  - **NetBanking:** Select **HDFC Bank** or **State Bank of India** ➔ Click green **Success** button.
+  - **UPI:** VPA `success@razorpay` ➔ Click green **Success** button.
+* **Checkout UX Guard:** Integrated a dedicated test mode helper banner inside `CheckoutPageView.tsx` visible whenever `NEXT_PUBLIC_RAZORPAY_KEY_ID` starts with `rzp_test_`.
+
+### 17.4 Automated 13-Point End-to-End Verification Suite (`scripts/verify-razorpay-and-pages.ts`)
+* **Scope & Coverage:**
+  1. Homepage (`GET /`)
+  2. Plants Catalog (`GET /plants`)
+  3. Pots Catalog (`GET /pots`)
+  4. Seeds Catalog (`GET /seeds`)
+  5. Product Detail Page (`GET /product/money-plant`)
+  6. Checkout Stepper (`GET /checkout`)
+  7. Backend Health (`GET /actuator/health`)
+  8. Public Active Categories (`GET /api/v1/categories`)
+  9. Public Plants Catalog (`GET /api/v1/products?category=plants`)
+  10. Razorpay Order Creation (`POST /api/v1/orders`)
+  11. Binary PDF Tax Invoice (`GET /api/v1/orders/{orderNumber}/invoice`)
+  12. Admin JWT Authentication (`POST /api/v1/auth/login`)
+  13. Admin Dashboard Analytics (`GET /api/v1/admin/dashboard/stats`)
+* **Verification Status:** All 13 test flows pass with 100% success rate.
+

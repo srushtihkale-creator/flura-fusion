@@ -762,12 +762,33 @@
 - [x] **GitHub Synchronization:**
   - Committed and pushed all deployment fixes to remote GitHub `main` branch (`srushtihkale-creator/flura-fusion.git`).
 
+### Milestone 28: Full Feature Restoration, Admin Category Active/Inactive Fix & Razorpay Integration
+- [x] **Full Customer Feature & Approved UI/UX Preservation:**
+  - Restored 100% of customer functionality from `2f93cfd` (Product Catalog, Categories, PDP, Search/Filter, Cart Drawer, Checkout, Coupons, Wishlist, Account, Orders, Plant Care, Flora AI) while strictly locking the visual presentation to the approved UI/UX from `59e3e7a`.
+  - Customer frontend files (`src/app/page.tsx`, `layout.tsx`, `SiteHeader.tsx`, `ProductDetailView.tsx`, `CheckoutPageView.tsx`, `AccountPageView.tsx`, `FloraAIPanel.tsx`, `styles/components.css`, `styles/responsive.css`) preserved with zero redesign.
+- [x] **End-to-End Admin Category Active/Inactive Toggle Fix:**
+  - Diagnosed root cause: `ProductRepository.java` queries omitted `p.category.isActive = TRUE` filtering, allowing products of inactive categories to remain visible.
+  - Added strict `p.category.isActive = TRUE` conditions across `findByCategorySlugAndStatus`, `findByStatus`, `searchProducts`, and `findRelatedProducts`.
+  - Updated `CategoryService.java` to enforce active checks in `getCategoryBySlug` and atomic persistence in `toggleCategoryStatus`.
+  - Updated `AdminController.java` to deserialize boolean active states flexibly (`isActive` or `active`).
+  - Fixed `src/services/product.service.ts` so empty array responses from inactive categories are honored rather than falling back to seed mock items.
+- [x] **Razorpay Standard Checkout Integration:**
+  - Integrated Razorpay standard checkout client (`https://checkout.razorpay.com/v1/checkout.js`) with test credential `rzp_test_TkGZqDthTkR6pj`.
+  - Added domestic Indian test card compliance helper in Checkout (`4718 6091 0820 4366`, Expiry: 12/28, CVV: 123) and NetBanking options.
+  - Persisted captured `paymentTransactionId` (`pay_test_...`) in Spring Boot `OrderService` with status `COMPLETED`.
+  - Automated transactional order confirmation email delivery to customer via Resend API.
+  - Linked order confirmation to binary PDF Tax Invoice generation (`/api/v1/orders/{orderNumber}/invoice`).
+- [x] **Automated 13-Point End-to-End Verification Suite (`scripts/verify-razorpay-and-pages.ts`):**
+  - Homepage, Plants, Pots, Seeds, PDP, Checkout, Backend Health, Active Categories API, Products API, Razorpay Order Creation, PDF Tax Invoice, Admin Auth, and Admin Dashboard Stats — 13/13 PASSED (100% Success).
+- [x] **Git Repository & Remote Synchronization:**
+  - Committed and pushed all commits (`fa6d5a1`, `ec20941`, `a735fcc`, `1ef98ab`) to GitHub `main` branch.
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
 
-1. **Payment Gateway Integration:**
-   - Integrate Razorpay sandbox for live test payments alongside existing UPI/COD/Card mock processing.
+1. **Production Razorpay Activation:**
+   - Transition Razorpay API keys from test mode (`rzp_test_...`) to live merchant credentials (`rzp_live_...`) in production environments.
 2. **Monstera 360° Asset Acquisition:**
    - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
 3. **Advanced Customer Garden Tracker:**
