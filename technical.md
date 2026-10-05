@@ -856,19 +856,44 @@ To support multi-angle studio photography without disrupting existing catalog la
   - Pre-filled message: `"Hi Flora Fusion, I need help with a product/order."` (URL-encoded). Customer manually reviews and sends in WhatsApp client without automated bots or APIs.
 
 ### 15.9 Active System State
-* **Backend:** Spring Boot running on `http://localhost:8080`.
-* **Frontend:** Next.js 14 App Router running on `http://localhost:3000`.
-* **Database:** PostgreSQL running on `localhost:5432` with database `flora_fusion`.
-* **Credentials:** Protected in `backend/.env` (untracked, git-ignored).
+* **Backend:** Spring Boot running on `http://localhost:8080` (Local) & Render HTTPS Web Service (Production).
+* **Frontend:** Next.js 14 App Router running on `http://localhost:3000` (Local) & Vercel (Production).
+* **Database:** PostgreSQL on `localhost:5432` (Local) & Supabase Managed PostgreSQL with SSL (Production).
+* **Storage:** Supabase Storage bucket `flora-fusion-media` (Production).
+* **WhatsApp Support:** `NEXT_PUBLIC_WHATSAPP_NUMBER=919890414379`.
 
+---
 
+## 16. Production Cloud Deployment & Build Architecture
 
+### 16.1 Cloud Topology
+```mermaid
+graph TD
+    Client([Web / Mobile Browser]) -->|HTTPS| Vercel[Vercel — Next.js 14 Frontend]
+    Vercel -->|REST API / JSON| Render[Render — Spring Boot 3.3.4 Backend Web Service]
+    
+    subgraph Supabase Cloud
+        Render -->|JDBC SSL Pooler :5432| SupabaseDB[(Supabase PostgreSQL Database)]
+        Render -->|Public Asset Storage| SupabaseStorage[(Supabase Storage: flora-fusion-media)]
+    end
 
+    subgraph Google Cloud
+        Render -->|API Key| GeminiAPI[Google Gemini 3.8-Flash API]
+    end
 
+    subgraph WhatsApp
+        Client -->|Click-to-Chat| WhatsAppAPI[WhatsApp Support: +91 9890414379]
+    end
+```
 
+### 16.2 Vercel Static Site Generation (SSG) Build Resilience
+* **Root Cause of Cold-Start Timeout:** During `next build` on Vercel, Next.js executes server-side data fetching for 53 static routes. If the Render backend is cold-starting (~50s delay on free tier), unbuffered `fetch()` calls stall Next.js build workers and trigger Vercel's 60-second build timeout.
+* **Architectural Mitigation (`src/lib/api.ts`):**
+  - Configured `AbortController` timeout dynamically: `5000ms` during server-side build time (`typeof window === "undefined"`) and `15000ms` in client browser sessions.
+  - On timeout during build, services automatically fallback to the local catalog data without throwing unhandled exceptions or stalling compilation.
+* **Next.js Configuration (`next.config.mjs`):**
+  - Added `staticPageGenerationTimeout: 120` to allow sufficient headroom for page rendering.
 
-
-
-
-
-
+### 16.3 UI/UX Freeze Contract
+* **Visual Stability:** The approved Flora Fusion design system (Cormorant Garamond + Inter typography, `#173F2B` brand palette, GSAP/Lenis animations, product cards, category pages, cart drawer, 3-step checkout, and 360° viewer) is 100% frozen.
+* **Header & Navigation:** Exact approved desktop header action buttons (account SVG link, wishlist badge, cart badge) and mobile 5-item bottom bar are preserved.

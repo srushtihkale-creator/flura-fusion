@@ -743,6 +743,25 @@
   - Preserved 100% of approved visual tokens, Cormorant/Inter typography, animations, 360° viewer, offer marquee, and responsive layouts.
   - Verified customer session isolation, past order persistence, and cross-customer RBAC access controls (`HTTP 403 Forbidden`).
 
+### Milestone 27: 100% Approved UI/UX Restoration & Vercel SSG Build Optimization
+- [x] **Approved UI/UX Layout & Component Restoration:**
+  - `SiteHeader.tsx`: Realigned header actions to the exact approved UI (SVG account link, wishlist badge, cart badge). Removed intrusive inline text buttons from navbar.
+  - `MobileNav.tsx`: Restored exact 5-button bottom navigation bar (`Home`, `Catalog`, `Flora AI`, `Wishlist`, `Account`).
+  - `ProductDetailView.tsx`: Restored subtle discoverability hint badge (`↔ Drag to rotate` / `↔ Swipe to rotate` auto-dismissing after 3.8s) instead of persistent full-width overlay.
+  - `responsive.css`: Removed all unused active offers grid classes.
+- [x] **Vercel Static Generation Timeout Resolution:**
+  - Diagnosed Render cold-start lag causing Vercel Next.js static page generation timeout on 53 SSG routes.
+  - Updated `src/lib/api.ts` with a resilient 5-second server-side build timeout that falls back to the local catalog instantaneously without blocking Next.js build workers.
+  - Added `staticPageGenerationTimeout: 120` in `next.config.mjs` for build stability.
+- [x] **Full Regression & Quality Verification:**
+  - `npx tsc --noEmit`: 0 errors (100% Passed).
+  - `npm test`: 17/17 Passed.
+  - `scripts/verify-customer-session-e2e.ts`: 100% Passed.
+  - `scripts/verify-full-regression.ts`: 9/9 Test Flows Passed (100% Success).
+  - `npm run build`: 53/53 static/dynamic routes compiled cleanly.
+- [x] **GitHub Synchronization:**
+  - Committed and pushed all deployment fixes to remote GitHub `main` branch (`srushtihkale-creator/flura-fusion.git`).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
@@ -753,6 +772,3 @@
    - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
 3. **Advanced Customer Garden Tracker:**
    - Add watering reminder schedule and digital plant care logs linked to customer account.
-
-
-
