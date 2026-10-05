@@ -1,12 +1,13 @@
 /**
  * Flora Fusion — Flora AI Customer Service Layer
  * Domain boundary per frontendprompt.md Section 23 & 26
- * Current: Client botanical knowledge retrieval engine
- * Future: Spring Boot AI agent / Gemini Interactions API endpoint
+ * Flow: Frontend → Spring Boot REST API → Google Gemini API → AI Recommendation
+ * (with resilient fallback to local botanical knowledge engine)
  */
 
 import { Product } from "@/types/product";
 import { getAllProducts } from "@/data/catalog";
+import { apiFetch, IS_BACKEND_CONFIGURED } from "@/lib/api";
 
 export interface FloraAIMessage {
   id: string;
@@ -19,16 +20,39 @@ export interface FloraAIMessage {
 export const FloraAIService = {
   /**
    * Process customer intent and generate botanical guidance with matched products
+   * via Spring Boot Gemini endpoint (with resilient local catalog fallback)
    */
   async generateResponse(query: string): Promise<{ text: string; recommendations: Product[] }> {
+    if (IS_BACKEND_CONFIGURED) {
+      try {
+        const res = await apiFetch<{
+          text: string;
+          recommendations: Product[];
+          source?: string;
+        }>("ai/recommend", {
+          method: "POST",
+          body: JSON.stringify({ message: query }),
+        });
+
+        if (res && res.text) {
+          return {
+            text: res.text,
+            recommendations: res.recommendations || [],
+          };
+        }
+      } catch (err) {
+        console.warn("Backend AI recommendation endpoint unavailable, falling back to local botanical engine:", err);
+      }
+    }
+
     const q = query.toLowerCase();
     const all = getAllProducts();
 
-    // Natural processing delay
+    // Natural processing delay for local fallback
     await new Promise((resolve) => setTimeout(resolve, 600));
 
     // Intent 1: Low Light / Dim Rooms
-    if (q.includes("low light") || q.includes("dim") || q.includes("dark") || q.includes("bedroom")) {
+    if (q.includes("low light") || q.includes("dim") || q.includes("dark") || q.includes("bedroom") || q.includes("shade")) {
       const recs = all.filter((p) => p.slug === "snake-plant" || p.slug === "zz-plant" || p.slug === "peace-lily");
       return {
         text: "For bedrooms or rooms with soft, indirect lighting, hardy species that tolerate lower illumination are ideal. The Snake Plant and ZZ Plant produce oxygen and require watering only once every 2–3 weeks!",
@@ -55,7 +79,7 @@ export const FloraAIService = {
     }
 
     // Intent 4: Air Purifier / NASA / Clean Air
-    if (q.includes("air") || q.includes("purif") || q.includes("toxin") || q.includes("breathe")) {
+    if (q.includes("air") || q.includes("purif") || q.includes("toxin") || q.includes("breathe") || q.includes("nasa")) {
       const recs = all.filter((p) => {
         const meta = p.metadata as any;
         return meta?.airPurifying === true;

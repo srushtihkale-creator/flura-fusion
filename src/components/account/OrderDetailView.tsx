@@ -4,18 +4,31 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Order } from "@/types/cart";
 import { useFloraStore } from "@/store/useFloraStore";
+import { OrderService } from "@/services/order.service";
 
 interface OrderDetailViewProps {
   orderId: string;
 }
 
 export function OrderDetailView({ orderId }: OrderDetailViewProps) {
-  const { orders } = useFloraStore();
+  const { orders, addOrder, addToast } = useFloraStore();
   const [mounted, setMounted] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [fetchedOrder, setFetchedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Fetch directly from backend if not already in store
+    const existing = orders.find((o) => o.orderId === orderId);
+    if (!existing) {
+      OrderService.getById(orderId).then((ord) => {
+        if (ord) {
+          setFetchedOrder(ord);
+          addOrder(ord);
+        }
+      });
+    }
+  }, [orderId, orders, addOrder]);
 
   if (!mounted) {
     return (
@@ -25,7 +38,20 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
     );
   }
 
-  const order = orders.find((o) => o.orderId === orderId);
+  const order = orders.find((o) => o.orderId === orderId) || fetchedOrder;
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    try {
+      setDownloadingInvoice(true);
+      await OrderService.downloadInvoice(order.orderId);
+      addToast("Tax invoice downloaded successfully! 📄", "success");
+    } catch (err: any) {
+      addToast(err?.message || "Failed to download invoice.", "error");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
 
   if (!order) {
     return (
@@ -118,7 +144,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
             <span
               style={{
                 padding: "6px 14px",
@@ -143,6 +169,29 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
             >
               {order.deliveryMethod} Delivery
             </span>
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
+              className="btn-secondary"
+              style={{
+                padding: "6px 14px",
+                borderRadius: "var(--radius-pill)",
+                fontSize: "0.8125rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: downloadingInvoice ? "not-allowed" : "pointer",
+                border: "1px solid var(--color-brand-forest)",
+                backgroundColor: "#FFFFFF",
+                color: "var(--color-brand-forest)",
+                fontWeight: 600,
+              }}
+              title="Download official PDF tax invoice"
+            >
+              <span>📄</span>
+              <span>{downloadingInvoice ? "Generating PDF..." : "Tax Invoice (PDF)"}</span>
+            </button>
           </div>
         </div>
 

@@ -10,7 +10,7 @@ import { CartService } from "@/services/cart.service";
 
 export function CheckoutPageView() {
   const router = useRouter();
-  const { cart, coupon, clearCart, addOrder, addToast } = useFloraStore();
+  const { cart, coupon, clearCart, addOrder, addToast, user } = useFloraStore();
   const [mounted, setMounted] = useState(false);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -19,19 +19,26 @@ export function CheckoutPageView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [address, setAddress] = useState<ShippingAddress>({
-    fullName: "Priya Sharma",
-    phone: "9876543210",
-    addressLine1: "Flat 402, Green Meadows, Koregaon Park",
-    city: "Pune",
-    state: "Maharashtra",
-    pincode: "411001",
+    fullName: "",
+    phone: "",
+    addressLine1: "",
+    city: "",
+    state: "",
+    pincode: "",
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ShippingAddress, string>>>({});
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (user?.name) {
+      setAddress((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.name,
+        phone: prev.phone || user.phone || "",
+      }));
+    }
+  }, [user]);
 
   if (!mounted) {
     return (

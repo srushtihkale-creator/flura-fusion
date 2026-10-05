@@ -31,10 +31,12 @@ export async function apiFetch<T>(
     );
   }
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("flora_token") : null;
   const url = `${API_BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
   const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers || {}),
     },
     ...options,

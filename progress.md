@@ -25,6 +25,13 @@
 | **Pot & Seed Ref Removal** | ✅ Complete | Removed 40 blurry `*-ref.png` assets, kept studio photos | 100% Sharp photography across catalog |
 | **Plant Rotation & Hint** | ✅ Complete | Multi-angle drag/swipe + discoverability overlay | Non-blocking, auto/permanent dismiss |
 | **Backend-Readiness Audit** | ✅ Complete | 17-point audit, async OrderService, stock/price authority, API client | 100% Ready for Spring Boot REST API |
+| **Spring Boot 3.x Backend** | ✅ Complete | Full schema, 31-product seeds, 13 JPA entities, security, services, controllers | 100% Compiled & tested (Java 21) |
+| **Local PostgreSQL Database** | ✅ Complete | Flyway migrations `V1` & `V2`, 15 tables, 31 products, constraints & indexes | 100% Verified on port 5432 |
+| **Checkout & Order Creation** | ✅ Complete | Resolved payload alignment, authenticated checkout, PostgreSQL order persistence | 100% Verified (`FF-XXXXXX`) |
+| **Dual Authentication Flow** | ✅ Complete | Clear tabs for Sign In & Create Account, state isolation, full logout clearing | 100% Verified in UI & store |
+| **Google Gemini Flora AI** | ✅ Complete | Spring Boot proxy (`gemini-3.8-flash`), dynamic catalog prompt injection, catalog hydration | 100% Tested with live botanical queries |
+| **Homepage Offers & Discounts** | ✅ Complete | Dynamic backend coupons (`/api/v1/coupons`), prominent homepage cards, 1-click copy/apply, checkout flow | 100% Tested & Verified with PostgreSQL |
+| **Top Offer Marquee & Products** | ✅ Complete | Slim infinite right-to-left marquee, auto-apply, subtle product chips, admin CRUD, RBAC privacy | 100% Tested & Verified with E2E Suite |
 | **GitHub Remote Sync** | ✅ Synced | Branch `main`, Clean tree | 100% Synchronized with `origin/main` |
 
 ---
@@ -517,16 +524,221 @@
 - [x] **Strict UI/UX Immutability Maintained:**
   - Zero UI layout, font, color, button, spacing, animation, or product image changes made.
 
+### Milestone 34: Spring Boot 3.x Backend Architecture, Schema DDL, Seed Scripts & REST API Foundation
+- [x] **Relational Database Schema & Migrations (`backend/sql/01_schema.sql` & `V1__init_schema.sql`):**
+  - Fully modeled PostgreSQL relational schema matching SRS Section 7, 8, 12, 13, 21, 22, 23, and 36.
+  - Defined 15 tables: `users`, `addresses`, `categories`, `products`, `product_images`, `carts`, `cart_items`, `wishlists`, `wishlist_items`, `coupons`, `discounts`, `orders`, `order_items`, `reviews`, `cms_banners`, `cms_pages`, and `ai_visualizations`.
+  - Added indexes for slugs, foreign keys, order numbers, and GIN index for botanical metadata.
+- [x] **Catalog & CMS Seed Scripts (`backend/sql/02_seed_data.sql` & `V2__seed_catalog_and_cms.sql`):**
+  - Pre-seeded all 31 existing catalog products (11 Plants, 10 Pots, 10 Seeds) with 100% price, botanical specification, care guide, and 4-angle studio photography parity.
+  - Included default admin user (`admin@florafusion.com` / `Password@123`), customer user, promotional coupons (`FLORA10`, `NATURE20`), and homepage CMS banners.
+- [x] **Entity-Relationship Diagram & Documentation (`backend/ERD.md` & `backend/README.md`):**
+  - Detailed Mermaid ERD diagram visualizing table relationships, cardinalities, constraints, and audit rules.
+  - Created comprehensive documentation detailing configuration, environment variables, and endpoint catalog.
+- [x] **JPA Entity & Repository Layer:**
+  - Implemented 13 JPA entities in `com.florafusion.entity` using Jakarta Persistence and Lombok.
+  - Implemented 13 Spring Data JPA repositories in `com.florafusion.repository` supporting pagination, search, and custom JPQL queries.
+- [x] **Spring Security, JWT & RBAC (`com.florafusion.security` & `com.florafusion.config`):**
+  - Configured stateless JWT authentication using JJWT 0.12.x and BCrypt password hashing.
+  - Enforced RBAC: public access for catalog and guest checkout; customer access for cart, wishlist, and orders; role-guarded `/api/v1/admin/**` restricted to `ROLE_ADMIN`.
+  - Configured CORS for `localhost:3000` and Vercel domains.
+- [x] **DTOs & Unified Error Handling (`com.florafusion.dto` & `com.florafusion.exception`):**
+  - Built DTO records matching 100% of frontend types for Auth, Catalog, Cart, Order, and CMS.
+  - Standardized RFC-7807 problem details in `GlobalExceptionHandler` with validation error mapping.
+- [x] **Domain Business Services (`com.florafusion.service`):**
+  - `AuthService`: Registration and login with JWT generation.
+  - `ProductService` & `CategoryService`: Catalog retrieval, sorting, slug lookup, and full-text search.
+  - `CartService` & `WishlistService`: Persistent shopping cart and wishlist management.
+  - `OrderService`: Authoritative stock checking, coupon discounts, order placement, and 6-stage tracking milestones.
+  - `MockPaymentService`: Provider-agnostic payment processing (`MOCK-TXN-XXXXXX`).
+  - `InvoiceService`: Generates branded Flora Fusion PDF tax invoices via OpenPDF.
+  - `CmsService`: Homepage banners and editorial plant care articles.
+- [x] **Full REST Controller Layer & OpenAPI Documentation (`com.florafusion.controller`):**
+  - Created controllers for Auth, Categories, Products, Cart, Wishlist, Orders, CMS, and Admin.
+  - Configured OpenAPI 3 / Swagger UI (`/swagger-ui.html`).
+- [x] **Compilation & Verification:**
+  - `mvn clean compile`: 85 source files compiled successfully (`BUILD SUCCESS`).
+  - `mvn test`: 10/10 unit tests passing cleanly across `OrderServiceTest`, `ProductServiceTest`, and `CartServiceTest`.
+  - Frontend verification: 15/15 tests passing (`npm test`), 0 TypeScript errors (`npx tsc --noEmit`), 0 lint warnings (`npm run lint`).
+  - `.env` credentials protected and ignored via `.gitignore`.
+
+### Milestone 35: Local PostgreSQL Database Setup & Flyway Migrations
+- [x] Successfully configured and connected local PostgreSQL database `flora_fusion` on port `5432`.
+- [x] Executed Flyway migrations `V1__init_schema.sql` and `V2__seed_catalog_and_cms.sql` creating 15 tables, relational constraints, foreign keys, and indexes.
+- [x] Pre-seeded all 31 catalog products, 3 categories, default customer (`srushti@florafusion.com`), and admin accounts (`admin@florafusion.com`).
+
+### Milestone 36: Checkout Flow & Order Creation Payload Alignment
+- [x] **"Input validation failed" Root Cause Identified & Resolved:**
+  - Mapped frontend cart items in `src/services/order.service.ts` to `{ productId: resolveProductId(id, slug), quantity }` meeting backend `@NotBlank` requirements.
+  - Mapped shipping address fields from `{ fullName, addressLine1 }` to `{ name, address }` required by backend `ShippingAddressDto`.
+  - Added robust identifier resolution in backend `OrderService.java` supporting UUIDs, catalog slugs, and SKUs without bypassing validation.
+  - Added public single-order retrieval endpoint `GET /api/v1/orders/{identifier}` in `OrderController.java` and `SecurityConfig.java`.
+  - Tested authenticated checkout flow returning HTTP `201 Created` (`FF-XXXXXX`) and verified in `/api/v1/orders/my-orders`.
+
+### Milestone 37: Dual Authentication Architecture (Sign In vs Create Account)
+- [x] **Tabbed Modal UX in `src/components/auth/AuthModal.tsx`:**
+  - Clear tabs for **Sign In** (existing users) and **Create Account** (new users), keeping existing Flora Fusion botanical aesthetic.
+  - "Sign In" tab features email/password inputs with one-click test account chips for Customer and Admin.
+  - "Create Account" tab features Full Name (min 2 chars), Email, Phone (optional), and Password (min 6 chars).
+- [x] **Auth Service & State Management:**
+  - Added `register(...)` method in `src/services/auth.service.ts` communicating with `POST /api/v1/auth/register`.
+  - Added `authMode`, `setAuthMode`, and `register` actions in `src/store/useFloraStore.ts`.
+  - Strict enforcement: Unauthenticated users see only "Sign In" with no user name displayed; authenticated users see their real name and badge; logout clears tokens and state completely.
+
+### Milestone 38: Google Gemini API Live Botanical Recommendation Integration
+- [x] **End-to-End Secure Flow:** Frontend (`FloraAIService`) ➔ Spring Boot (`POST /api/v1/ai/recommend`) ➔ Google Gemini API (`gemini-3.8-flash`) ➔ Local PostgreSQL Catalog ➔ UI.
+- [x] **Security & Key Management:**
+  - `GEMINI_API_KEY` and `GEMINI_MODEL` configured in `backend/.env` (git-ignored, strictly local).
+  - API key is consumed only by the Spring Boot backend via HTTP header `x-goog-api-key` and is never exposed to the frontend or printed in server logs.
+- [x] **Service Layer (`GeminiRecommendationService.java`):**
+  - Dynamically injects Flora Fusion 31-product catalog metadata into the prompt.
+  - Prompts Gemini as "Flora AI" for warm, 2-4 sentence botanical advice tailored to Indian home lighting and care needs.
+  - Parses recommended product slugs (`RECOMMENDED_SLUGS: [...]`) and hydrates full product cards from the local database.
+  - Resilient error handling: Automatically falls back to the local botanical knowledge engine if the Gemini API key is missing or external calls are rate-limited.
+- [x] **Verified with Live Queries:**
+  - *"Which plant is good for attracting wealth and positive energy?"* ➔ Returned Vastu/prosperity guidance + Money Plant & Jade Plant.
+  - *"I want to grow fresh vegetables or herbs on my sunny balcony"* ➔ Returned container gardening guidance + Tomato, Chilli, and Basil seeds.
+  - *"Find low light plants for bedroom"* ➔ Returned ZZ Plant & Snake Plant cards.
+
+### Milestone 39: Homepage Active Botanical Offers & Discounts Integration
+- [x] **Strict Visual Identity & Zero Redesign Constraint:**
+  - Preserved 100% of existing frozen Flora Fusion UI/UX, typography (Cormorant/Inter), colors (`#173F2B`, `#24583B`, `#F7F4EC`), spacing, animations, cards, header, hero, and navigation.
+  - Placed active botanical discount offers prominently near the beginning of the homepage (between `<ExploreByPlantType />` and `<TrustStrip />`) using standard container grid layout without altering any existing components.
+- [x] **Backend & Database Data Sourcing (Zero Hardcoded Data):**
+  - Extended Spring Boot backend with `CouponController.java` (`GET /api/v1/coupons`, `/api/v1/coupons/active`, `/api/v1/coupons/{code}`) and `CouponService.java`.
+  - Added `findAllByIsActiveTrueOrderByDiscountValueDesc()` in `CouponRepository.java` fetching verified active vouchers from PostgreSQL.
+  - Permitted public access in `SecurityConfig.java` (`.requestMatchers(HttpMethod.GET, "/api/v1/coupons/**").permitAll()`).
+  - Active vouchers populated from PostgreSQL seeds: `FLORA10` (10% off, max ₹500), `NATURE20` (20% off, min ₹1000, max ₹1000), `WELCOME50` (flat ₹50 off, min ₹499).
+- [x] **Seamless Frontend Component Architecture (`src/components/home/ActiveOffersSection.tsx`):**
+  - Created `src/services/coupon.service.ts` communicating with `/api/v1/coupons` with seed-matching fallback.
+  - Built `ActiveOffersSection.tsx` rendering active voucher cards with discount badges (`10% OFF`, `20% OFF`, `FLAT ₹50 OFF`), copyable coupon code pill buttons with real-time checkmark feedback, terms/minimum eligibility, and direct category links (`/plants`).
+  - Integrated 1-click apply: tapping "Apply Code" or copying applies the coupon into `useFloraStore` state with toast feedback (`Coupon FLORA10 applied! 🌿`).
+  - Full SSR parity with 0 layout shift and complete responsive grid (3 columns desktop, 1 column mobile).
+- [x] **End-to-End Checkout & Backend-Authoritative Validation:**
+  - Verified `POST /api/v1/orders/validate` with `FLORA10`, `NATURE20`, and `WELCOME50` applying authoritative mathematical discounts.
+  - Verified full order creation flow through `POST /api/v1/orders` persisting coupon discount amount in PostgreSQL (`OrderResponse`).
+- [x] **Quality Verification:**
+  - Automated test suite: 17/17 passed (`npm test`).
+  - TypeScript strict check: 0 errors (`npx tsc --noEmit`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Production build: All 53 static/dynamic routes generated cleanly (`npm run build`).
+  - Active Dev Server: Running on `http://localhost:3000` (HTTP 200 OK).
+
+---
+
+### Milestone 40: Final Offer Marquee + Product Offer Integration
+- [x] **Top Offer Announcement Marquee Bar (`src/components/home/TopOfferMarquee.tsx`):**
+  - Implemented slim horizontal announcement bar (38px desktop / 34px mobile) at the top of the existing Flora Fusion homepage.
+  - Features smooth, continuous right-to-left infinite marquee scrolling via hardware-accelerated CSS keyframe animation (`ff-marquee-scroll 34s linear infinite`).
+  - Seamless loop with duplicate items avoiding any visible jump or reset.
+  - Pauses animation on hover for effortless reading and clicking.
+  - Fully honors `@media (prefers-reduced-motion: reduce)` with accessible static overflow/wrap presentation.
+  - Zero hardcoding: dynamically populated from PostgreSQL database via Spring Boot `GET /api/v1/coupons` API.
+  - Active offers rendered:
+    1. 🌿 BUY ANY 4 PLANTS @ ₹1,199 (Bundle Deal, auto-apply)
+    2. 🎉 GET 10% OFF ON ORDERS ABOVE ₹1,499 (10% off, auto-apply)
+    3. 🚚 FREE SHIPPING ABOVE ₹499 (Free delivery, auto-apply)
+- [x] **Clickable Offers & Auto-Apply Functionality:**
+  - Every offer in the marquee is directly clickable, routing customers to the target catalog destination (`/plants`).
+  - Automatically applies the offer into the customer session and cart if configured with `autoApply: true` without requiring manual coupon entry.
+  - Shows instant toast confirmation: *"🎉 Offer Activated: [Title] (Auto-applied in cart)"*.
+- [x] **Product-Side Subtle Offer Indication (`ProductCard.tsx`):**
+  - Automatically evaluates active promotional offers against product category (`plants`, `pots`, `seeds`) or specific product IDs.
+  - Displays subtle, elegant micro-chips (`.product-card-offer-chip` and `.card-badge-offer`) such as `Buy 4 @ ₹1,199`, `10% OFF`, `Free Shipping`.
+  - Strictly preserves existing product card structure, image dimensions, typography, prices, and layout.
+  - Only qualifying products display the relevant offer indication.
+- [x] **Admin Promotion Controls (`AdminDashboardView.tsx` & `AdminController.java`):**
+  - Built comprehensive Admin CMS tab: "Promotional Offers & Marquee Controls".
+  - Admin can configure: Offer code, title, marquee banner text, discount type (`PERCENTAGE`, `BUNDLE`, `FREE_SHIPPING`, `FIXED_AMOUNT`), discount value, bundle quantity, bundle price, min cart value, max discount, applicable category, start/end dates, active status, and auto-apply flag.
+  - 1-click active/inactive toggle immediately updates live marquee and product tags.
+  - Full CRUD operations via protected Spring Boot endpoints (`GET/POST/PUT/PATCH/DELETE /api/v1/admin/offers`).
+- [x] **Database & Authoritative Discount Engine:**
+  - Added Flyway migration `V3__offers_and_marquee.sql` extending `coupons` table with marquee metadata, bundle rules, and display order.
+  - Enhanced `OrderService.java` with authoritative discount calculation supporting bundle pricing (e.g. 4 plants @ ₹1,199), free shipping thresholds, percentage discounts, and category eligibility.
+  - Authoritative calculation runs for both checkout validation (`POST /api/v1/orders/validate`) and persistent order placement (`POST /api/v1/orders`).
+- [x] **Customer Data Privacy & RBAC Isolation:**
+  - Strict Spring Security JWT verification ensuring Customer A cannot view or access Customer B's profile, orders, cart, wishlist, address, discount usage, or invoices.
+  - Verified via E2E test: unauthorized cross-customer requests strictly receive HTTP 403 Forbidden.
+  - Admin role properly authorized for system-wide fulfillment and analytics.
+- [x] **Quality Verification:**
+  - E2E Test Suite (`scripts/test-offers-e2e.ts`): 10/10 steps passed.
+  - Automated Jest & Catalog Suite (`npm test`): 17/17 passed.
+  - TypeScript strict check (`npx tsc --noEmit`): 0 errors.
+  - ESLint (`npm run lint`): 0 errors / 0 warnings.
+  - Production build (`npm run build`): All 53 routes pre-rendered successfully.
+  - Local environment active: Spring Boot (port 8080) + Next.js (port 3000) + PostgreSQL (port 5432).
+
+### Milestone 24: Reversion of Discount/Offer Visual UI & Preservation of Compact Announcement Marquee
+- [x] **Complete UI Reversion to Approved Baseline:**
+  - Removed the large "Grow More, Save More" discount card section (`ActiveOffersSection.tsx`) from the homepage and deleted the component.
+  - Reverted `ProductCard.tsx` back to its original layout and styling with zero offer badges or chips (`card-badge-offer`, `product-card-offer-chip` removed).
+  - Cleaned up discarded discount styles from `src/styles/components.css`.
+  - Restored the homepage section order to exactly the pre-discount state:
+    1. Hero Section
+    2. Explore by Plant Type
+    3. Trust Strip
+    4. Catalog Sections (Plants, Pots, Seeds)
+    5. Category Banners
+    6. Plant Stories & Care Tips
+- [x] **Preserved Compact Top Offer Marquee:**
+  - Kept only the very thin, compact announcement strip (`TopOfferMarquee.tsx`, height 38px / 34px mobile) at the top.
+  - Continuous right-to-left marquee animation with hover-pause behavior.
+  - Dynamically displays active backend-controlled offers from PostgreSQL database:
+    - 🌿 BUY ANY 4 PLANTS @ ₹1,199
+    - 🎉 GET 10% OFF ON ORDERS ABOVE ₹1,499
+    - 🚚 FREE SHIPPING ABOVE ₹499
+  - Offer click behavior routes to target catalog destination (`/plants`) and auto-applies discount to cart without altering destination page layouts or product cards.
+- [x] **Zero Regressions to Functionality:**
+  - Preserved all backend endpoints, Flyway database migrations (`V1`, `V2`, `V3`), Spring Boot discount calculations (bundle deals, percentage discounts, free shipping), customer RBAC privacy, authentication, checkout flow, invoices, 360° rotation, and WhatsApp functionality.
+  - All 17 automated tests passing (`npm test`).
+  - TypeScript compilation completely clean (`npx tsc --noEmit`).
+
+---
+
+### Milestone 25: Full Functionality Restoration, UI/UX Freeze & Regression Suite
+- [x] **Complete UI/UX Freeze & Preservation:**
+  - Preserved approved Flora Fusion layout, typography, colors, spacing, animations, product cards, header, hero, and navigation.
+  - Retained exclusively the compact horizontal offer announcement marquee bar (`TopOfferMarquee.tsx`).
+  - Completely excluded large discount cards, banners, or redesigned product cards.
+- [x] **Restored User-Specific Data Isolation & Security:**
+  - Verified user data isolation between Customer A ("Rupali Deshmukh", `rupali@florafusion.com`) and Customer B ("Aarav Patel", `aarav.patel@example.com`).
+  - Spring Boot backend strictly enforces ownership authorization: Customer B attempting to view Customer A's order or invoice receives HTTP `403 Forbidden`.
+  - Frontend Zustand store (`useFloraStore.ts`) purges stale cart, wishlist, orders, and coupon data upon `logout()`.
+  - Authenticated user data (wishlist, cart, orders) automatically loads from backend upon login.
+- [x] **Enhanced Cart & Wishlist Service Robustness:**
+  - Resolved `UUID.fromString` parsing in `CartService.java` and `WishlistService.java` to support slugs (`snake-plant`, `plant-1`), SKUs, and UUIDs interchangeably.
+- [x] **Official Tax Invoice PDF Generation & Download:**
+  - Wired `GET /api/v1/orders/{orderNumber}/invoice` to UI download buttons in `OrderDetailView.tsx`, `OrdersListView.tsx`, and `AccountPageView.tsx`.
+  - Generated official 2.1KB Tax Invoice PDF with complete billing address, itemized breakdown, tax computation, and digital signature stamp.
+- [x] **Floating WhatsApp Click-to-Chat Button (`WhatsAppButton.tsx`):**
+  - Mounted `<WhatsAppButton />` in `src/app/layout.tsx` dynamically reading `process.env.NEXT_PUBLIC_WHATSAPP_NUMBER` (`919890414379`).
+  - Formatted URL-encoded pre-filled message: *"Hi Flora Fusion, I need help with a product/order."*
+  - Direct WhatsApp Click-to-Chat link: `https://wa.me/919890414379?text=Hi%20Flora%20Fusion%2C%20I%20need%20help%20with%20a%20product%2Forder.`
+  - Manual send behavior: Customer manually reviews and presses Send in WhatsApp (zero external bot/API dependencies).
+  - Preserved exact approved design, size (52×52), colors, SVG icon, and responsive positioning (`bottom: 74px` mobile, `bottom: 28px; left: 28px` desktop).
+- [x] **Full 9-Flow End-to-End Regression Suite:**
+  - `TEST FLOW 1`: Catalog, Product Details, 360° Rotation, & Auth — PASSED ✓
+  - `TEST FLOW 2`: Wishlist Persistence & Refresh Verification — PASSED ✓
+  - `TEST FLOW 3`: Add to Cart, Modify Quantity & Cart Persistence — PASSED ✓
+  - `TEST FLOW 4`: Order Validation, Discount, Creation & Invoice PDF — PASSED ✓
+  - `TEST FLOW 5`: Strict User Data Isolation & Cross-Customer Privacy (HTTP 403) — PASSED ✓
+  - `TEST FLOW 6`: Admin Login & Authorized Dashboard Controls — PASSED ✓
+  - `TEST FLOW 7`: Backend Offer Creation & Top Marquee Integration — PASSED ✓
+  - `TEST FLOW 8`: Inactive / Expired Offer Exclusion from Marquee — PASSED ✓
+  - `TEST FLOW 9`: Floating WhatsApp Button & Click-to-Chat — PASSED ✓
+  - All 17 automated tests passing (`npm test`).
+  - TypeScript compilation completely clean (`npx tsc --noEmit`).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
 
-1. **Monstera 360° Asset Acquisition:**
-   - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography (or 3D model render) for `monstera-deliciosa` without UI overlays or species morphing.
-2. **Spring Boot Backend Integration (Future Phase):**
-   - Connect typed services (`product.service.ts`, `cart.service.ts`, `order.service.ts`, `floraAI.service.ts`, `spaceVisualization.service.ts`) with Spring Boot REST endpoints.
-   - Authoritative PostgreSQL transactional database and Razorpay payment gateway sandbox.
-3. **Headless CMS Integration:**
-   - Connect `PlantCareService` and marketing banners to a headless CMS (Strapi / Sanity).
-4. **Advanced Customer Personalization:**
-   - Multi-device customer accounts with JWT authentication and downloadable order invoices.
+1. **Payment Gateway Integration:**
+   - Integrate Razorpay sandbox for live test payments alongside existing UPI/COD/Card mock processing.
+2. **Monstera 360° Asset Acquisition:**
+   - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
+3. **Advanced Customer Garden Tracker:**
+   - Add watering reminder schedule and digital plant care logs linked to customer account.
+
+
+

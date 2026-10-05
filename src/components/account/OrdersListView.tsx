@@ -3,14 +3,31 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useFloraStore } from "@/store/useFloraStore";
+import { OrderService } from "@/services/order.service";
 
 export function OrdersListView() {
-  const { orders } = useFloraStore();
+  const { orders, isAuthenticated, loadOrders, addToast } = useFloraStore();
   const [mounted, setMounted] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (isAuthenticated) {
+      loadOrders();
+    }
+  }, [isAuthenticated, loadOrders]);
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      setDownloadingId(orderId);
+      await OrderService.downloadInvoice(orderId);
+      addToast(`Tax invoice for ${orderId} downloaded! 📄`, "success");
+    } catch (err: any) {
+      addToast(err?.message || "Failed to download invoice.", "error");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -147,7 +164,25 @@ export function OrdersListView() {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadInvoice(order.orderId)}
+                    disabled={downloadingId === order.orderId}
+                    className="btn-secondary"
+                    style={{
+                      padding: "9px 16px",
+                      fontSize: "0.875rem",
+                      cursor: downloadingId === order.orderId ? "not-allowed" : "pointer",
+                      border: "1px solid var(--color-brand-forest)",
+                      backgroundColor: "#FFFFFF",
+                      color: "var(--color-brand-forest)",
+                      fontWeight: 600,
+                    }}
+                    title="Download official PDF tax invoice"
+                  >
+                    📄 {downloadingId === order.orderId ? "Downloading..." : "Tax Invoice"}
+                  </button>
                   <Link
                     href={`/account/orders/${order.orderId}`}
                     className="btn-primary"

@@ -20,8 +20,19 @@ export interface CartItem {
 export interface Coupon {
   code: string;
   discountPercentage: number;
+  discountAmount?: number;
+  discountType?: "PERCENTAGE" | "FIXED_AMOUNT" | "BUNDLE" | "FREE_SHIPPING";
   minOrderValue: number;
+  maxDiscount?: number;
   description: string;
+  terms?: string;
+  title?: string;
+  targetCategory?: string;
+  targetLink?: string;
+  bannerText?: string;
+  autoApply?: boolean;
+  bundleQty?: number;
+  bundlePrice?: number;
 }
 
 export interface ShippingAddress {

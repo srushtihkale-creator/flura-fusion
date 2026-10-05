@@ -1,3 +1,4 @@
+import { TopOfferMarquee } from "@/components/home/TopOfferMarquee";
 import { HeroSection } from "@/components/home/HeroSection";
 import { ExploreByPlantType } from "@/components/home/ExploreByPlantType";
 import { TrustStrip } from "@/components/home/TrustStrip";
@@ -8,6 +9,9 @@ import { StoriesAndCareSection } from "@/components/home/StoriesAndCareSection";
 export default function HomePage() {
   return (
     <div id="home-view" className="app-view">
+      {/* TOP OFFER ANNOUNCEMENT STRIP (Slim Infinite Marquee) */}
+      <TopOfferMarquee />
+
       {/* 1. HERO SECTION */}
       <HeroSection />
 
@@ -17,13 +21,13 @@ export default function HomePage() {
       {/* 3. TRUST STRIP */}
       <TrustStrip />
 
-      {/* 3. CATALOG SECTIONS (Plants, Pots, Seeds) */}
+      {/* 4. CATALOG SECTIONS (Plants, Pots, Seeds) */}
       <FeaturedCatalogSections />
 
-      {/* 4. PROMOTIONAL CATEGORY BANNERS */}
+      {/* 5. PROMOTIONAL CATEGORY BANNERS */}
       <CategoryBanners />
 
-      {/* 5. BOTANICAL STORIES & PLANT CARE */}
+      {/* 6. BOTANICAL STORIES & PLANT CARE */}
       <StoriesAndCareSection />
     </div>
   );

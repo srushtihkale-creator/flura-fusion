@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useFloraStore } from "@/store/useFloraStore";
 import { ProductService } from "@/services/product.service";
+import { FloraAIService } from "@/services/floraAI.service";
 import { Product } from "@/types/product";
 import { VisualizeMySpaceModal } from "./VisualizeMySpaceModal";
 
@@ -50,7 +51,7 @@ export function FloraAIPanel() {
 
   async function handleSend(queryText?: string) {
     const q = (queryText || input).trim();
-    if (!q) return;
+    if (!q || isThinking) return;
 
     const userMsg: Message = {
       id: Math.random().toString(36),
@@ -62,43 +63,29 @@ export function FloraAIPanel() {
     if (!queryText) setInput("");
     setIsThinking(true);
 
-    setTimeout(async () => {
-      const lower = q.toLowerCase();
-      let replyText = "";
-      let matchedProducts: Product[] = [];
-
-      if (lower.includes("low light") || lower.includes("dark") || lower.includes("shade")) {
-        replyText = "For rooms with minimal or indirect light, these resilient botanical champions thrive effortlessly:";
-        matchedProducts = (await ProductService.getByCategory("plants", "indoor")).filter(
-          (p) => p.slug === "snake-plant" || p.slug === "zz-plant" || p.slug === "peace-lily"
-        );
-      } else if (lower.includes("500") || lower.includes("budget") || lower.includes("cheap")) {
-        replyText = "Here are our most popular high-value plants and seeds under ₹500:";
-        const all = await ProductService.getAll();
-        matchedProducts = all.filter((p) => p.price <= 499).slice(0, 3);
-      } else if (lower.includes("herb") || lower.includes("kitchen") || lower.includes("seeds")) {
-        replyText = "Growing your own fresh kitchen herbs is deeply rewarding! Try these easy organic seeds:";
-        matchedProducts = (await ProductService.getByCategory("seeds", "herb")).slice(0, 3);
-      } else if (lower.includes("pot") || lower.includes("ceramic")) {
-        replyText = "Here are handcrafted artisan pots crafted from breathable clay and glazed ceramic:";
-        matchedProducts = (await ProductService.getByCategory("pots", "ceramic")).slice(0, 3);
-      } else {
-        replyText = "Here are our most beloved, beginner-friendly houseplants with NASA air-purifying power:";
-        const all = await ProductService.getAll();
-        matchedProducts = all.filter((p) => p.badge === "Bestseller" || p.badge === "Popular").slice(0, 3);
-      }
-
+    try {
+      const response = await FloraAIService.generateResponse(q);
       setMessages((prev) => [
         ...prev,
         {
           id: Math.random().toString(36),
           sender: "flora",
-          text: replyText,
-          products: matchedProducts,
+          text: response.text,
+          products: response.recommendations,
         },
       ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(36),
+          sender: "flora",
+          text: "Something went wrong while retrieving botanical guidance. Please try again.",
+        },
+      ]);
+    } finally {
       setIsThinking(false);
-    }, 600);
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {

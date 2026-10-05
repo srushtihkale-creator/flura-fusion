@@ -7,7 +7,7 @@ import { useFloraStore } from "@/store/useFloraStore";
 
 export function MobileNav() {
   const pathname = usePathname();
-  const { wishlist, openWishlist, openAI } = useFloraStore();
+  const { wishlist, openWishlist, openAI, user, isAuthenticated } = useFloraStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -15,6 +15,7 @@ export function MobileNav() {
   }, []);
 
   const totalWishlistCount = mounted ? wishlist.length : 0;
+  const isAdmin = mounted && isAuthenticated && user?.role === "ADMIN";
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
@@ -88,17 +89,29 @@ export function MobileNav() {
           )}
         </button>
 
-        <Link
-          href="/account"
-          className={`mobile-nav-btn ${pathname === "/account" ? "active" : ""}`}
-          title="Account & Orders"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span>Account</span>
-        </Link>
+        {isAdmin ? (
+          <Link
+            href="/admin"
+            className={`mobile-nav-btn ${pathname.startsWith("/admin") ? "active" : ""}`}
+            title="Admin Dashboard"
+            style={{ color: "var(--color-brand-terracotta)" }}
+          >
+            <span style={{ fontSize: "1.1rem" }}>👑</span>
+            <span>Admin</span>
+          </Link>
+        ) : (
+          <Link
+            href="/account"
+            className={`mobile-nav-btn ${pathname === "/account" ? "active" : ""}`}
+            title="Account & Orders"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>{mounted && isAuthenticated && user ? user.name.split(" ")[0] : "Account"}</span>
+          </Link>
+        )}
       </div>
     </nav>
   );

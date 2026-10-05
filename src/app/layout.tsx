@@ -10,6 +10,8 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SubFooter } from "@/components/layout/SubFooter";
 import { RotatingBadgeStrip } from "@/components/layout/RotatingBadgeStrip";
 import { ToastContainer } from "@/components/ui/ToastContainer";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -78,7 +80,9 @@ export default function RootLayout({
             <CartDrawer />
             <WishlistModal />
             <FloraAIPanel />
+            <WhatsAppButton />
             <ToastContainer />
+            <AuthModal />
           </div>
         </SmoothScrollProvider>
       </body>

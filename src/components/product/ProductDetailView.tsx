@@ -18,30 +18,52 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(product.image);
 
-  const galleryImages = useMemo(() => {
-    return product.images && product.images.length > 0
-      ? product.images
-      : product.refImage
-      ? [product.image, product.refImage]
-      : [];
-  }, [product.images, product.image, product.refImage]);
-
-  // 4-angle rotation is strictly allowed ONLY for Plants or Pots when exactly 4 verified separate images exist:
-  // 1. Front, 2. Right, 3. Back, 4. Left.
-  // Seeds must NEVER rotate. Reference crops (*-ref.png) must never be treated as rotation angles.
   const isRotatableCategory = product.category === "plants" || product.category === "pots";
   const rotationFrames = useMemo(() => {
     if (!isRotatableCategory) return [];
-    if (product.images && product.images.length === 4) {
-      // Must be 4 genuine distinct angle images of the exact same product, not reference crops
-      const hasRefCrop = product.images.some((img) => img.includes("-ref."));
-      if (!hasRefCrop) {
-        return product.images;
-      }
+
+    let frames: string[] = [];
+
+    // Prioritize images360 or images from backend API / catalog
+    if (product.images360 && product.images360.length > 0) {
+      frames = [...product.images360];
+    } else if (product.images && product.images.length > 0) {
+      frames = [...product.images];
     }
-    return [];
-  }, [isRotatableCategory, product.images]);
-  const canRotate = rotationFrames.length === 4;
+
+    // Exclude reference crops
+    frames = frames.filter((img) => !img.includes("-ref."));
+
+    // Ensure the primary image is included (as the first angle frame)
+    if (product.image && !frames.includes(product.image)) {
+      frames = [product.image, ...frames];
+    }
+
+    // Deduplicate
+    const unique = Array.from(new Set(frames));
+
+    // Must have at least 3 distinct angle frames (standard nursery set has 4: Front, Right, Back, Left)
+    return unique.length >= 3 ? unique : [];
+  }, [isRotatableCategory, product.image, product.images, product.images360]);
+
+  const canRotate = rotationFrames.length >= 3;
+
+  const galleryImages = useMemo(() => {
+    let list: string[] = [];
+    if (rotationFrames.length > 0) {
+      list = [...rotationFrames];
+    } else if (product.images && product.images.length > 0) {
+      list = [...product.images];
+    } else if (product.refImage) {
+      list = [product.image, product.refImage];
+    }
+
+    if (product.image && !list.includes(product.image)) {
+      list = [product.image, ...list];
+    }
+
+    return Array.from(new Set(list.filter((img) => !img.includes("-ref."))));
+  }, [rotationFrames, product.images, product.image, product.refImage]);
 
   const rotateStartRef = useRef<{ startX: number; startIdx: number } | null>(null);
 
@@ -56,26 +78,11 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [showRotationHint, setShowRotationHint] = useState(false);
   const hasRotatedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Show plant rotation hint temporarily on mount; dismiss automatically after 3.8s
-  useEffect(() => {
-    hasRotatedRef.current = false;
-    if (mounted && product.category === "plants" && canRotate) {
-      setShowRotationHint(true);
-      const timer = setTimeout(() => {
-        setShowRotationHint(false);
-      }, 3800);
-      return () => clearTimeout(timer);
-    } else {
-      setShowRotationHint(false);
-    }
-  }, [mounted, product.slug, product.category, canRotate]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.matchMedia) {
@@ -96,7 +103,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   // Preload verified 4-angle rotation images immediately on mount so rotation is instant, crisp, and flicker-free
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (canRotate && rotationFrames.length === 4) {
+    if (canRotate && rotationFrames.length > 0) {
       rotationFrames.forEach((src) => {
         const img = new Image();
         img.src = src;
@@ -192,7 +199,6 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       if (rotationFrames[nextIdx] && rotationFrames[nextIdx] !== activeImage) {
         setActiveImage(rotationFrames[nextIdx]);
         hasRotatedRef.current = true;
-        setShowRotationHint(false);
       }
     }
   };
@@ -309,7 +315,6 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         if (rotationFrames[nextIdx] && rotationFrames[nextIdx] !== activeImage) {
           setActiveImage(rotationFrames[nextIdx]);
           hasRotatedRef.current = true;
-          setShowRotationHint(false);
         }
       }
     }
@@ -440,54 +445,59 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                   transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
                   transformOrigin: "center center",
                   transition: isDragging || prefersReducedMotion ? "none" : "transform var(--duration-normal)",
-                  cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+                  cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : canRotate ? (isDragging ? "grabbing" : "grab") : "zoom-in",
                   userSelect: "none",
                   WebkitUserSelect: "none",
                 }}
                 onError={() => {
-                  if (product.refImage && activeImage !== product.refImage) {
-                    setActiveImage(product.refImage);
+                  if (activeImage !== product.image) {
+                    setActiveImage(product.image);
                   }
                 }}
               />
 
-              {/* Temporary discoverability hint for rotatable plants */}
-              {product.category === "plants" && canRotate && (
+              {/* Clear rotation instruction overlay for rotatable products */}
+              {canRotate && zoomScale === 1 && (
                 <div
                   style={{
                     position: "absolute",
                     bottom: "16px",
                     left: "50%",
-                    transform:
-                      showRotationHint && zoomScale === 1
-                        ? "translateX(-50%) translateY(0)"
-                        : "translateX(-50%) translateY(6px)",
-                    opacity: showRotationHint && zoomScale === 1 ? 1 : 0,
-                    transition: prefersReducedMotion
-                      ? "none"
-                      : "opacity 0.4s ease, transform 0.4s ease",
+                    transform: "translateX(-50%)",
                     pointerEvents: "none",
                     userSelect: "none",
                     WebkitUserSelect: "none",
                     zIndex: 3,
-                    backgroundColor: "rgba(23, 63, 43, 0.85)",
+                    backgroundColor: "rgba(23, 63, 43, 0.88)",
                     color: "#FFFFFF",
                     fontSize: "0.8125rem",
                     fontWeight: 500,
                     fontFamily: "var(--font-sans, 'Inter', sans-serif)",
                     padding: "6px 14px",
                     borderRadius: "999px",
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.18)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                     letterSpacing: "0.02em",
                     whiteSpace: "nowrap",
                     display: "flex",
                     alignItems: "center",
-                    gap: "4px",
+                    gap: "6px",
                   }}
                   aria-hidden="true"
                 >
-                  <span className="rotation-hint-desktop">↔ Drag to rotate</span>
-                  <span className="rotation-hint-mobile">↔ Swipe to rotate</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                  </svg>
+                  <span className="rotation-hint-desktop">Drag to rotate 360°</span>
+                  <span className="rotation-hint-mobile">Swipe to rotate 360°</span>
                 </div>
               )}
             </div>

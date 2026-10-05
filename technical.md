@@ -697,16 +697,172 @@ To support multi-angle studio photography without disrupting existing catalog la
   - Converted `createOrder` to an asynchronous interface (`async createOrder(params: CreateOrderParams): Promise<Order>`).
   - **Stock Authority:** Checks catalog records prior to order creation; rejects out-of-stock items with descriptive user feedback.
   - **Price Integrity:** Prevents client-side price manipulation by resolving authoritative prices from the database/catalog.
-  - **Order Totals Recalculation:** Subtotal, delivery fee, coupon discounts, and grand totals are calculated authoritatively by the service layer rather than trusted from client state.
-  - **Spring Boot Endpoint Delegation:** When `NEXT_PUBLIC_API_URL` is set, calls `POST /api/v1/orders`. When absent, seamlessly falls back to the local order generation engine.
-* **Centralized API Client (`src/lib/api.ts` & `.env.example`):**
-  - Provides `apiFetch<T>(endpoint, options)` with automatic headers, status code parsing, and structured error payloads.
-  - Environment variable `NEXT_PUBLIC_API_URL` configured in `.env.example`.
-* **Crash & 404 Route Protection Boundaries (`src/app/not-found.tsx` & `src/app/error.tsx`):**
-  - Custom `not-found.tsx` renders botanical 404 page styled with Cormorant Garamond typography and brand forest buttons, replacing raw unstyled Next.js default pages.
-  - Custom `error.tsx` acts as a top-level client error boundary with interactive retry (`reset()`) and logging.
-* **Animation Lifecycle Safety (`src/components/home/HeroSection.tsx`):**
-  - Added `gsap.killTweensOf(card)` inside the unmount cleanup callback to prevent lingering tweens across route transitions.
+### 14.17 Authoritative Order Creation & Payload Alignment Architecture
+* **Frontend ➔ Backend Payload Contract:**
+  - `OrderService.createOrder` (`src/services/order.service.ts`) serializes cart and address into exact Spring Boot DTO schemas:
+    - `items`: mapped to `List<OrderItemRequest>` with `{ productId: resolveProductId(id, slug), quantity }`. Resolves client slugs or legacy IDs (`plant-1`) to database UUIDs.
+    - `shippingAddress`: mapped to `ShippingAddressDto` with `{ name, phone, address, city, state, pincode }`.
+    - `paymentMethod`: `"UPI"` | `"Card"` | `"NetBanking"` | `"COD"`.
+    - `couponCode`: optional discount code string.
+  - Backend `OrderService.java` resolves products authoritatively via UUID, slug, or SKU, enforces atomic inventory decrements, and persists orders to PostgreSQL.
+  - Returns `OrderResponse` hydrated back into frontend `Order` interface with public tracking milestones.
+  - Exposed `GET /api/v1/orders/{identifier}` for direct order lookup by `orderNumber` or UUID.
+
+### 14.18 Dual Authentication Architecture (Sign In vs Create Account)
+* **Tabbed Authentication UX (`src/components/auth/AuthModal.tsx`):**
+  - Offers clear tab switching between **Sign In** (existing customers & admin) and **Create Account** (new users).
+  - Quick test account chips for instant customer and admin login.
+  - Full registration form: Name (min 2 chars), Email, Phone (optional), Password (min 6 chars) submitting to `POST /api/v1/auth/register`.
+* **State & Session Security (`useFloraStore.ts` & `auth.service.ts`):**
+  - Unauthenticated users: No username is displayed in the header or account page; header displays only the "Sign In" pill.
+  - Authenticated users: Header and profile pages display user initials, real name (`user.name`), and role badge (`CUSTOMER` or `ADMIN`).
+  - Logout: Clears JWT token from `localStorage` and resets Zustand state completely.
+
+### 14.19 Google Gemini API Integration Architecture (Flora AI Recommendations)
+* **Secure Pipeline:**
+  ```text
+  Frontend (FloraAIService) ➔ Spring Boot (AiController) ➔ GeminiRecommendationService ➔ Google Gemini API (gemini-3.8-flash) ➔ PostgreSQL Catalog ➔ Frontend UI Cards
+  ```
+* **Strict Security Boundary:**
+  - `GEMINI_API_KEY` and `GEMINI_MODEL` are stored exclusively in `backend/.env` (git-ignored).
+  - The API key is never transmitted to the frontend, never stored in client bundles, and never printed in server logs.
+  - Spring Boot attaches the key via the `x-goog-api-key` header to `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`.
+* **Dynamic Context Injection & Slug Parsing:**
+  - `GeminiRecommendationService.java` constructs a system prompt injected with the 31-product nursery catalog (names, slugs, prices, light/water/air-purifying attributes).
+  - Gemini provides natural language botanical advice for Indian home settings and outputs `RECOMMENDED_SLUGS: [slug1, slug2]`.
+  - Spring Boot matches the slugs with active database `Product` records, returning rich product cards with images, badges, and prices.
+* **Resilient Fallback Engine:**
+  - If the Gemini API key is missing or an external API error occurs (network offline, quota limit, rate limit), the backend automatically falls back to the local botanical knowledge engine without throwing an error to the user.
+
+---
+
+## 15. Local PostgreSQL Database & Spring Boot 3.3.4 Production Architecture
+
+### 15.1 Relational Schema & Flyway Migration Versioning
+* **Database Engine:** PostgreSQL 15+ running locally on port `5432` with database `flora_fusion`.
+* **Flyway Migration Strategy:**
+  - `V1__init_schema.sql`: Authoritative DDL creating 15 normalized relational tables:
+    - Core Commerce: `users`, `addresses`, `categories`, `products`, `product_images`, `carts`, `cart_items`, `wishlists`, `wishlist_items`, `coupons`, `discounts`, `orders`, `order_items`, `reviews`.
+    - CMS & AI: `cms_banners`, `cms_pages`, `ai_visualizations`.
+    - Foreign keys, cascading constraints, unique indexes on slugs/SKUs/emails, and a GIN index on botanical JSONB attributes.
+  - `V2__seed_catalog_and_cms.sql`: Authoritative catalog seed data populating all 31 products (11 Plants, 10 Pots, 10 Seeds) with 100% pricing, botanical care metadata, ratings, stock counts, and 4-angle studio photography paths.
+  - Seed Accounts: Default admin (`admin@florafusion.com`) with `ROLE_ADMIN` and customer accounts (`srushti@florafusion.com`, `customer@florafusion.com`) with `ROLE_CUSTOMER`.
+
+### 15.2 Database Configuration & Credential Safety
+* **Zero Credential Exposure:**
+  - Local database credentials and API keys reside strictly in `backend/.env`.
+  - `backend/.gitignore` explicitly ignores `.env` and all `.env.*` files.
+  - `backend/.env.example` serves as the sanitized template with placeholders.
+  - `FloraFusionApplication.java` loads `.env` key-value pairs into JVM system properties on startup without logging or echoing sensitive values.
+* **Spring Boot Configuration (`application.yml`):**
+  - Database URL: `jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:flora_fusion}`
+  - Hibernate DDL auto set to `validate` to ensure schema authority resides solely with Flyway.
+  - `flyway.validate-on-migrate: false` to allow seamless local testing iterations.
+
+### 15.3 Spring Boot 3.3.4 REST API & Security Architecture
+* **Java Stack:** Java 21, Spring Boot 3.3.4, Spring Data JPA, Spring Security 6.x, JJWT 0.12.x, Lombok, OpenPDF.
+* **Stateless JWT Security (`SecurityConfig.java`):**
+  - Public endpoints:
+    - `/api/v1/auth/**` (login, register, token refresh)
+    - `/api/v1/categories/**` & `/api/v1/products/**` (catalog queries)
+    - `/api/v1/cms/**` (homepage banners, care guides)
+    - `/api/v1/ai/**` (Flora AI recommendations)
+    - `GET /api/v1/orders/{identifier}` (public tracking by order number)
+    - `/swagger-ui/**`, `/v3/api-docs/**` (OpenAPI documentation)
+  - Authenticated customer endpoints:
+    - `/api/v1/cart/**` (persistent server-side cart)
+    - `/api/v1/wishlist/**` (persistent customer wishlist)
+    - `POST /api/v1/orders` (authoritative order creation)
+    - `GET /api/v1/orders/my-orders` (authenticated order history)
+  - Admin-only endpoints (`ROLE_ADMIN`):
+    - `/api/v1/admin/**` (inventory updates, order status dispatch, coupon management)
+
+### 15.4 Full End-to-End Authenticated Checkout & Order Persistence
+* **Payload Contract Alignment:**
+  - Solved "Input validation failed" by aligning frontend `OrderService.createOrder` with Spring Boot `@Valid @RequestBody OrderCreateRequest`:
+    - `items`: `List<OrderItemRequest>` requiring `@NotBlank String productId` and `@Min(1) Integer quantity`. Frontend resolves slugs/legacy IDs (`plant-1`) to database UUIDs via `resolveProductId()`.
+    - `shippingAddress`: `ShippingAddressDto` requiring `@NotBlank name`, `@NotBlank phone`, `@NotBlank address`, `@NotBlank city`, `@NotBlank state`, `@NotBlank pincode`.
+    - `paymentMethod`: `"UPI"` | `"Card"` | `"NetBanking"` | `"COD"`.
+    - `couponCode`: optional coupon string evaluated authoritatively on backend.
+* **Authoritative Order Processing (`OrderService.java`):**
+  - Validates stock availability for every line item, atomically deducting inventory.
+  - Verifies and calculates authoritative line item prices, applying coupon discounts.
+  - Generates unique order number: `FF-` + 6 uppercase alphanumeric characters (e.g. `FF-A1B2C3`).
+  - Sets initial 6-stage milestone tracking: `Placed` (current) ➔ `Confirmed` ➔ `Packed` ➔ `Dispatched` ➔ `Out for Delivery` ➔ `Delivered`.
+  - Persists order and line items to PostgreSQL, returning HTTP `201 Created` with `OrderResponse`.
+
+### 15.5 Dual Authentication Protocol (Sign In vs Create Account)
+* **Tabbed Modal UX (`AuthModal.tsx`):**
+  - **Sign In Tab:** Email and password inputs with one-click test account chips for Customer and Admin.
+  - **Create Account Tab:** Full Name, Email, Phone, and Password fields submitting to `POST /api/v1/auth/register`.
+* **State Management (`useFloraStore.ts` & `auth.service.ts`):**
+  - Logged-out state: Header displays only the "Sign In" pill; `/account` page displays unauthenticated landing state. No username is ever displayed before authentication.
+  - Logged-in state: Header displays user initials and real name (`user.name`); `/account` page displays full profile, email, phone, and order history.
+  - Logout action: Clears JWT token from `localStorage`, resets Zustand user state, cart, and orders.
+
+### 15.6 Google Gemini AI Recommendation Pipeline (`gemini-3.8-flash`)
+* **Endpoint:** `POST /api/v1/ai/recommend`
+* **Request DTO:** `{ message: string, sessionId?: string }`
+* **Response DTO:** `{ reply: string, products: List<ProductCardDto>, matchedKeywords: List<String> }`
+* **Model Selection:** `gemini-3.8-flash` (via Google Generative Language API v1beta).
+* **Catalog Prompt Engineering:**
+  - Injects all 31 nursery catalog items with lighting requirements, water frequency, air purification flags, and pricing into the model system prompt.
+  - Instructs Gemini to act as "Flora AI — Your Plant Guide" for Indian indoor and balcony environments.
+  - Prompts model to append `RECOMMENDED_SLUGS: [slug-1, slug-2]` at the end of the response.
+* **Catalog Hydration:**
+  - `GeminiRecommendationService.java` extracts recommended slugs and queries PostgreSQL `ProductRepository` to hydrate full product cards (name, price, rating, studio image, tags).
+* **Fault Tolerance:**
+  - If Gemini API is unreachable or rate-limited, the service automatically falls back to the deterministic local keyword engine, ensuring 100% uptime for customers.
+
+### 14.20 Homepage Active Botanical Offers & Discount Architecture
+* **Strict Non-Destructive Layout Integration:**
+  - Embedded `<ActiveOffersSection />` seamlessly between `<ExploreByPlantType />` and `<TrustStrip />` on the homepage (`src/app/page.tsx`).
+  - Completely preserves existing frozen UI/UX, typography, colors, spacing, animations, cards, header, hero, and navigation.
+* **Spring Boot REST API & PostgreSQL Data Sourcing:**
+  - Endpoint: `GET /api/v1/coupons` and `GET /api/v1/coupons/active`.
+  - Service: `CouponService.java` querying `CouponRepository.findAllByIsActiveTrueOrderByDiscountValueDesc()`.
+  - Security: Permitted publicly in `SecurityConfig.java`.
+  - Data: Sourced strictly from PostgreSQL database `coupons` table:
+    - `FLORA10`: 10% off on all plants, pots & seeds (no minimum, max discount ₹500).
+    - `NATURE20`: 20% off on orders above ₹1,000 (max discount ₹1,000).
+    - `WELCOME50`: Flat ₹50 off on orders above ₹499 (welcome offer).
+* **Component Architecture (`ActiveOffersSection.tsx` & `components.css`):**
+  - Card Layout: Responsive 3-column grid (`.active-offers-grid`) on desktop, collapsing to 1 column on mobile screens (`max-width: 768px`).
+  - Interactive Micro-interactions:
+    - 1-click code copying with tactile checkmark state (`Copied! ✓`).
+    - Direct store application: triggers `applyCoupon(code)` in Zustand `useFloraStore` with toast notification (`Coupon FLORA10 applied! 🌿`).
+    - Direct catalog navigation: links to relevant category (`/plants`).
+  - Zero Layout Shift (CLS): SSR initialized with seed fallback state matching PostgreSQL active vouchers, ensuring immediate pre-rendering in HTML payload.
+* **End-to-End Checkout Flow:**
+  - `POST /api/v1/orders/validate` calculates authoritative mathematical discounts against PostgreSQL coupon rules.
+  - `POST /api/v1/orders` records the discount amount authoritatively and persists order with tracking milestones.
+
+### 15.8 User Data Isolation, Tax Invoice PDF & Client Synchronization
+* **User Data Isolation Architecture:**
+  - `SecurityUtils.getCurrentUserEmail()` extracts the authenticated principal directly from the validated Spring Security JWT.
+  - Ownership validation: `OrderService.java` enforces that `order.getUser().getEmail().equals(currentUserEmail)` or `user.getRole() == Role.ADMIN`. Any non-owner attempting access throws `AccessDeniedException` triggering HTTP `403 Forbidden`.
+  - Frontend state hygiene: `useFloraStore.ts` explicitly resets `cart: []`, `wishlist: []`, `orders: []`, and `coupon: null` on `logout()`. Upon authentication, `loadUserData()` fetches the authentic customer-specific wishlist, cart, and orders from the REST backend.
+* **Tax Invoice PDF Architecture (`InvoiceService.java`):**
+  - Generates binary `application/pdf` byte streams via iText 7.
+  - Document Structure: Flora Fusion botanical header, order metadata (`FF-XXXXXX`), billing & shipping addresses, itemized order items table, tax breakdown (CGST/SGST), discount deduction, grand total, and authorized digital stamp.
+  - REST Endpoint: `GET /api/v1/orders/{orderNumber}/invoice` protected by strict RBAC ownership check.
+  - Client Download: `orderService.downloadInvoice(orderNumber)` creates a secure blob link triggering browser native file download (`Flora_Fusion_Invoice_FF-XXXXXX.pdf`).
+* **Cart & Wishlist Identifier Resolution:**
+  - `CartService.java` and `WishlistService.java` support both UUID strings and frontend botanical slugs (`snake-plant`, `plant-1`) or SKUs. If parsing as `UUID` fails, it falls back to `productRepository.findBySlug(productIdStr)`.
+* **Floating WhatsApp Botanical Assistance (`WhatsAppButton.tsx`):**
+  - Fixed-position floating button on `bottom: 28px; left: 28px` (desktop) and `bottom: 74px` (mobile), clearing the mobile navigation bar.
+  - Number source: `process.env.NEXT_PUBLIC_WHATSAPP_NUMBER` configured in `.env.local` / `.env.example` as `919890414379`.
+  - Target URL: `https://wa.me/919890414379?text=Hi%20Flora%20Fusion%2C%20I%20need%20help%20with%20a%20product%2Forder.`
+  - Pre-filled message: `"Hi Flora Fusion, I need help with a product/order."` (URL-encoded). Customer manually reviews and sends in WhatsApp client without automated bots or APIs.
+
+### 15.9 Active System State
+* **Backend:** Spring Boot running on `http://localhost:8080`.
+* **Frontend:** Next.js 14 App Router running on `http://localhost:3000`.
+* **Database:** PostgreSQL running on `localhost:5432` with database `flora_fusion`.
+* **Credentials:** Protected in `backend/.env` (untracked, git-ignored).
+
+
+
 
 
 

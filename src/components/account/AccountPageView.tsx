@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useFloraStore } from "@/store/useFloraStore";
 
 export function AccountPageView() {
-  const { orders, wishlist, openFloraAI } = useFloraStore();
+  const { orders, wishlist, user, isAuthenticated, openAuthModal, logout, openFloraAI, loadOrders } = useFloraStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (isAuthenticated) {
+      loadOrders();
+    }
+  }, [isAuthenticated, loadOrders]);
 
   if (!mounted) {
     return (
@@ -21,6 +24,85 @@ export function AccountPageView() {
   }
 
   const latestOrder = orders.length > 0 ? orders[0] : null;
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="account-page-container" style={{ padding: "var(--space-8) 0 var(--space-16)" }}>
+        <div className="container" style={{ maxWidth: "560px", textAlign: "center", padding: "60px 20px" }}>
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              backgroundColor: "var(--color-brand-sage-light, #DDE7D8)",
+              color: "var(--color-brand-forest, #173F2B)",
+              fontSize: "1.75rem",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "16px",
+            }}
+          >
+            👤
+          </div>
+          <h1
+            style={{
+              fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
+              fontSize: "2rem",
+              color: "var(--color-brand-forest)",
+              margin: "0 0 12px",
+            }}
+          >
+            Sign in to Your Account
+          </h1>
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: "0.9375rem",
+              lineHeight: 1.6,
+              marginBottom: "24px",
+            }}
+          >
+            Access your orders, track live nursery shipments, manage your wishlist, and enjoy personalized botanical recommendations.
+          </p>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => openAuthModal("signin")}
+              className="btn-primary"
+              style={{ padding: "12px 28px", fontSize: "0.9375rem" }}
+            >
+              Sign In →
+            </button>
+            <button
+              type="button"
+              onClick={() => openAuthModal("signup")}
+              className="btn-secondary"
+              style={{ padding: "12px 20px", fontSize: "0.9375rem" }}
+            >
+              Create Account
+            </button>
+            <Link
+              href="/"
+              className="btn-secondary"
+              style={{ padding: "12px 20px", fontSize: "0.9375rem", textDecoration: "none" }}
+            >
+              Browse Catalog
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const initials = user.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "FF";
 
   return (
     <div className="account-page-container" style={{ padding: "var(--space-8) 0 var(--space-16)" }}>
@@ -77,39 +159,62 @@ export function AccountPageView() {
                 justifyContent: "center",
               }}
             >
-              PS
+              {initials}
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                 <h1 style={{ fontSize: "1.5rem", color: "var(--color-brand-forest)", margin: 0 }}>
-                  Priya Sharma
+                  {user.name}
                 </h1>
                 <span
                   style={{
-                    backgroundColor: "var(--color-brand-sage-light)",
-                    color: "var(--color-brand-forest)",
+                    backgroundColor: user.role === "ADMIN" ? "#FFF8F2" : "var(--color-brand-sage-light)",
+                    color: user.role === "ADMIN" ? "var(--color-brand-terracotta)" : "var(--color-brand-forest)",
                     fontSize: "0.75rem",
                     fontWeight: 600,
                     padding: "3px 10px",
                     borderRadius: "var(--radius-pill)",
+                    border: user.role === "ADMIN" ? "1px solid var(--color-brand-terracotta)" : "none",
                   }}
                 >
-                  Botanical Club 🌿
+                  {user.role === "ADMIN" ? "👑 Admin" : "Botanical Club 🌿"}
                 </span>
               </div>
               <p style={{ color: "var(--color-text-secondary)", fontSize: "0.875rem", margin: 0 }}>
-                priya.sharma@example.com • +91 98765 43210
+                {user.email}
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            {user.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="btn-primary"
+                style={{
+                  padding: "10px 18px",
+                  fontSize: "0.875rem",
+                  backgroundColor: "var(--color-brand-terracotta)",
+                  textDecoration: "none",
+                }}
+              >
+                Admin Dashboard 👑
+              </Link>
+            )}
             <Link href="/account/orders" className="btn-secondary" style={{ padding: "10px 18px", fontSize: "0.875rem" }}>
               My Orders ({orders.length})
             </Link>
             <Link href="/wishlist" className="btn-secondary" style={{ padding: "10px 18px", fontSize: "0.875rem" }}>
               Wishlist ({wishlist.length})
             </Link>
+            <button
+              type="button"
+              onClick={logout}
+              className="btn-secondary"
+              style={{ padding: "10px 18px", fontSize: "0.875rem", color: "#C53030" }}
+            >
+              Sign Out
+            </button>
           </div>
         </div>
 
@@ -212,26 +317,52 @@ export function AccountPageView() {
                 Saved Delivery Addresses
               </h3>
 
-              <div
-                style={{
-                  padding: "16px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--color-brand-sage)",
-                  backgroundColor: "var(--color-surface-soft)",
-                  marginBottom: "12px",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                  <strong style={{ fontSize: "0.875rem", color: "var(--color-brand-forest)" }}>
-                    Primary Residence (Default)
-                  </strong>
-                  <span style={{ fontSize: "0.75rem", color: "var(--color-brand-green)", fontWeight: 600 }}>Home</span>
+              {latestOrder?.shippingAddress?.addressLine1 ? (
+                <div
+                  style={{
+                    padding: "16px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--color-brand-sage)",
+                    backgroundColor: "var(--color-surface-soft)",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <strong style={{ fontSize: "0.875rem", color: "var(--color-brand-forest)" }}>
+                      {latestOrder.shippingAddress.fullName || user.name}
+                    </strong>
+                    <span style={{ fontSize: "0.75rem", color: "var(--color-brand-green)", fontWeight: 600 }}>Primary</span>
+                  </div>
+                  <p style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)", margin: 0, lineHeight: 1.5 }}>
+                    {latestOrder.shippingAddress.addressLine1}
+                    {latestOrder.shippingAddress.addressLine2 ? `, ${latestOrder.shippingAddress.addressLine2}` : ""}<br />
+                    {latestOrder.shippingAddress.city}{latestOrder.shippingAddress.state ? `, ${latestOrder.shippingAddress.state}` : ""} — {latestOrder.shippingAddress.pincode}
+                    {latestOrder.shippingAddress.phone && (
+                      <>
+                        <br />
+                        <span style={{ color: "var(--color-text-muted)", fontSize: "0.75rem" }}>
+                          Phone: {latestOrder.shippingAddress.phone}
+                        </span>
+                      </>
+                    )}
+                  </p>
                 </div>
-                <p style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)", margin: 0, lineHeight: 1.5 }}>
-                  Flat 402, Green Meadows, Koregaon Park<br />
-                  Pune, Maharashtra — 411001
-                </p>
-              </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "16px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px dashed var(--color-border-light)",
+                    backgroundColor: "var(--color-cream-soft)",
+                    textAlign: "center",
+                    color: "var(--color-text-muted)",
+                    fontSize: "0.8125rem",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  No saved delivery address yet. Your address will be saved after your first botanical order.
+                </div>
+              )}
             </div>
 
             {/* Flora AI Assistance Card */}

@@ -6,12 +6,22 @@
 
 import { Product, ProductCategory } from "@/types/product";
 import { FLORA_CATALOG, getAllProducts, getProductById, getProductBySlug } from "@/data/catalog";
+import { apiFetch, IS_BACKEND_CONFIGURED } from "@/lib/api";
 
 export const ProductService = {
   /**
    * Fetch all products across all categories
    */
   async getAll(): Promise<Product[]> {
+    if (IS_BACKEND_CONFIGURED) {
+      try {
+        const response = await apiFetch<{ content: Product[] } | Product[]>("products?size=100");
+        const list = Array.isArray(response) ? response : response?.content || [];
+        if (list.length > 0) return list;
+      } catch (err) {
+        console.warn("API product fetch failed, falling back to local catalog:", err);
+      }
+    }
     return getAllProducts();
   },
 
@@ -23,6 +33,29 @@ export const ProductService = {
     filter: string = "all",
     sort: string = "featured"
   ): Promise<Product[]> {
+    if (IS_BACKEND_CONFIGURED) {
+      try {
+        const response = await apiFetch<{ content: Product[] } | Product[]>(
+          `products?category=${category}&sort=${sort}&size=100`
+        );
+        const apiList = Array.isArray(response) ? response : response?.content || [];
+        if (apiList.length > 0) {
+          const normalizedFilter = filter.toLowerCase().replace(/[\s-_]+/g, "");
+          if (normalizedFilter !== "all" && normalizedFilter !== "") {
+            return apiList.filter((item) => {
+              const sub = (item.subCategory || "").toLowerCase().replace(/[\s-_]+/g, "");
+              const name = item.name.toLowerCase().replace(/[\s-_]+/g, "");
+              const tagline = item.tagline.toLowerCase().replace(/[\s-_]+/g, "");
+              return sub.includes(normalizedFilter) || name.includes(normalizedFilter) || tagline.includes(normalizedFilter);
+            });
+          }
+          return apiList;
+        }
+      } catch (err) {
+        console.warn("API category fetch failed, falling back to local catalog:", err);
+      }
+    }
+
     const list = FLORA_CATALOG[category] || [];
     const normalizedFilter = filter.toLowerCase().replace(/[\s-_]+/g, "");
 
@@ -122,6 +155,14 @@ export const ProductService = {
    * Fetch single product by slug
    */
   async getBySlug(slug: string): Promise<Product | null> {
+    if (IS_BACKEND_CONFIGURED) {
+      try {
+        const product = await apiFetch<Product>(`products/${slug}`);
+        if (product) return product;
+      } catch (err) {
+        console.warn("API slug fetch failed, falling back to local catalog:", err);
+      }
+    }
     return getProductBySlug(slug) || null;
   },
 
@@ -138,6 +179,16 @@ export const ProductService = {
   async search(query: string): Promise<Product[]> {
     const q = query.toLowerCase().trim();
     if (!q) return [];
+
+    if (IS_BACKEND_CONFIGURED) {
+      try {
+        const response = await apiFetch<{ content: Product[] } | Product[]>(`search?q=${encodeURIComponent(q)}&size=50`);
+        const list = Array.isArray(response) ? response : response?.content || [];
+        if (list.length > 0) return list;
+      } catch (err) {
+        console.warn("API search failed, falling back to local catalog search:", err);
+      }
+    }
 
     return getAllProducts().filter((p) => {
       return (

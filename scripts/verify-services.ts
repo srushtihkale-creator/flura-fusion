@@ -13,6 +13,7 @@ import { CartService } from "../src/services/cart.service";
 import { OrderService } from "../src/services/order.service";
 import { SearchService } from "../src/services/search.service";
 import { ProductService } from "../src/services/product.service";
+import { CouponService } from "../src/services/coupon.service";
 
 console.log("🌱 Starting Flora Fusion Test & Verification Suite...\n");
 
@@ -125,6 +126,30 @@ async function runAllTests() {
     const valid = CartService.validateCoupon("NATURE20", 1200);
     assert.strictEqual(valid.valid, true);
     assert.strictEqual(valid.discountRate, 0.2);
+  });
+
+  await test("CartService validates coupon WELCOME50 (flat ₹50 discount)", () => {
+    const invalid = CartService.validateCoupon("WELCOME50", 300);
+    assert.strictEqual(invalid.valid, false);
+
+    const valid = CartService.validateCoupon("WELCOME50", 500);
+    assert.strictEqual(valid.valid, true);
+
+    const mockItems = [
+      { id: "plant-1", slug: "money-plant", name: "Money Plant", price: 500, image: "", category: "plants", quantity: 1 },
+    ];
+    const res = CartService.calculateTotals(mockItems, "WELCOME50");
+    assert.strictEqual(res.discount, 50);
+  });
+
+  await test("CouponService fetches active botanical coupons from database/backend", async () => {
+    const coupons = await CouponService.getActiveCoupons();
+    assert.ok(Array.isArray(coupons), "Coupons should be an array");
+    assert.ok(coupons.length >= 3, "Should have at least 3 active coupons");
+    const codes = coupons.map((c) => c.code.toUpperCase());
+    assert.ok(codes.includes("FLORA10"), "Should include FLORA10");
+    assert.ok(codes.includes("NATURE20"), "Should include NATURE20");
+    assert.ok(codes.includes("WELCOME50"), "Should include WELCOME50");
   });
 
   // 4. Order Service Creation & Tracking Steps
