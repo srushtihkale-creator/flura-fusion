@@ -33,22 +33,36 @@ export async function apiFetch<T>(
 
   const token = typeof window !== "undefined" ? localStorage.getItem("flora_token") : null;
   const url = `${API_BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options?.headers || {}),
-    },
-    ...options,
-  });
+  
+  // 5-second timeout during static page building, 15s in client browser
+  const timeoutMs = typeof window === "undefined" ? 5000 : 15000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    throw new Error(
-      errorBody?.message ||
-        `API request failed with status ${response.status} (${response.statusText})`
-    );
+  try {
+    const response = await fetch(url, {
+      signal: options?.signal || controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options?.headers || {}),
+      },
+      ...options,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
+      throw new Error(
+        errorBody?.message ||
+          `API request failed with status ${response.status} (${response.statusText})`
+      );
+    }
+
+    return response.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
   }
-
-  return response.json();
 }

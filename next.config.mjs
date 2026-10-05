@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  staticPageGenerationTimeout: 120,
   transpilePackages: ["gsap", "lenis"],
   images: {
     unoptimized: true,
