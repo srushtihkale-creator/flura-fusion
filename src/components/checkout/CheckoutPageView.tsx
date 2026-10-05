@@ -576,6 +576,28 @@ export function CheckoutPageView() {
                   <span>🔒</span>
                   <span>100% Encrypted &amp; Secure Payments powered by <strong>Razorpay</strong> (UPI, Cards, NetBanking)</span>
                 </div>
+
+                {/* Test Mode Helper Banner */}
+                {(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TkGZqDthTkR6pj").startsWith("rzp_test_") && (
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      padding: "10px 14px",
+                      backgroundColor: "#F0FDF4",
+                      border: "1px dashed #16A34A",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: "0.75rem",
+                      color: "#166534",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong>🧪 Razorpay Test Mode:</strong> Use Indian Domestic Test Card{" "}
+                    <code style={{ background: "#DCFCE7", padding: "2px 6px", borderRadius: "4px", fontWeight: 700, letterSpacing: "0.5px" }}>
+                      4718 6091 0820 4366
+                    </code>{" "}
+                    (CVV: 123, Exp: 12/28) or select <strong>NetBanking (HDFC/SBI)</strong> &rarr; click <em>Success</em>.
+                  </div>
+                )}
               </div>
             )}
 
