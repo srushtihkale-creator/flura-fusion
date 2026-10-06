@@ -61,7 +61,11 @@ function VerifyEmailForm() {
   };
 
   const handleResend = async () => {
-    if (cooldown > 0 || !email) return;
+    if (!email.trim()) {
+      setErrorMessage("Please enter your email address to request a new verification code.");
+      return;
+    }
+    if (cooldown > 0) return;
     setErrorMessage("");
     setInfoMessage("");
     setLoading(true);
@@ -253,18 +257,18 @@ function VerifyEmailForm() {
               <button
                 type="button"
                 onClick={handleResend}
-                disabled={cooldown > 0 || !email}
+                disabled={cooldown > 0 || loading}
                 style={{
                   background: "none",
                   border: "none",
-                  color: cooldown > 0 ? "#888" : "var(--color-forest, #173F2B)",
+                  color: cooldown > 0 || loading ? "#888" : "var(--color-forest, #173F2B)",
                   fontSize: 12,
-                  cursor: cooldown > 0 ? "not-allowed" : "pointer",
+                  cursor: cooldown > 0 || loading ? "not-allowed" : "pointer",
                   padding: 0,
-                  textDecoration: "underline",
+                  textDecoration: cooldown > 0 ? "none" : "underline",
                 }}
               >
-                {cooldown > 0 ? `Resend code (${cooldown}s)` : "Resend code"}
+                {loading ? "Sending code..." : cooldown > 0 ? `Resend code (${cooldown}s)` : "Resend code"}
               </button>
             </div>
             <input

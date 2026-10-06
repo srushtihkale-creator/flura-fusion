@@ -49,6 +49,20 @@ export function AuthModal() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
+  useEffect(() => {
+    if (authMode === "verify" && !targetEmail) {
+      const fallback = (email || regEmail).trim();
+      if (fallback) {
+        setTargetEmail(fallback);
+      } else if (typeof window !== "undefined") {
+        try {
+          const stored = JSON.parse(localStorage.getItem("flora_user") || "{}");
+          if (stored.email) setTargetEmail(stored.email);
+        } catch {}
+      }
+    }
+  }, [authMode, targetEmail, email, regEmail]);
+
   if (!isAuthModalOpen) return null;
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -117,6 +131,11 @@ export function AuthModal() {
 
   const handleVerifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const effectiveEmail = (targetEmail || email || regEmail).trim();
+    if (!effectiveEmail) {
+      setErrorMessage("Please enter your email address.");
+      return;
+    }
     if (!verifyCode.trim()) {
       setErrorMessage("Please enter the 6-digit verification code.");
       return;
@@ -126,7 +145,7 @@ export function AuthModal() {
     setErrorMessage("");
     setInfoMessage("");
 
-    const result = await verifyEmail(targetEmail, verifyCode.trim());
+    const result = await verifyEmail(effectiveEmail, verifyCode.trim());
     setLoading(false);
 
     if (!result.success) {
@@ -139,18 +158,28 @@ export function AuthModal() {
   };
 
   const handleResendCode = async () => {
-    if (cooldown > 0 || !targetEmail) return;
+    const effectiveEmail = (targetEmail || email || regEmail).trim();
+    if (!effectiveEmail) {
+      setErrorMessage("Please enter your email address to receive a verification code.");
+      return;
+    }
+    if (cooldown > 0) return;
 
     setLoading(true);
     setErrorMessage("");
-    const result = await resendVerification(targetEmail);
-    setLoading(false);
-
-    if (result.success) {
-      setCooldown(60);
-      setInfoMessage(result.message || "A new verification code has been sent to your email.");
-    } else {
-      setErrorMessage(result.error || "Failed to resend code.");
+    setInfoMessage("");
+    try {
+      const result = await resendVerification(effectiveEmail);
+      if (result.success) {
+        setCooldown(60);
+        setInfoMessage(result.message || `A new verification code has been dispatched to ${effectiveEmail}.`);
+      } else {
+        setErrorMessage(result.error || "Failed to resend code.");
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to resend code.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -800,6 +829,38 @@ export function AuthModal() {
         {authMode === "verify" && (
           <div>
             <form onSubmit={handleVerifySubmit}>
+              <div style={{ marginBottom: "14px" }}>
+                <label
+                  htmlFor="verify-target-email"
+                  style={{
+                    display: "block",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "var(--color-brand-forest, #173F2B)",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Email Address
+                </label>
+                <input
+                  id="verify-target-email"
+                  type="email"
+                  required
+                  value={targetEmail}
+                  onChange={(e) => setTargetEmail(e.target.value)}
+                  placeholder="srushti.h.kale2004@gmail.com"
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: "var(--radius-md, 8px)",
+                    border: "1px solid var(--color-border, #CBD5E1)",
+                    fontSize: "0.9375rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
               <div style={{ marginBottom: "20px" }}>
                 <label
                   htmlFor="verify-code"
@@ -871,12 +932,12 @@ export function AuthModal() {
                     border: "none",
                     color: cooldown > 0 ? "var(--color-text-muted, #718096)" : "var(--color-brand-forest, #173F2B)",
                     fontWeight: 600,
-                    cursor: cooldown > 0 ? "default" : "pointer",
+                    cursor: cooldown > 0 || loading ? "default" : "pointer",
                     padding: 0,
                     textDecoration: cooldown > 0 ? "none" : "underline",
                   }}
                 >
-                  {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend Code 🔄"}
+                  {loading ? "Sending code..." : cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend Code 🔄"}
                 </button>
 
                 <button
