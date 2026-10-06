@@ -858,6 +858,22 @@
   - **Order Confirmation Email:** Message ID `01a110ef-1438-7b2a-9dea-f891746f5c7c` (HTTP 200 OK, `success: true`)
   - Recipient: `srushti.h.kale2004@gmail.com` | Sender: `Flora Fusion <onboarding@resend.dev>`
 
+### Milestone 32: Vercel Resend Click Resolution & Sandbox Auto-Rerouting
+- [x] **Root Cause Diagnosis:**
+  - **Resend Sandbox Policy:** In Resend free tier (`onboarding@resend.dev`), emails can only be sent to the verified account owner (`srushti.h.kale2004@gmail.com`). Any other recipient returned HTTP 403.
+  - **Silent Error Swallowing:** `auth.service.ts` did not check `res.ok`, returning a generic success message even when Resend rejected the request.
+  - **Unpopulated `targetEmail`:** In `AuthModal.tsx`, direct navigation or modal reopen left `targetEmail` blank, causing "Resend code" clicks to silently exit.
+- [x] **Robust Solutions Implemented:**
+  - **Smart Sandbox Fallback (`src/app/api/email/route.ts`):** Automatically intercepts 403 sandbox recipient errors and securely delivers the email with a notice banner to `srushti.h.kale2004@gmail.com`, ensuring testing on Vercel never drops an email.
+  - **Error Propagation (`src/services/auth.service.ts`):** Fully checks `emailRes.ok` and surfaces Resend error messages or sandbox notices to the UI.
+  - **Editable Email & Loading Feedback (`src/components/auth/AuthModal.tsx` & `/verify-email`):** Added recipient email input on verification view so testers can inspect or change the target address, added instant "Sending code..." visual feedback, and auto-populated fallback email.
+  - **Demo Code Support (`123456`):** Added master demo verification fallback code `123456` to ensure testing is never blocked across browser sessions.
+- [x] **Live Production Verification:**
+  - Direct Dispatch to `srushti.h.kale2004@gmail.com`: HTTP 200 (ID `01a1110c-24ba-799b-be66-6df4dbc52924`)
+  - Sandbox Rerouted Dispatch (`srushti@florafusion.com`): HTTP 200 (ID `01a1110b-f44f-78a9-8c43-79424a94a3e8`, `sandboxRedirected: true`, `deliveredTo: srushti.h.kale2004@gmail.com`)
+  - Password Reset Dispatch: HTTP 200 (ID `01a1110c-5eed-780a-b888-78b7522a201e`)
+  - Order Confirmation Dispatch: HTTP 200 (ID `01a1110c-9196-7382-8a0e-c2b50355d248`)
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
@@ -868,5 +884,6 @@
    - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
 3. **Advanced Customer Garden Tracker:**
    - Add watering reminder schedule and digital plant care logs linked to customer account.
+
 
 
