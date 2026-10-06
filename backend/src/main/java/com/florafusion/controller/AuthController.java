@@ -73,4 +73,10 @@ public class AuthController {
             "role", principal.getRole().name()
         ));
     }
+
+    @GetMapping("/test-email")
+    @Operation(summary = "Diagnostic test endpoint for transactional email dispatch")
+    public ResponseEntity<?> testEmail(@RequestParam(required = false) String to) {
+        return ResponseEntity.ok(authService.testEmailDispatch(to));
+    }
 }

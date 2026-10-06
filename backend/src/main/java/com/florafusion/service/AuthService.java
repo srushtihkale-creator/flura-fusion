@@ -334,4 +334,26 @@ public class AuthService {
             throw new RuntimeException("SHA-256 digest unavailable", e);
         }
     }
+
+    public Map<String, Object> testEmailDispatch(String to) {
+        String recipient = (to != null && !to.isBlank()) ? to.trim() : "srushti.h.kale2004@gmail.com";
+        String code = generateSecureCode();
+        try {
+            var future = emailService.sendVerificationEmail(recipient, "Srushti Test", code);
+            var result = future.get();
+            return Map.of(
+                    "recipient", recipient,
+                    "code", code,
+                    "success", result.success(),
+                    "messageId", result.messageId() != null ? result.messageId() : "null",
+                    "error", result.error() != null ? result.error() : "none"
+            );
+        } catch (Exception e) {
+            return Map.of(
+                    "recipient", recipient,
+                    "success", false,
+                    "error", e.getMessage() != null ? e.getMessage() : e.toString()
+            );
+        }
+    }
 }
