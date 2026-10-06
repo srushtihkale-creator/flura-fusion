@@ -852,6 +852,11 @@
   - `auth.service.ts` and `order.service.ts` automatically detect environment:
     - If `IS_BACKEND_CONFIGURED` is true (local Spring Boot), routes requests to Spring Boot backend.
     - If `IS_BACKEND_CONFIGURED` is false (standalone Vercel), dispatches emails directly via `/api/email` (Resend).
+- [x] **Live Vercel Resend Verification Results (`https://flura-fusion.vercel.app/api/email`):**
+  - **Verification Email:** Message ID `01a110ed-f8d1-79a3-acd4-990f9c7f42f3` (HTTP 200 OK, `success: true`)
+  - **Password Reset Email:** Message ID `01a110ee-e076-79bb-bb41-cbdb2bb08f83` (HTTP 200 OK, `success: true`)
+  - **Order Confirmation Email:** Message ID `01a110ef-1438-7b2a-9dea-f891746f5c7c` (HTTP 200 OK, `success: true`)
+  - Recipient: `srushti.h.kale2004@gmail.com` | Sender: `Flora Fusion <onboarding@resend.dev>`
 
 ---
 
