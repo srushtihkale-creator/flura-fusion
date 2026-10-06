@@ -52,8 +52,13 @@ public class ResendEmailProvider implements EmailProvider {
         }
 
         try {
+            String effectiveFrom = defaultFrom;
+            if (effectiveFrom == null || effectiveFrom.isBlank() || effectiveFrom.toLowerCase().contains("@gmail.com") || effectiveFrom.toLowerCase().contains("@yahoo.com") || effectiveFrom.toLowerCase().contains("@outlook.com")) {
+                effectiveFrom = "Flora Fusion <onboarding@resend.dev>";
+            }
+
             Map<String, Object> payload = new HashMap<>();
-            payload.put("from", defaultFrom);
+            payload.put("from", effectiveFrom);
             payload.put("to", Collections.singletonList(message.to()));
             payload.put("subject", message.subject());
             payload.put("html", message.htmlBody());
