@@ -23,10 +23,11 @@ public class EmailProviderConfig {
     @Bean
     @Primary
     public EmailProvider primaryEmailProvider(
+            SmtpEmailProvider smtpProvider,
             ResendEmailProvider resendProvider,
             MockEmailProvider mockProvider
     ) {
-        String selected = providerName != null ? providerName.trim().toLowerCase() : "resend";
+        String selected = providerName != null ? providerName.trim().toLowerCase() : "smtp";
         log.info("[EmailProviderConfig] Initializing primary EmailProvider: '{}'", selected);
 
         return switch (selected) {
@@ -38,9 +39,13 @@ public class EmailProviderConfig {
                 log.info("[EmailProviderConfig] Using ResendEmailProvider as primary email delivery provider");
                 yield resendProvider;
             }
+            case "smtp" -> {
+                log.info("[EmailProviderConfig] Using SmtpEmailProvider as primary email delivery provider");
+                yield smtpProvider;
+            }
             default -> {
-                log.warn("[EmailProviderConfig] Unrecognized provider '{}', defaulting to ResendEmailProvider", selected);
-                yield resendProvider;
+                log.warn("[EmailProviderConfig] Unrecognized provider '{}', defaulting to SmtpEmailProvider", selected);
+                yield smtpProvider;
             }
         };
     }

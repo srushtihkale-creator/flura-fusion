@@ -949,3 +949,103 @@ graph TD
   13. Admin Dashboard Analytics (`GET /api/v1/admin/dashboard/stats`)
 * **Verification Status:** All 13 test flows pass with 100% success rate.
 
+---
+
+## 18. Transactional Email Architecture & Resend Integration (`ResendEmailProvider`)
+
+### 18.1 Pluggable Email Provider Architecture
+* **Interface Abstraction (`EmailProvider.java`):**
+  - Defines contract `EmailSendResult sendEmail(EmailMessage message)`.
+  - Immutable domain records: `EmailMessage`, `EmailAttachment`, and `EmailSendResult`.
+* **Provider Implementations:**
+  - `ResendEmailProvider` (`@Component("resendEmailProvider")`): Communicates with Resend REST API (`https://api.resend.com/emails`) using Java 11+ `HttpClient`.
+  - `EmailProviderConfig`: Swappable provider selector via `application.email.provider` (`${EMAIL_PROVIDER:resend}`).
+* **Security & Fallback Guarantee:**
+  - Sensitive `RESEND_API_KEY` is isolated in `backend/.env` (git-ignored) and never exposed to the frontend client.
+  - If `RESEND_API_KEY` is missing or placeholder (`re_placeholder...`), `ResendEmailProvider` falls back gracefully to simulated dispatch (`resend-simulated-{UUID}`) without breaking order creation or user registration flows.
+
+### 18.2 Dispatch Triggers & Workflow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Customer / Browser
+    participant API as Spring Boot Controller
+    participant Service as OrderService / AuthService
+    participant Email as EmailServiceImpl
+    participant Provider as ResendEmailProvider
+    participant Resend as Resend REST API
+
+    alt Account Registration
+        Customer->>API: POST /api/v1/auth/register
+        API->>Service: register(request)
+        Service->>Email: sendWelcomeEmail(email, name)
+    else Order Placement
+        Customer->>API: POST /api/v1/orders
+        API->>Service: createOrder(request)
+        Service->>Email: sendOrderConfirmationEmail(order, invoicePdf)
+    end
+
+    Email->>Provider: sendEmail(EmailMessage)
+    Provider->>Resend: POST https://api.resend.com/emails (Bearer Token)
+    Resend-->>Provider: HTTP 200 OK { id: "01a1..." }
+    Provider-->>Email: EmailSendResult.ok(messageId)
+```
+
+### 18.3 Binary PDF Invoice Attachment Pipeline
+* In `OrderService.createOrder()`, upon persisting order records to PostgreSQL:
+  1. `InvoiceService.generateInvoicePdf(order)` creates a compliant binary OpenPDF document in memory.
+  2. `ResendEmailProvider` extracts `EmailAttachment`, applies Base64 encoding (`Base64.getEncoder().encodeToString(att.data())`), and constructs a multipart JSON payload accepted by Resend.
+  3. Resend attaches the PDF (`Flora_Fusion_Invoice_{orderNumber}.pdf`) directly to the customer's email inbox.
+
+### 18.4 Live Resend API Verification Results (`LiveResendEmailTest.java`)
+* **Environment:** Live verification executed against the official Resend API (`https://api.resend.com/emails`).
+* **Sender:** `Flora Fusion <onboarding@resend.dev>`.
+* **Recipient:** `srushti.h.kale2004@gmail.com`.
+* **Verification Metrics:**
+  - **Welcome Email:** Message ID `01a10feb-510c-723a-ae77-d9efb126a041` (Status: HTTP 200 OK, `success: true`).
+  - **Order Confirmation Email:** Message ID `01a10feb-56d2-7648-a7a8-d0a5251899b4` (Status: HTTP 200 OK, `success: true`, 2,139 byte PDF Tax Invoice attachment).
+
+---
+
+## 19. SMTP Email Provider & Cryptographic Token Verification Flow
+
+### 19.1 Pluggable Email Architecture
+Flora Fusion supports three pluggable email provider strategies configured via `EMAIL_PROVIDER`:
+1. `resend`: Uses Resend REST API (`ResendEmailProvider.java`).
+2. `smtp`: Uses Spring Boot `JavaMailSender` (`SmtpEmailProvider.java`).
+3. `mock`: In-memory simulated logger for offline development and testing (`MockEmailProvider.java`).
+
+When `EMAIL_PROVIDER=smtp`, the system dynamically creates a `JavaMailSenderImpl` configured with:
+* `SMTP_HOST` (e.g. `smtp.gmail.com`, `smtp.mailgun.org`, etc.)
+* `SMTP_PORT` (e.g. `587` or `465`)
+* `SMTP_USERNAME` & `SMTP_PASSWORD`
+* `SMTP_AUTH` & `SMTP_STARTTLS`
+* `EMAIL_FROM` (e.g. `Flora Fusion <noreply@florafusion.com>`)
+
+### 19.2 Cryptographic Token Storage & PostgreSQL Schema (`V4__email_verification_and_security_tokens.sql`)
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS security_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_type VARCHAR(50) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_tokens_user_type ON security_tokens(user_id, token_type);
+CREATE INDEX IF NOT EXISTS idx_security_tokens_hash ON security_tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_security_tokens_expires ON security_tokens(expires_at);
+```
+
+### 19.3 Security Guarantees
+1. **Zero Plaintext Tokens:** All 6-digit verification codes and password reset tokens are hashed with SHA-256 before persisting to PostgreSQL.
+2. **Replay Attack Prevention:** Verification queries check `used_at IS NULL` and set `used_at = NOW()` in a single transaction.
+3. **Strict Rate-Limiting:** Cooldown check prevents resending verification or reset emails within 60 seconds of the last request (`400 Bad Request` with exact seconds remaining).
+4. **Login Gate:** Unverified users are rejected at login (`400 Bad Request`) until their email is verified.
+
+
+

@@ -32,7 +32,10 @@
 | **Google Gemini Flora AI** | ✅ Complete | Spring Boot proxy (`gemini-3.8-flash`), dynamic catalog prompt injection, catalog hydration | 100% Tested with live botanical queries |
 | **Homepage Offers & Discounts** | ✅ Complete | Dynamic backend coupons (`/api/v1/coupons`), prominent homepage cards, 1-click copy/apply, checkout flow | 100% Tested & Verified with PostgreSQL |
 | **Top Offer Marquee & Products** | ✅ Complete | Slim infinite right-to-left marquee, auto-apply, subtle product chips, admin CRUD, RBAC privacy | 100% Tested & Verified with E2E Suite |
+| **Resend Transactional Emails** | ✅ Complete | Welcome & Order Confirmation with attached PDF Tax Invoice via Resend REST API | 100% Live Verified (HTTP 200) |
+| **SMTP Transactional Emails** | ✅ Complete | Live Gmail SMTP integration with JavaMailSender & STARTTLS (`srushti.h.kale2004@gmail.com`) | 100% Live Verified (HTTP 200) |
 | **GitHub Remote Sync** | ✅ Synced | Branch `main`, Clean tree | 100% Synchronized with `origin/main` |
+
 
 ---
 
@@ -783,6 +786,59 @@
 - [x] **Git Repository & Remote Synchronization:**
   - Committed and pushed all commits (`fa6d5a1`, `ec20941`, `a735fcc`, `1ef98ab`) to GitHub `main` branch.
 
+### Milestone 29: Transactional Email Verification via Resend API & Dual Server Health
+- [x] **Live Resend API Email Delivery Verification (`LiveResendEmailTest.java`):**
+  - Executed live integration test suite against the official Resend REST API (`https://api.resend.com/emails`) using active `RESEND_API_KEY`.
+  - **Welcome Email Dispatch:**
+    - Recipient: `srushti.h.kale2004@gmail.com`
+    - Subject: `Welcome to Flora Fusion! 🌿`
+    - Message ID: `01a10feb-510c-723a-ae77-d9efb126a041`
+    - Status: HTTP 200 OK (`success: true`)
+  - **Order Confirmation Email Dispatch with PDF Tax Invoice:**
+    - Recipient: `srushti.h.kale2004@gmail.com`
+    - Subject: `Order Confirmed: FF-884920 🌿 Flora Fusion`
+    - Attachment: Binary OpenPDF Tax Invoice (`Flora_Fusion_Invoice_FF-884920.pdf`, 2,139 bytes) Base64 encoded
+    - Message ID: `01a10feb-56d2-7648-a7a8-d0a5251899b4`
+    - Status: HTTP 200 OK (`success: true`)
+- [x] **End-to-End Application Wiring:**
+  - `AuthService.java` asynchronously triggers `sendWelcomeEmail` upon successful customer account registration.
+  - `OrderService.java` asynchronously triggers `sendOrderConfirmationEmail` with the generated official PDF Tax Invoice upon order placement (`POST /api/v1/orders`).
+  - `ResendEmailProvider.java` handles fallback to simulated dispatch if the API key is absent, ensuring 100% test and build resilience.
+### Milestone 30: SMTP Email Provider Architecture & Cryptographic Token Verification
+- [x] **Pluggable SMTP Email Provider (`SmtpEmailProvider.java`):**
+  - Integrated `spring-boot-starter-mail` and configured `JavaMailSender` support.
+  - Pluggable provider selection via `EMAIL_PROVIDER=smtp` in `EmailProviderConfig.java`, preserving Resend (`ResendEmailProvider`) and Mock (`MockEmailProvider`).
+  - Added HTML multipart email rendering and Base64 binary PDF Tax Invoice attachment support.
+  - Configurable via standard environment variables: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, `SMTP_STARTTLS`, `EMAIL_FROM`.
+  - Zero-credential resilience: falls back cleanly to simulated dispatch if SMTP credentials are absent or placeholder.
+- [x] **PostgreSQL Schema & Token Security (`V4__email_verification_and_security_tokens.sql`):**
+  - Added `email_verified` boolean to `users` table.
+  - Adjusted `users_status_check` to permit `PENDING_VERIFICATION` status while retaining `ACTIVE`, `SUSPENDED`, `DELETED`.
+  - Created `security_tokens` table with columns: `id`, `user_id`, `token_type`, `token_hash`, `expires_at`, `used_at`, `created_at`.
+  - Indexed `(user_id, token_type)`, `token_hash`, and `expires_at` for high-throughput queries.
+  - Cryptographic token hashing: raw 6-digit codes and reset tokens are hashed via SHA-256 before storage; raw tokens are never persisted in plaintext.
+- [x] **End-to-End Auth & Verification Lifecycle:**
+  - **Registration:** Users start in `PENDING_VERIFICATION` state with `email_verified = false`. A cryptographically secure 6-digit verification code is generated (15-min validity) and emailed.
+  - **Login Gate:** Unverified users are blocked from login with a clear message to verify email first.
+  - **Verification:** `POST /api/v1/auth/verify-email` checks the single-use SHA-256 token, marks `used_at = NOW()`, transitions status to `ACTIVE`, sets `email_verified = true`, dispatches Welcome Email, and returns authenticated JWT session.
+  - **Rate-Limiting Cooldown:** `POST /api/v1/auth/resend-verification` enforces a strict 60-second cooldown with exact remaining seconds calculation to prevent spam.
+  - **Forgot/Reset Password:** `POST /api/v1/auth/forgot-password` generates secure 1-hour reset token; `POST /api/v1/auth/reset-password` validates and updates password, preventing replay attacks.
+- [x] **UI/UX Freeze Compliant Frontend:**
+  - Fully maintained design system and tokens in `src/components/auth/AuthModal.tsx`.
+  - Added verification code entry, 60s cooldown timer, forgot password, and reset password views matching the existing modal frame.
+- [x] **Live SMTP Email Delivery Verification:**
+  - Configured and authenticated with `smtp.gmail.com:587` using Google App Passwords over STARTTLS.
+  - Automatically handles space-separated 16-character App Passwords (`xxxx yyyy zzzz aaaa`).
+  - **Live Dispatch Verified:**
+    - Recipient: `srushti.h.kale2004@gmail.com`
+    - Subject: `Reset your password — Flora Fusion 🔐`
+    - Message ID: `8e50322c-329b-4b3a-9cba-0683338dceaf`
+    - Status: HTTP 200 OK (`[SmtpEmailProvider] Successfully dispatched email`)
+- [x] **Verification & Test Suite:**
+  - 27 Backend unit & service tests PASSED (`AuthServiceVerificationTest`, `EmailServiceTest`, `OrderServiceTest`, `CartServiceTest`, `ProductServiceTest`).
+  - 17 Frontend Vitest tests PASSED (`auth.service.test.ts`, `cart.service.test.ts`, `order.service.test.ts`, etc.).
+  - TypeScript `tsc --noEmit` verified with 0 errors.
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
@@ -793,3 +849,4 @@
    - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
 3. **Advanced Customer Garden Tracker:**
    - Add watering reminder schedule and digital plant care logs linked to customer account.
+

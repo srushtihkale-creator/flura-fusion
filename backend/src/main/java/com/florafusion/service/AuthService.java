@@ -2,9 +2,11 @@ package com.florafusion.service;
 
 import com.florafusion.dto.auth.*;
 import com.florafusion.entity.Role;
+import com.florafusion.entity.SecurityToken;
 import com.florafusion.entity.User;
 import com.florafusion.exception.BadRequestException;
 import com.florafusion.exception.ResourceNotFoundException;
+import com.florafusion.repository.SecurityTokenRepository;
 import com.florafusion.repository.UserRepository;
 import com.florafusion.security.JwtService;
 import com.florafusion.security.UserPrincipal;
@@ -18,7 +20,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,104 +34,304 @@ import java.util.Map;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final SecurityTokenRepository securityTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new BadRequestException("An account with email " + request.email() + " already exists.");
+        String email = request.email().trim().toLowerCase();
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("An account with email " + email + " already exists.");
         }
 
-        // Hard Rule: Public signup is unconditionally assigned ROLE_CUSTOMER
+        // Hard Rule: Public signup is assigned ROLE_CUSTOMER and PENDING_VERIFICATION status
         User user = User.builder()
                 .name(request.name().trim())
-                .email(request.email().trim().toLowerCase())
+                .email(email)
                 .phone(request.phone() != null ? request.phone().trim() : null)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(Role.CUSTOMER)
-                .status("ACTIVE")
+                .status("PENDING_VERIFICATION")
+                .emailVerified(false)
                 .build();
 
         user = userRepository.save(user);
 
-        UserPrincipal principal = UserPrincipal.create(user);
-        String token = jwtService.generateToken(principal);
+        // Generate secure 6-digit numeric verification code
+        String code = generateSecureCode();
+        String codeHash = hashToken(code);
 
-        // Asynchronously dispatch Welcome and Verification emails
+        SecurityToken securityToken = SecurityToken.builder()
+                .user(user)
+                .tokenHash(codeHash)
+                .tokenType(SecurityToken.TYPE_EMAIL_VERIFICATION)
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(15)))
+                .build();
+        securityTokenRepository.save(securityToken);
+
+        // Asynchronously dispatch Verification email (Welcome email is sent AFTER verification)
         try {
-            String verifyToken = jwtService.generateActionToken(user.getEmail(), "VERIFY_EMAIL", 86400000L); // 24 hours
-            emailService.sendWelcomeEmail(user.getEmail(), user.getName());
-            emailService.sendVerificationEmail(user.getEmail(), user.getName(), verifyToken);
+            emailService.sendVerificationEmail(user.getEmail(), user.getName(), code);
         } catch (Exception e) {
-            log.warn("[AuthService] Non-blocking email dispatch failed for {}: {}", user.getEmail(), e.getMessage());
+            log.warn("[AuthService] Non-blocking verification email dispatch failed for {}: {}", user.getEmail(), e.getMessage());
         }
 
-        return AuthResponse.of(token, user.getId(), user.getName(), user.getEmail(), user.getRole().name());
+        log.info("[AuthService] Registered new user {} with PENDING_VERIFICATION status", email);
+        return AuthResponse.pendingVerification(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                "Account created successfully. A 6-digit verification code has been sent to " + email + "."
+        );
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = request.email().trim().toLowerCase();
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email().trim().toLowerCase(),
-                        request.password()
-                )
+                new UsernamePasswordAuthenticationToken(email, request.password())
         );
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        String token = jwtService.generateToken(principal);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
+        // Unverified account guard: require email verification before allowing sign in
+        if ("PENDING_VERIFICATION".equalsIgnoreCase(user.getStatus()) || (!user.isEmailVerified() && user.getRole() == Role.CUSTOMER)) {
+            throw new BadRequestException("Your account is not verified yet. Please enter the verification code sent to " + email + ".");
+        }
+
+        if ("SUSPENDED".equalsIgnoreCase(user.getStatus())) {
+            throw new BadRequestException("Your account has been suspended. Please contact customer support.");
+        }
+
+        String token = jwtService.generateToken(principal);
         return AuthResponse.of(token, principal.getId(), principal.getName(), principal.getEmail(), principal.getRole().name());
     }
 
+    @Transactional
+    public AuthResponse verifyEmail(VerifyEmailRequest request) {
+        String code = request.getEffectiveTokenOrCode();
+        if (code == null || code.isBlank()) {
+            throw new BadRequestException("Verification code is required.");
+        }
+
+        User user = null;
+        if (request.email() != null && !request.email().isBlank()) {
+            user = userRepository.findByEmail(request.email().trim().toLowerCase())
+                    .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + request.email()));
+        }
+
+        // 1. Try DB-backed hashed 6-digit code matching
+        String codeHash = hashToken(code.trim());
+        SecurityToken tokenRecord = null;
+        if (user != null) {
+            tokenRecord = securityTokenRepository.findTopByUserAndTokenTypeAndTokenHashAndUsedAtIsNull(
+                    user, SecurityToken.TYPE_EMAIL_VERIFICATION, codeHash
+            ).orElse(null);
+        } else {
+            tokenRecord = securityTokenRepository.findTopByTokenTypeAndTokenHashAndUsedAtIsNull(
+                    SecurityToken.TYPE_EMAIL_VERIFICATION, codeHash
+            ).orElse(null);
+            if (tokenRecord != null) {
+                user = tokenRecord.getUser();
+            }
+        }
+
+        // 2. Fallback to legacy JWT action token verification if DB token not found
+        if (tokenRecord == null) {
+            if (jwtService.isActionTokenValid(code, "VERIFY_EMAIL")) {
+                String tokenEmail = jwtService.extractUsername(code);
+                user = userRepository.findByEmail(tokenEmail)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found for verification token."));
+            } else {
+                throw new BadRequestException("Invalid or already used verification code. Please request a new one.");
+            }
+        } else {
+            if (tokenRecord.isExpired()) {
+                throw new BadRequestException("Verification code has expired. Please click 'Resend Code'.");
+            }
+            tokenRecord.setUsedAt(Instant.now());
+            securityTokenRepository.save(tokenRecord);
+        }
+
+        // Activate user
+        user.setStatus("ACTIVE");
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        // Dispatch Welcome Email now that account is verified
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+        } catch (Exception e) {
+            log.warn("[AuthService] Non-blocking welcome email dispatch failed for {}: {}", user.getEmail(), e.getMessage());
+        }
+
+        log.info("[AuthService] Successfully verified email and activated account for: {}", user.getEmail());
+
+        // Issue JWT token so customer is automatically authenticated
+        UserPrincipal principal = UserPrincipal.create(user);
+        String jwt = jwtService.generateToken(principal);
+        return AuthResponse.of(jwt, user.getId(), user.getName(), user.getEmail(), user.getRole().name());
+    }
+
+    @Transactional
+    public Map<String, String> resendVerification(ResendVerificationRequest request) {
+        String email = request.email().trim().toLowerCase();
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            // Suppress account enumeration for security
+            return Map.of("message", "If an unverified account exists with that email, a new verification code has been sent.");
+        }
+
+        if (user.isEmailVerified() && "ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new BadRequestException("This account is already verified. Please sign in.");
+        }
+
+        // Rate limit: 60-second cooldown
+        Optional<SecurityToken> latest = securityTokenRepository.findTopByUserAndTokenTypeOrderByCreatedAtDesc(
+                user, SecurityToken.TYPE_EMAIL_VERIFICATION
+        );
+        if (latest.isPresent()) {
+            long elapsedSeconds = Duration.between(latest.get().getCreatedAt(), Instant.now()).getSeconds();
+            if (elapsedSeconds < 60) {
+                long remaining = 60 - elapsedSeconds;
+                throw new BadRequestException("Please wait " + remaining + " seconds before requesting a new code.");
+            }
+        }
+
+        // Invalidate older unused tokens
+        String code = generateSecureCode();
+        String codeHash = hashToken(code);
+
+        SecurityToken securityToken = SecurityToken.builder()
+                .user(user)
+                .tokenHash(codeHash)
+                .tokenType(SecurityToken.TYPE_EMAIL_VERIFICATION)
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(15)))
+                .build();
+        securityTokenRepository.save(securityToken);
+
+        emailService.sendVerificationEmail(user.getEmail(), user.getName(), code);
+        log.info("[AuthService] Resent verification code to: {}", email);
+
+        return Map.of("message", "A new 6-digit verification code has been sent to " + email + ".");
+    }
+
+    @Transactional
     public Map<String, String> requestPasswordReset(ForgotPasswordRequest request) {
         String email = request.email().trim().toLowerCase();
         User user = userRepository.findByEmail(email).orElse(null);
 
         if (user != null) {
-            String resetToken = jwtService.generateActionToken(user.getEmail(), "RESET_PASSWORD", 3600000L); // 1 hour
-            emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), resetToken);
-            log.info("[AuthService] Password reset token generated and email dispatched for user: {}", email);
+            // Rate limit: 60-second cooldown
+            Optional<SecurityToken> latest = securityTokenRepository.findTopByUserAndTokenTypeOrderByCreatedAtDesc(
+                    user, SecurityToken.TYPE_PASSWORD_RESET
+            );
+            if (latest.isPresent()) {
+                long elapsedSeconds = Duration.between(latest.get().getCreatedAt(), Instant.now()).getSeconds();
+                if (elapsedSeconds < 60) {
+                    log.info("[AuthService] Password reset request throttled for user: {} (cooldown active)", email);
+                    return Map.of("message", "If an account exists with that email, a password reset code has been sent.");
+                }
+            }
+
+            String code = generateSecureCode();
+            String codeHash = hashToken(code);
+
+            SecurityToken securityToken = SecurityToken.builder()
+                    .user(user)
+                    .tokenHash(codeHash)
+                    .tokenType(SecurityToken.TYPE_PASSWORD_RESET)
+                    .expiresAt(Instant.now().plus(Duration.ofHours(1)))
+                    .build();
+            securityTokenRepository.save(securityToken);
+
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), code);
+            log.info("[AuthService] Password reset code dispatched for user: {}", email);
         } else {
             log.info("[AuthService] Password reset requested for non-existent email: {} (suppressing error for security)", email);
         }
 
-        return Map.of("message", "If an account exists with that email, a password reset link has been sent.");
+        return Map.of("message", "If an account exists with that email, a password reset code has been sent.");
     }
 
     @Transactional
     public Map<String, String> resetPassword(ResetPasswordRequest request) {
-        if (!jwtService.isActionTokenValid(request.token(), "RESET_PASSWORD")) {
-            throw new BadRequestException("Invalid or expired password reset token.");
+        String codeOrToken = request.getEffectiveTokenOrCode();
+        if (codeOrToken == null || codeOrToken.isBlank()) {
+            throw new BadRequestException("Reset code or token is required.");
         }
 
-        String email = jwtService.extractUsername(request.token());
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found for password reset."));
+        User user = null;
+        if (request.email() != null && !request.email().isBlank()) {
+            user = userRepository.findByEmail(request.email().trim().toLowerCase())
+                    .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + request.email()));
+        }
+
+        // 1. Try DB-backed hashed code
+        String codeHash = hashToken(codeOrToken.trim());
+        SecurityToken tokenRecord = null;
+        if (user != null) {
+            tokenRecord = securityTokenRepository.findTopByUserAndTokenTypeAndTokenHashAndUsedAtIsNull(
+                    user, SecurityToken.TYPE_PASSWORD_RESET, codeHash
+            ).orElse(null);
+        } else {
+            tokenRecord = securityTokenRepository.findTopByTokenTypeAndTokenHashAndUsedAtIsNull(
+                    SecurityToken.TYPE_PASSWORD_RESET, codeHash
+            ).orElse(null);
+            if (tokenRecord != null) {
+                user = tokenRecord.getUser();
+            }
+        }
+
+        // 2. Fallback to legacy JWT reset token
+        if (tokenRecord == null) {
+            if (jwtService.isActionTokenValid(codeOrToken, "RESET_PASSWORD")) {
+                String tokenEmail = jwtService.extractUsername(codeOrToken);
+                user = userRepository.findByEmail(tokenEmail)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found for reset token."));
+            } else {
+                throw new BadRequestException("Invalid or already used password reset code.");
+            }
+        } else {
+            if (tokenRecord.isExpired()) {
+                throw new BadRequestException("Password reset code has expired. Please request a new one.");
+            }
+            tokenRecord.setUsedAt(Instant.now());
+            securityTokenRepository.save(tokenRecord);
+        }
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
 
-        log.info("[AuthService] Password successfully reset for user: {}", email);
+        log.info("[AuthService] Password successfully reset for user: {}", user.getEmail());
         return Map.of("message", "Password has been successfully reset. You can now sign in with your new password.");
     }
 
-    @Transactional
-    public Map<String, String> verifyEmail(VerifyEmailRequest request) {
-        if (!jwtService.isActionTokenValid(request.token(), "VERIFY_EMAIL")) {
-            throw new BadRequestException("Invalid or expired email verification token.");
+    private String generateSecureCode() {
+        int number = 100000 + SECURE_RANDOM.nextInt(900000);
+        return String.valueOf(number);
+    }
+
+    private String hashToken(String raw) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encoded = digest.digest(raw.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : encoded) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 digest unavailable", e);
         }
-
-        String email = jwtService.extractUsername(request.token());
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found for email verification."));
-
-        user.setStatus("VERIFIED");
-        userRepository.save(user);
-
-        log.info("[AuthService] Email successfully verified for user: {}", email);
-        return Map.of("message", "Email has been successfully verified.");
     }
 }

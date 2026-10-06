@@ -1,6 +1,6 @@
 /**
  * Flora Fusion — Authentication Service Layer
- * Interacts with Spring Boot JWT endpoints (/api/v1/auth/login, /api/v1/auth/me)
+ * Interacts with Spring Boot JWT endpoints (/api/v1/auth/login, /api/v1/auth/register, /api/v1/auth/verify-email, etc.)
  */
 
 import { apiFetch, IS_BACKEND_CONFIGURED } from "@/lib/api";
@@ -11,15 +11,18 @@ export interface AuthUser {
   name: string;
   role: "CUSTOMER" | "ADMIN";
   phone?: string;
+  emailVerified?: boolean;
 }
 
 export interface AuthResponse {
-  token: string;
-  type: string;
+  token: string | null;
+  tokenType?: string | null;
   id: string;
   email: string;
   name: string;
   role: "CUSTOMER" | "ADMIN";
+  emailVerified?: boolean;
+  message?: string;
 }
 
 const TOKEN_KEY = "flora_token";
@@ -48,11 +51,76 @@ export const AuthService = {
         name: res.name,
         role: res.role,
         phone: phone?.trim(),
+        emailVerified: res.emailVerified,
       };
       AuthService.setSession(res.token, user);
     }
 
     return res;
+  },
+
+  async verifyEmail(email: string, code: string): Promise<AuthResponse> {
+    if (!IS_BACKEND_CONFIGURED) {
+      throw new Error("Backend API is not configured.");
+    }
+
+    const res = await apiFetch<AuthResponse>("auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        code: code.trim(),
+      }),
+    });
+
+    if (res && res.token) {
+      const user: AuthUser = {
+        id: res.id,
+        email: res.email,
+        name: res.name,
+        role: res.role,
+        emailVerified: true,
+      };
+      AuthService.setSession(res.token, user);
+    }
+
+    return res;
+  },
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    if (!IS_BACKEND_CONFIGURED) {
+      throw new Error("Backend API is not configured.");
+    }
+
+    return await apiFetch<{ message: string }>("auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+  },
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    if (!IS_BACKEND_CONFIGURED) {
+      throw new Error("Backend API is not configured.");
+    }
+
+    return await apiFetch<{ message: string }>("auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+  },
+
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+    if (!IS_BACKEND_CONFIGURED) {
+      throw new Error("Backend API is not configured.");
+    }
+
+    return await apiFetch<{ message: string }>("auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        code: code.trim(),
+        newPassword,
+      }),
+    });
   },
 
   async login(email: string, password: string): Promise<AuthResponse> {
@@ -71,6 +139,7 @@ export const AuthService = {
         email: res.email,
         name: res.name,
         role: res.role,
+        emailVerified: true,
       };
       AuthService.setSession(res.token, user);
     }

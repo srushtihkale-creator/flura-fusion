@@ -1,23 +1,53 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFloraStore } from "@/store/useFloraStore";
 
 export function AuthModal() {
-  const { isAuthModalOpen, closeAuthModal, authMode, setAuthMode, login, register } = useFloraStore();
-  
+  const {
+    isAuthModalOpen,
+    closeAuthModal,
+    authMode,
+    setAuthMode,
+    login,
+    register,
+    verifyEmail,
+    resendVerification,
+    forgotPassword,
+    resetPassword,
+  } = useFloraStore();
+
   // Sign In form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+
   // Sign Up form state
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPhone, setRegPhone] = useState("");
   const [regPassword, setRegPassword] = useState("");
 
+  // Verification state
+  const [verifyCode, setVerifyCode] = useState("");
+  const [targetEmail, setTargetEmail] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+
+  // Forgot / Reset password state
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPasswordState, setNewPasswordState] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
+
+  useEffect(() => {
+    let timer: any;
+    if (cooldown > 0) {
+      timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   if (!isAuthModalOpen) return null;
 
@@ -30,12 +60,18 @@ export function AuthModal() {
 
     setLoading(true);
     setErrorMessage("");
+    setInfoMessage("");
 
     const result = await login(email, password);
     setLoading(false);
 
     if (!result.success) {
-      setErrorMessage(result.error || "Authentication failed. Please check your credentials.");
+      const err = result.error || "Authentication failed. Please check your credentials.";
+      setErrorMessage(err);
+      if (err.toLowerCase().includes("not verified")) {
+        setTargetEmail(email);
+        setAuthMode("verify");
+      }
     } else {
       setEmail("");
       setPassword("");
@@ -57,12 +93,19 @@ export function AuthModal() {
 
     setLoading(true);
     setErrorMessage("");
+    setInfoMessage("");
 
     const result = await register(regName, regEmail, regPassword, regPhone);
     setLoading(false);
 
     if (!result.success) {
       setErrorMessage(result.error || "Account creation failed. Please check your details.");
+    } else if (result.requiresVerification) {
+      setTargetEmail(result.email || regEmail);
+      setAuthMode("verify");
+      setCooldown(60);
+      setInfoMessage(`We sent a 6-digit verification code to ${result.email || regEmail}.`);
+      setRegPassword("");
     } else {
       setRegName("");
       setRegEmail("");
@@ -72,15 +115,143 @@ export function AuthModal() {
     }
   };
 
+  const handleVerifySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verifyCode.trim()) {
+      setErrorMessage("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+
+    const result = await verifyEmail(targetEmail, verifyCode.trim());
+    setLoading(false);
+
+    if (!result.success) {
+      setErrorMessage(result.error || "Verification failed. Please check the code.");
+    } else {
+      setVerifyCode("");
+      setErrorMessage("");
+      setInfoMessage("");
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (cooldown > 0 || !targetEmail) return;
+
+    setLoading(true);
+    setErrorMessage("");
+    const result = await resendVerification(targetEmail);
+    setLoading(false);
+
+    if (result.success) {
+      setCooldown(60);
+      setInfoMessage(result.message || "A new verification code has been sent to your email.");
+    } else {
+      setErrorMessage(result.error || "Failed to resend code.");
+    }
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      setErrorMessage("Please enter your email address.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+
+    const result = await forgotPassword(forgotEmail.trim());
+    setLoading(false);
+
+    if (result.success) {
+      setAuthMode("reset");
+      setInfoMessage(result.message || "If an account exists, a reset code has been sent to your email.");
+    } else {
+      setErrorMessage(result.error || "Failed to process request.");
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetCode.trim() || !newPasswordState) {
+      setErrorMessage("Please enter the reset code and your new password.");
+      return;
+    }
+
+    if (newPasswordState.length < 6) {
+      setErrorMessage("New password must be at least 6 characters long.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+
+    const result = await resetPassword(forgotEmail.trim(), resetCode.trim(), newPasswordState);
+    setLoading(false);
+
+    if (result.success) {
+      setAuthMode("signin");
+      setEmail(forgotEmail);
+      setPassword("");
+      setResetCode("");
+      setNewPasswordState("");
+      setInfoMessage("Password successfully reset! Please sign in with your new password.");
+    } else {
+      setErrorMessage(result.error || "Password reset failed.");
+    }
+  };
+
   const fillQuick = (testEmail: string) => {
     setEmail(testEmail);
     setPassword("Password@123");
     setErrorMessage("");
+    setInfoMessage("");
   };
 
-  const switchTab = (mode: "signin" | "signup") => {
+  const switchTab = (mode: "signin" | "signup" | "verify" | "forgot" | "reset") => {
     setAuthMode(mode);
     setErrorMessage("");
+    setInfoMessage("");
+  };
+
+  const getModalTitle = () => {
+    switch (authMode) {
+      case "signin":
+        return "Sign In to Flora Fusion";
+      case "signup":
+        return "Create Your Account";
+      case "verify":
+        return "Verify Your Email 🌿";
+      case "forgot":
+        return "Forgot Password 🔐";
+      case "reset":
+        return "Set New Password 🔑";
+      default:
+        return "Flora Fusion Authentication";
+    }
+  };
+
+  const getModalSubtitle = () => {
+    switch (authMode) {
+      case "signin":
+        return "Access your garden, track nursery shipments & manage wishlist";
+      case "signup":
+        return "Join Flora Fusion for fresh plants, express delivery & botanical care";
+      case "verify":
+        return `Enter the 6-digit verification code sent to ${targetEmail || "your email"}`;
+      case "forgot":
+        return "Enter your email address to receive a secure password reset code";
+      case "reset":
+        return "Enter the 6-digit code received in your email and choose a new password";
+      default:
+        return "";
+    }
   };
 
   return (
@@ -171,7 +342,7 @@ export function AuthModal() {
               fontWeight: 600,
             }}
           >
-            {authMode === "signin" ? "Sign In to Flora Fusion" : "Create Your Account"}
+            {getModalTitle()}
           </h2>
           <p
             style={{
@@ -180,61 +351,78 @@ export function AuthModal() {
               margin: 0,
             }}
           >
-            {authMode === "signin"
-              ? "Access your garden, track nursery shipments & manage wishlist"
-              : "Join Flora Fusion for fresh plants, express delivery & botanical care"}
+            {getModalSubtitle()}
           </p>
         </div>
 
         {/* Tab Toggle: Sign In vs Create Account */}
-        <div
-          style={{
-            display: "flex",
-            backgroundColor: "var(--color-cream-soft, #F7F5F0)",
-            padding: "4px",
-            borderRadius: "var(--radius-pill, 999px)",
-            marginBottom: "20px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => switchTab("signin")}
+        {(authMode === "signin" || authMode === "signup") && (
+          <div
             style={{
-              flex: 1,
-              padding: "9px 16px",
-              fontSize: "0.875rem",
-              fontWeight: 600,
+              display: "flex",
+              backgroundColor: "var(--color-cream-soft, #F7F5F0)",
+              padding: "4px",
               borderRadius: "var(--radius-pill, 999px)",
-              border: "none",
-              backgroundColor: authMode === "signin" ? "#FFFFFF" : "transparent",
-              color: authMode === "signin" ? "var(--color-brand-forest, #173F2B)" : "var(--color-text-muted, #718096)",
-              boxShadow: authMode === "signin" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
+              marginBottom: "20px",
             }}
           >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab("signup")}
+            <button
+              type="button"
+              onClick={() => switchTab("signin")}
+              style={{
+                flex: 1,
+                padding: "9px 16px",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                borderRadius: "var(--radius-pill, 999px)",
+                border: "none",
+                backgroundColor: authMode === "signin" ? "#FFFFFF" : "transparent",
+                color: authMode === "signin" ? "var(--color-brand-forest, #173F2B)" : "var(--color-text-muted, #718096)",
+                boxShadow: authMode === "signin" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab("signup")}
+              style={{
+                flex: 1,
+                padding: "9px 16px",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                borderRadius: "var(--radius-pill, 999px)",
+                border: "none",
+                backgroundColor: authMode === "signup" ? "#FFFFFF" : "transparent",
+                color: authMode === "signup" ? "var(--color-brand-forest, #173F2B)" : "var(--color-text-muted, #718096)",
+                boxShadow: authMode === "signup" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              Create Account
+            </button>
+          </div>
+        )}
+
+        {/* Info Notification Message */}
+        {infoMessage && (
+          <div
             style={{
-              flex: 1,
-              padding: "9px 16px",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              borderRadius: "var(--radius-pill, 999px)",
-              border: "none",
-              backgroundColor: authMode === "signup" ? "#FFFFFF" : "transparent",
-              color: authMode === "signup" ? "var(--color-brand-forest, #173F2B)" : "var(--color-text-muted, #718096)",
-              boxShadow: authMode === "signup" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
+              backgroundColor: "var(--color-brand-sage-light, #DDE7D8)",
+              color: "var(--color-brand-forest, #173F2B)",
+              border: "1px solid var(--color-brand-sage, #A9BDA3)",
+              padding: "10px 14px",
+              borderRadius: "var(--radius-md, 8px)",
+              fontSize: "0.8125rem",
+              marginBottom: "16px",
             }}
           >
-            Create Account
-          </button>
-        </div>
+            {infoMessage}
+          </div>
+        )}
 
         {/* Error Message */}
         {errorMessage && (
@@ -253,10 +441,9 @@ export function AuthModal() {
           </div>
         )}
 
-        {/* SIGN IN FORM (Existing user) */}
-        {authMode === "signin" ? (
+        {/* 1. SIGN IN FORM */}
+        {authMode === "signin" && (
           <div>
-            {/* Quick Fill Credentials Chips */}
             <div style={{ marginBottom: "18px" }}>
               <div
                 style={{
@@ -339,7 +526,7 @@ export function AuthModal() {
                 />
               </div>
 
-              <div style={{ marginBottom: "20px" }}>
+              <div style={{ marginBottom: "12px" }}>
                 <label
                   htmlFor="auth-password"
                   style={{
@@ -369,6 +556,26 @@ export function AuthModal() {
                     boxSizing: "border-box",
                   }}
                 />
+              </div>
+
+              {/* Forgot Password Link */}
+              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "18px" }}>
+                <button
+                  type="button"
+                  onClick={() => switchTab("forgot")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "0.8125rem",
+                    color: "var(--color-brand-forest, #173F2B)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: 0,
+                    textDecoration: "underline",
+                  }}
+                >
+                  Forgot password?
+                </button>
               </div>
 
               <button
@@ -412,8 +619,10 @@ export function AuthModal() {
               </div>
             </form>
           </div>
-        ) : (
-          /* CREATE ACCOUNT FORM (New user) */
+        )}
+
+        {/* 2. CREATE ACCOUNT FORM */}
+        {authMode === "signup" && (
           <div>
             <form onSubmit={handleRegisterSubmit}>
               <div style={{ marginBottom: "14px" }}>
@@ -562,7 +771,7 @@ export function AuthModal() {
                   marginBottom: "16px",
                 }}
               >
-                {loading ? "Creating Account..." : "Create Account & Sign In →"}
+                {loading ? "Sending verification..." : "Create Account →"}
               </button>
 
               <div style={{ textAlign: "center", fontSize: "0.8125rem", color: "var(--color-text-secondary, #4A5568)" }}>
@@ -581,6 +790,304 @@ export function AuthModal() {
                   }}
                 >
                   Sign In →
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* 3. EMAIL VERIFICATION FORM */}
+        {authMode === "verify" && (
+          <div>
+            <form onSubmit={handleVerifySubmit}>
+              <div style={{ marginBottom: "20px" }}>
+                <label
+                  htmlFor="verify-code"
+                  style={{
+                    display: "block",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "var(--color-brand-forest, #173F2B)",
+                    marginBottom: "8px",
+                    textAlign: "center",
+                  }}
+                >
+                  6-Digit Verification Code
+                </label>
+                <input
+                  id="verify-code"
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="123456"
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    borderRadius: "var(--radius-md, 8px)",
+                    border: "2px solid var(--color-brand-forest, #173F2B)",
+                    fontSize: "1.5rem",
+                    fontWeight: 700,
+                    letterSpacing: "8px",
+                    textAlign: "center",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    backgroundColor: "var(--color-cream-soft, #FBF9F4)",
+                    color: "var(--color-brand-forest, #173F2B)",
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || verifyCode.length < 6}
+                className="btn-primary"
+                style={{
+                  width: "100%",
+                  padding: "13px",
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                  borderRadius: "var(--radius-pill, 999px)",
+                  cursor: loading || verifyCode.length < 6 ? "not-allowed" : "pointer",
+                  opacity: verifyCode.length < 6 ? 0.7 : 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  marginBottom: "16px",
+                }}
+              >
+                {loading ? "Verifying..." : "Verify & Activate Account →"}
+              </button>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8125rem" }}>
+                <button
+                  type="button"
+                  disabled={cooldown > 0 || loading}
+                  onClick={handleResendCode}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: cooldown > 0 ? "var(--color-text-muted, #718096)" : "var(--color-brand-forest, #173F2B)",
+                    fontWeight: 600,
+                    cursor: cooldown > 0 ? "default" : "pointer",
+                    padding: 0,
+                    textDecoration: cooldown > 0 ? "none" : "underline",
+                  }}
+                >
+                  {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend Code 🔄"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => switchTab("signin")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--color-text-muted, #718096)",
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* 4. FORGOT PASSWORD FORM */}
+        {authMode === "forgot" && (
+          <div>
+            <form onSubmit={handleForgotSubmit}>
+              <div style={{ marginBottom: "20px" }}>
+                <label
+                  htmlFor="forgot-email"
+                  style={{
+                    display: "block",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "var(--color-brand-forest, #173F2B)",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Account Email Address
+                </label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  required
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  style={{
+                    width: "100%",
+                    padding: "11px 14px",
+                    borderRadius: "var(--radius-md, 8px)",
+                    border: "1px solid var(--color-border, #CBD5E1)",
+                    fontSize: "0.9375rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary"
+                style={{
+                  width: "100%",
+                  padding: "13px",
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                  borderRadius: "var(--radius-pill, 999px)",
+                  cursor: loading ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  marginBottom: "16px",
+                }}
+              >
+                {loading ? "Sending..." : "Send Reset Code →"}
+              </button>
+
+              <div style={{ textAlign: "center", fontSize: "0.8125rem" }}>
+                <button
+                  type="button"
+                  onClick={() => switchTab("signin")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--color-brand-forest, #173F2B)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: 0,
+                  }}
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* 5. RESET PASSWORD FORM */}
+        {authMode === "reset" && (
+          <div>
+            <form onSubmit={handleResetSubmit}>
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  htmlFor="reset-code"
+                  style={{
+                    display: "block",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "var(--color-brand-forest, #173F2B)",
+                    marginBottom: "6px",
+                    textAlign: "center",
+                  }}
+                >
+                  6-Digit Reset Code
+                </label>
+                <input
+                  id="reset-code"
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="123456"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "var(--radius-md, 8px)",
+                    border: "1px solid var(--color-border, #CBD5E1)",
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    letterSpacing: "6px",
+                    textAlign: "center",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    backgroundColor: "var(--color-cream-soft, #FBF9F4)",
+                    color: "var(--color-brand-forest, #173F2B)",
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <label
+                  htmlFor="new-password"
+                  style={{
+                    display: "block",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "var(--color-brand-forest, #173F2B)",
+                    marginBottom: "6px",
+                  }}
+                >
+                  New Password (min 6 characters)
+                </label>
+                <input
+                  id="new-password"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPasswordState}
+                  onChange={(e) => setNewPasswordState(e.target.value)}
+                  placeholder="At least 6 characters"
+                  style={{
+                    width: "100%",
+                    padding: "11px 14px",
+                    borderRadius: "var(--radius-md, 8px)",
+                    border: "1px solid var(--color-border, #CBD5E1)",
+                    fontSize: "0.9375rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || resetCode.length < 6}
+                className="btn-primary"
+                style={{
+                  width: "100%",
+                  padding: "13px",
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                  borderRadius: "var(--radius-pill, 999px)",
+                  cursor: loading || resetCode.length < 6 ? "not-allowed" : "pointer",
+                  opacity: resetCode.length < 6 ? 0.7 : 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  marginBottom: "16px",
+                }}
+              >
+                {loading ? "Resetting..." : "Reset Password & Sign In →"}
+              </button>
+
+              <div style={{ textAlign: "center", fontSize: "0.8125rem" }}>
+                <button
+                  type="button"
+                  onClick={() => switchTab("signin")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--color-brand-forest, #173F2B)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: 0,
+                  }}
+                >
+                  ← Back to Sign In
                 </button>
               </div>
             </form>

@@ -21,12 +21,16 @@ interface FloraState {
   token: string | null;
   isAuthenticated: boolean;
   isAuthModalOpen: boolean;
-  authMode: "signin" | "signup";
-  setAuthMode: (mode: "signin" | "signup") => void;
-  openAuthModal: (mode?: "signin" | "signup") => void;
+  authMode: "signin" | "signup" | "verify" | "forgot" | "reset";
+  setAuthMode: (mode: "signin" | "signup" | "verify" | "forgot" | "reset") => void;
+  openAuthModal: (mode?: "signin" | "signup" | "verify" | "forgot" | "reset") => void;
   closeAuthModal: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean; email?: string }>;
+  verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+  resendVerification: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => void;
   initAuth: () => void;
   loadUserData: () => Promise<void>;
@@ -126,28 +130,99 @@ export const useFloraStore = create<FloraState>()(
       register: async (name: string, email: string, password: string, phone?: string) => {
         try {
           const res = await AuthService.register(name, email, password, phone);
-          const user: AuthUser = {
-            id: res.id,
-            email: res.email,
-            name: res.name,
-            role: res.role,
-            phone: phone?.trim(),
-          };
-          set({
-            user,
-            token: res.token,
-            isAuthenticated: true,
-            isAuthModalOpen: false,
-            cart: [],
-            wishlist: [],
-            orders: [],
-            coupon: null,
-          });
-          get().addToast(`Welcome to Flora Fusion, ${res.name}! 🌱`, "success");
-          await get().loadUserData();
-          return { success: true };
+          if (res.token) {
+            const user: AuthUser = {
+              id: res.id,
+              email: res.email,
+              name: res.name,
+              role: res.role,
+              phone: phone?.trim(),
+              emailVerified: true,
+            };
+            set({
+              user,
+              token: res.token,
+              isAuthenticated: true,
+              isAuthModalOpen: false,
+              cart: [],
+              wishlist: [],
+              orders: [],
+              coupon: null,
+            });
+            get().addToast(`Welcome to Flora Fusion, ${res.name}! 🌱`, "success");
+            await get().loadUserData();
+            return { success: true };
+          } else {
+            get().addToast(`Verification code sent to ${res.email}! 🌿`, "info");
+            return { success: true, requiresVerification: true, email: res.email };
+          }
         } catch (err: any) {
           const msg = err?.message || "Registration failed. Please try again.";
+          return { success: false, error: msg };
+        }
+      },
+
+      verifyEmail: async (email: string, code: string) => {
+        try {
+          const res = await AuthService.verifyEmail(email, code);
+          if (res && res.token) {
+            const user: AuthUser = {
+              id: res.id,
+              email: res.email,
+              name: res.name,
+              role: res.role,
+              emailVerified: true,
+            };
+            set({
+              user,
+              token: res.token,
+              isAuthenticated: true,
+              isAuthModalOpen: false,
+              cart: [],
+              wishlist: [],
+              orders: [],
+              coupon: null,
+            });
+            get().addToast(`Account verified! Welcome to Flora Fusion, ${res.name}! 🌱`, "success");
+            await get().loadUserData();
+            return { success: true };
+          }
+          return { success: false, error: "Verification succeeded, but no session token received." };
+        } catch (err: any) {
+          const msg = err?.message || "Verification failed. Please check the code.";
+          return { success: false, error: msg };
+        }
+      },
+
+      resendVerification: async (email: string) => {
+        try {
+          const res = await AuthService.resendVerification(email);
+          get().addToast("A new verification code has been sent to your email 🌿", "info");
+          return { success: true, message: res.message };
+        } catch (err: any) {
+          const msg = err?.message || "Failed to resend code. Please try again later.";
+          return { success: false, error: msg };
+        }
+      },
+
+      forgotPassword: async (email: string) => {
+        try {
+          const res = await AuthService.forgotPassword(email);
+          get().addToast("If an account exists, a reset code has been sent 📩", "info");
+          return { success: true, message: res.message };
+        } catch (err: any) {
+          const msg = err?.message || "Failed to send reset code. Please try again.";
+          return { success: false, error: msg };
+        }
+      },
+
+      resetPassword: async (email: string, code: string, newPassword: string) => {
+        try {
+          const res = await AuthService.resetPassword(email, code, newPassword);
+          get().addToast("Password reset successful! Please sign in with your new password 🔐", "success");
+          return { success: true, message: res.message };
+        } catch (err: any) {
+          const msg = err?.message || "Password reset failed. Please check the code and try again.";
           return { success: false, error: msg };
         }
       },

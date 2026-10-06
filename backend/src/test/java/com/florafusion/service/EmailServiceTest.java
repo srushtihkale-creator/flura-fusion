@@ -227,4 +227,17 @@ class EmailServiceTest {
         assertTrue(result.success());
         assertTrue(result.messageId().startsWith("resend-simulated-"));
     }
+
+    @Test
+    @DisplayName("8. Provider Swappability: SmtpEmailProvider simulation and swappability test")
+    void testSmtpEmailProviderFallback() {
+        com.florafusion.service.email.provider.SmtpEmailProvider smtpProvider = new com.florafusion.service.email.provider.SmtpEmailProvider();
+        assertEquals("SMTP", smtpProvider.getProviderName());
+
+        EmailMessage msg = new EmailMessage("test@example.com", "SMTP Subject", "<p>Hello via SMTP</p>");
+        EmailSendResult result = smtpProvider.sendEmail(msg);
+
+        assertTrue(result.success());
+        assertTrue(result.messageId().startsWith("smtp-simulated-"));
+    }
 }
