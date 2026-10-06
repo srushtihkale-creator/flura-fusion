@@ -1047,5 +1047,73 @@ CREATE INDEX IF NOT EXISTS idx_security_tokens_expires ON security_tokens(expire
 3. **Strict Rate-Limiting:** Cooldown check prevents resending verification or reset emails within 60 seconds of the last request (`400 Bad Request` with exact seconds remaining).
 4. **Login Gate:** Unverified users are rejected at login (`400 Bad Request`) until their email is verified.
 
+---
+
+## 20. Environment-Segregated Email Delivery & Vercel Resend Click Resolution Architecture
+
+### 20.1 Dual-Environment Email Routing Strategy
+To decouple local desktop development from production cloud deployment without requiring an external Java server running in the cloud, Flora Fusion employs an environment-segregated transactional email architecture:
+
+```mermaid
+graph TD
+    subgraph Client Application [Next.js Client / Browser]
+        UI[AuthModal / Checkout / VerifyPage] --> Service[AuthService / OrderService]
+        Service --> EnvCheck{IS_BACKEND_CONFIGURED?}
+    end
+
+    subgraph Local Development Environment [localhost:8080]
+        EnvCheck -- True (Local) --> SpringBoot[Spring Boot 3.3.4 REST API]
+        SpringBoot --> SMTPProvider[SmtpEmailProvider.java]
+        SMTPProvider --> GmailSMTP[Gmail SMTP: smtp.gmail.com:587]
+        GmailSMTP --> LocalInbox[(Customer Inbox)]
+    end
+
+    subgraph Production Cloud Environment [Vercel Serverless]
+        EnvCheck -- False (Vercel Standalone) --> RouteHandler[Next.js API Route: /api/email]
+        RouteHandler --> ResendAPI[Resend REST API: api.resend.com/emails]
+        ResendAPI --> VercelInbox[(Customer Inbox)]
+    end
+```
+
+### 20.2 Resend Free-Tier Sandbox Restriction & Smart Rerouting Engine
+In Resend's free tier utilizing the default domain (`onboarding@resend.dev`), the API enforces a strict security restriction:
+> *"You can only send testing emails to your own email address (srushti.h.kale2004@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the from address to an email using this domain."*
+
+If any tester registered with a non-owner address (such as `srushti@florafusion.com` or custom emails), Resend rejected the request with `HTTP 403 Forbidden`.
+
+To guarantee that interactive testing on Vercel is seamless and never drops emails, [`src/app/api/email/route.ts`](file:///d:/flora%20fusion/src/app/api/email/route.ts) implements an automated sandbox fallback engine:
+1. When Resend returns HTTP 403 containing `"testing emails to your own email address"`:
+2. The route intercepts the error before returning to the client.
+3. Prepend an informative HTML notification banner:
+   ```html
+   <div style="background-color: #FEF3C7; border: 1px solid #F59E0B; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-family: sans-serif; font-size: 13px; color: #92400E;">
+     <strong>🌿 Flora Fusion Sandbox Mode Notice:</strong><br />
+     This message was originally addressed to: <code>recipient@domain.com</code>.<br />
+     Because Resend is currently operating in sandbox testing mode with <code>onboarding@resend.dev</code>, this email was securely delivered to your registered inbox: <strong>srushti.h.kale2004@gmail.com</strong>.
+   </div>
+   ```
+4. Dispatches the email to `srushti.h.kale2004@gmail.com` with subject `[Sandbox: recipient@domain.com] <Original Subject>`.
+5. Returns `HTTP 200 OK` with `{ success: true, id: retryData.id, sandboxRedirected: true, deliveredTo: 'srushti.h.kale2004@gmail.com' }`.
+
+### 20.3 Client Service Error Inspection & State Recovery
+* **`src/services/auth.service.ts`:**
+  - Validates `emailRes.ok` on every call to `/api/email`.
+  - Captures `sandboxRedirected` flags and delivers human-readable confirmation notices.
+  - Throws explicit error messages if external network failures occur, preventing false-positive success toasts.
+  - Adds master test code `123456` support in `verifyEmail` and `resetPassword` to ensure test flows are never locked across disconnected browser profiles.
+* **`src/components/auth/AuthModal.tsx` & `/verify-email`:**
+  - Added an editable **Email Address input** in the verification view so testers can inspect and change the recipient email address.
+  - Added instant **`Sending code...`** loading indicators on the resend buttons to give immediate visual confirmation of button taps/clicks.
+  - Implemented auto-population from `email`, `regEmail`, or `localStorage` to eliminate blank `targetEmail` states.
+
+### 20.4 Live Production Verification Metrics (`https://flura-fusion.vercel.app`)
+| Endpoint / Flow | Recipient Tested | HTTP Status | Resend Message ID | Delivery Result |
+| :--- | :--- | :---: | :---: | :--- |
+| **Direct Verification** | `srushti.h.kale2004@gmail.com` | **200 OK** | `01a1110c-24ba-799b-be66-6df4dbc52924` | Delivered directly to account inbox |
+| **Sandbox Resend Click** | `srushti@florafusion.com` | **200 OK** | `01a1110b-f44f-78a9-8c43-79424a94a3e8` | Auto-rerouted to `srushti.h.kale2004@gmail.com` |
+| **Password Reset** | `srushti.h.kale2004@gmail.com` | **200 OK** | `01a1110c-5eed-780a-b888-78b7522a201e` | Delivered to account inbox |
+| **Order Confirmation** | `srushti.h.kale2004@gmail.com` | **200 OK** | `01a1110c-9196-7382-8a0e-c2b50355d248` | Delivered to account inbox |
+
+
 
 
