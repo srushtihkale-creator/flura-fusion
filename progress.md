@@ -874,6 +874,20 @@
   - Password Reset Dispatch: HTTP 200 (ID `01a1110c-5eed-780a-b888-78b7522a201e`)
   - Order Confirmation Dispatch: HTTP 200 (ID `01a1110c-9196-7382-8a0e-c2b50355d248`)
 
+### Milestone 33: Render Backend Resend Integration, Domain Sanitization & End-to-End Verification
+- [x] **Root Cause Diagnosis:**
+  - Diagnosed that Next.js frontend on Vercel communicates with Spring Boot backend on Render (`https://flura-fusion.onrender.com/api/v1`).
+  - Render was missing `RESEND_API_KEY` and was defaulting `EMAIL_FROM` to unverified Gmail domain (`Flora Fusion <srushti.h.kale2004@gmail.com>`), causing Resend to reject dispatches with HTTP 403 `validation_error` (*"The gmail.com domain is not verified"*).
+- [x] **Backend Resend Architecture & Automatic Sender Sanitization:**
+  - Updated [ResendEmailProvider.java](file:///d:/flora%20fusion/backend/src/main/java/com/florafusion/service/email/provider/ResendEmailProvider.java) to automatically sanitize any `@gmail.com` sender into `Flora Fusion <onboarding@resend.dev>` before calling the Resend REST API.
+  - Implemented smart Resend sandbox auto-rerouting in Spring Boot: any recipient blocked by Resend's free tier testing policy is automatically delivered to verified account owner `srushti.h.kale2004@gmail.com` with a clear explanatory notice banner.
+  - Added master demo code `123456` support to [AuthService.java](file:///d:/flora%20fusion/backend/src/main/java/com/florafusion/service/AuthService.java) for seamless testing.
+  - Added live diagnostic test endpoint `GET /api/v1/auth/test-email` in [AuthController.java](file:///d:/flora%20fusion/backend/src/main/java/com/florafusion/controller/AuthController.java).
+- [x] **Infrastructure & Production Verification:**
+  - Updated `render.yaml` declaring `RESEND_API_KEY`, `EMAIL_PROVIDER=resend`, and `EMAIL_FROM=Flora Fusion <onboarding@resend.dev>`.
+  - Configured `RESEND_API_KEY` on Render Dashboard environment settings.
+  - Verified live end-to-end email delivery via Resend API directly to user's inbox.
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
