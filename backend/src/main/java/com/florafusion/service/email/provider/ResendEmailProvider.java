@@ -91,6 +91,34 @@ public class ResendEmailProvider implements EmailProvider {
             log.info("[ResendEmailProvider] Sending email to '{}' with subject '{}' via Resend API", message.to(), message.subject());
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+            // Check for Resend free-tier sandbox testing restriction (403: only send to owner email)
+            if (response.statusCode() == 403 && response.body() != null && response.body().contains("testing emails to your own email address")) {
+                String ownerEmail = "srushti.h.kale2004@gmail.com";
+                log.warn("[ResendEmailProvider] Recipient '{}' restricted in Resend sandbox mode. Auto-rerouting to verified owner: {}", message.to(), ownerEmail);
+
+                String banner = "<div style=\"background-color: #FEF3C7; border: 1px solid #F59E0B; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #92400E; line-height: 1.5;\">" +
+                        "<strong>🌿 Flora Fusion Sandbox Mode Notice:</strong><br />" +
+                        "This message was originally addressed to: <code>" + message.to() + "</code>.<br />" +
+                        "Because Resend is currently operating in sandbox testing mode with <code>onboarding@resend.dev</code>, this email was securely delivered to your registered inbox: <strong>" + ownerEmail + "</strong>." +
+                        "</div>";
+
+                payload.put("to", Collections.singletonList(ownerEmail));
+                payload.put("subject", "[Sandbox: " + message.to() + "] " + message.subject());
+                payload.put("html", banner + message.htmlBody());
+
+                String retryJson = objectMapper.writeValueAsString(payload);
+                HttpRequest retryRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(RESEND_API_URL))
+                        .timeout(Duration.ofSeconds(15))
+                        .header("Authorization", "Bearer " + apiKey.trim())
+                        .header("Content-Type", "application/json")
+                        .header("User-Agent", "FloraFusion-Backend/1.0.0")
+                        .POST(HttpRequest.BodyPublishers.ofString(retryJson))
+                        .build();
+
+                response = httpClient.send(retryRequest, HttpResponse.BodyHandlers.ofString());
+            }
+
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 JsonNode root = objectMapper.readTree(response.body());
                 String id = root.has("id") ? root.get("id").asText() : UUID.randomUUID().toString();
