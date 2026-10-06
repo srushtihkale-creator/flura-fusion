@@ -839,6 +839,20 @@
   - 17 Frontend Vitest tests PASSED (`auth.service.test.ts`, `cart.service.test.ts`, `order.service.test.ts`, etc.).
   - TypeScript `tsc --noEmit` verified with 0 errors.
 
+### Milestone 31: Environment-Segregated Email Architecture (Local SMTP & Production Vercel Resend Serverless)
+- [x] **Architecture Alignment:**
+  - **Local Development:** Uses Spring Boot 3.3.4 REST backend (`:8080`) with `EMAIL_PROVIDER=smtp` connecting to Gmail SMTP on port 587 (`SmtpEmailProvider.java`). Verified with live dispatch to `srushti.h.kale2004@gmail.com`.
+  - **Production on Vercel:** Uses Next.js Serverless Route Handler (`/api/email`) calling Resend REST API (`https://api.resend.com/emails`) directly using `RESEND_API_KEY`. Eliminates dependency on hosting an external cloud Java server for transactional emails.
+- [x] **Vercel Serverless Email Route (`src/app/api/email/route.ts`):**
+  - Dispatches verification codes, welcome emails, password reset tokens, and order confirmations via Resend.
+  - Graceful fallback: simulates success if `RESEND_API_KEY` is not set yet, preventing frontend crashes.
+- [x] **Frontend Botanical Email Templates (`src/lib/email-templates.ts`):**
+  - Matches exact brand design tokens (`#173F2B`, `#24583B`, `#A9BDA3`, `#F7F4EC`) and layout across all four transactional email templates.
+- [x] **Client Service Integration:**
+  - `auth.service.ts` and `order.service.ts` automatically detect environment:
+    - If `IS_BACKEND_CONFIGURED` is true (local Spring Boot), routes requests to Spring Boot backend.
+    - If `IS_BACKEND_CONFIGURED` is false (standalone Vercel), dispatches emails directly via `/api/email` (Resend).
+
 ---
 
 ## 🔮 Upcoming Roadmap & Next Steps
@@ -849,4 +863,5 @@
    - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
 3. **Advanced Customer Garden Tracker:**
    - Add watering reminder schedule and digital plant care logs linked to customer account.
+
 

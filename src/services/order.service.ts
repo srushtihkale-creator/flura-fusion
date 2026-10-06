@@ -205,7 +205,7 @@ export const OrderService = {
       },
     ];
 
-    return {
+    const newOrder: Order = {
       orderId,
       date: formattedDate,
       timestamp: now.getTime(),
@@ -221,6 +221,25 @@ export const OrderService = {
       estimatedDelivery,
       trackingSteps,
     };
+
+    if (typeof window !== "undefined") {
+      const storedUser = JSON.parse(localStorage.getItem("flora_user") || "{}");
+      const customerEmail = params.guestEmail || storedUser.email;
+      if (customerEmail) {
+        fetch("/api/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "order",
+            to: customerEmail,
+            name: shippingAddress.fullName,
+            order: newOrder,
+          }),
+        }).catch((err) => console.warn("[OrderService] Could not send confirmation email:", err));
+      }
+    }
+
+    return newOrder;
   },
 
   /**
