@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.florafusion.entity.Order;
 import com.florafusion.entity.OrderItem;
 import com.florafusion.entity.User;
+import com.florafusion.service.email.AsyncEmailDispatcher;
 import com.florafusion.service.email.EmailServiceImpl;
 import com.florafusion.service.email.provider.EmailProvider.EmailSendResult;
 import com.florafusion.service.email.provider.ResendEmailProvider;
@@ -63,7 +64,8 @@ public class LiveResendEmailTest {
         ReflectionTestUtils.setField(resendProvider, "defaultFrom", fromEmail);
 
         EmailTemplateService templateService = new EmailTemplateService(objectMapper);
-        EmailServiceImpl emailService = new EmailServiceImpl(resendProvider, templateService);
+        AsyncEmailDispatcher asyncEmailDispatcher = new AsyncEmailDispatcher();
+        EmailServiceImpl emailService = new EmailServiceImpl(resendProvider, templateService, asyncEmailDispatcher);
         ReflectionTestUtils.setField(emailService, "frontendUrl", "http://localhost:3000");
 
         String recipient = "srushti.h.kale2004@gmail.com";

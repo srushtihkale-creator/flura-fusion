@@ -230,13 +230,13 @@ public class AdminController {
                 .map(OrderResponse::fromEntity));
     }
 
-    @PatchMapping("/orders/{id}/status")
+    @RequestMapping(value = "/orders/{id}/status", method = {RequestMethod.PATCH, RequestMethod.PUT})
     @Operation(summary = "Update order delivery and shipping tracking status (triggers customer notification email)")
     public ResponseEntity<OrderResponse> updateOrderStatus(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestBody Map<String, String> body
     ) {
-        String newStatus = body.get("status");
+        String newStatus = body != null ? (body.get("status") != null ? body.get("status") : body.get("orderStatus")) : null;
         return ResponseEntity.ok(orderService.updateOrderStatus(id, newStatus));
     }
 

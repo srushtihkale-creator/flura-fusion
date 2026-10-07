@@ -1114,6 +1114,110 @@ To guarantee that interactive testing on Vercel is seamless and never drops emai
 | **Password Reset** | `srushti.h.kale2004@gmail.com` | **200 OK** | `01a1110c-5eed-780a-b888-78b7522a201e` | Delivered to account inbox |
 | **Order Confirmation** | `srushti.h.kale2004@gmail.com` | **200 OK** | `01a1110c-9196-7382-8a0e-c2b50355d248` | Delivered to account inbox |
 
+---
+
+## 21. Manual Customer Order-Status Management & Fulfillment Architecture
+
+### 21.1 Architectural Overview & Data Flow
+Flora Fusion implements authoritative, manual order-status management where administrators can progress orders through nursery fulfillment stages while ensuring real-time visibility for customers and zero UI/UX disruption.
+
+```mermaid
+graph TD
+    AdminUI[Admin Dashboard Orders Table] -->|Inline Pill Select| AdminHandler[handleOrderStatusChange]
+    AdminHandler -->|PATCH /api/v1/admin/orders/:id/status| AdminController[AdminController.java]
+    
+    subgraph Spring Boot Backend
+        AdminController --> RBACCheck{ROLE_ADMIN?}
+        RBACCheck -- Authorized --> OrderService[OrderService.java]
+        OrderService --> Normalizer[normalizeOrderStatus]
+        Normalizer --> DBUpdate[(PostgreSQL orders table)]
+        OrderService --> MilestoneSync[Sync tracking_milestones JSONB]
+        OrderService -. Asynchronous .-> EmailService[Send Status Update Email]
+    end
+    
+    subgraph Customer Experience
+        DBUpdate --> CustomerOrdersAPI[GET /api/v1/orders/my-orders]
+        DBUpdate --> CustomerDetailAPI[GET /api/v1/orders/:orderNumber]
+        CustomerOrdersAPI --> OrdersListView[My Orders Page]
+        CustomerDetailAPI --> OrderDetailView[Order Details & 6-Stage Timeline]
+    end
+```
+
+### 21.2 PostgreSQL Schema Constraint & Status Normalization
+The database enforces strict status validation via PostgreSQL check constraints in `01_schema.sql`:
+```sql
+order_status VARCHAR(30) DEFAULT 'Placed' NOT NULL 
+CHECK (order_status IN ('Placed', 'Confirmed', 'Packed', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'))
+```
+
+To eliminate payload mismatch errors from different frontend casings or terminology, `OrderService.normalizeOrderStatus` provides authoritative normalization:
+* `"PLACED"` / `"Placed"` ➔ `'Placed'`
+* `"CONFIRMED"` / `"Confirmed"` ➔ `'Confirmed'`
+* `"PACKED"` / `"Packed"` ➔ `'Packed'`
+* `"SHIPPED"` / `"DISPATCHED"` / `"Dispatched"` ➔ `'Dispatched'`
+* `"OUT_FOR_DELIVERY"` / `"out for delivery"` ➔ `'Out for Delivery'`
+* `"DELIVERED"` / `"Delivered"` ➔ `'Delivered'`
+* `"CANCELLED"` / `"CANCELED"` ➔ `'Cancelled'`
+
+### 21.3 Transit Milestone Synchronization
+When status changes occur, `OrderService` updates both `order_status` and serializes generated transit milestone steps (`OrderResponse.generateDefaultTrackingSteps`) into the `tracking_milestones` JSONB column. This ensures:
+1. Active timeline points and completed checkmarks (`✓`) dynamically match the current fulfillment stage.
+2. If marked `"Cancelled"`, the timeline displays a clean 2-stage milestone (`Order Placed` ➔ `Order Cancelled`).
+3. Asynchronous email notifications are triggered non-blockingly via `emailService.sendOrderStatusUpdateEmail(order, previousStatus, normalizedStatus)`.
+
+### 21.4 Zero UI/UX Disruption Design Implementation
+* **Admin Dashboard:** Replaced static text `<span>` inside the Orders table with an inline pill `<select>` using identical tokens from the product status dropdown (`var(--radius-pill)`, `fontSize: 0.75rem`, `fontWeight: 700`, contextual green/sage/red badges for Delivered/Default/Cancelled).
+* **Customer Order Details:** Updated `useEffect` in `OrderDetailView.tsx` to fetch fresh authoritative order data on mount from `OrderService.getById(orderId)`, eliminating stale cache while displaying existing store data without layout flicker.
+* **Store Deduplication:** Updated `addOrder` in `useFloraStore.ts` to deduplicate orders by `orderId` so state updates cleanly overwrite stale cached entries.
+
+### 21.5 RBAC Security & Privacy Isolation
+* `/api/v1/admin/orders/**` is strictly guarded by `@PreAuthorize("hasRole('ADMIN')")`. Non-admin customers receive `HTTP 403 Forbidden`.
+* Customer endpoint `/api/v1/orders/my-orders` and `/api/v1/orders/{identifier}` enforce strict ownership checks; customers can only view their own orders.
+
+---
+
+## 22. Hibernate Concurrency & Thread-Safe Asynchronous Email Dispatch Architecture
+
+### 22.1 Root Cause of `Illegal pop() with non-matching JdbcValuesSourceProcessingState`
+In Hibernate 6.x (Hibernate ORM 6.5+), internal result set and state stack processing is managed by `JdbcValuesSourceProcessingStateStandardImpl`. Hibernate sessions are strictly not thread-safe.
+
+When an admin updated an order status:
+1. HTTP Request Thread (`[nio-8080-exec-X]`) retrieved the managed `Order` entity, updated status, and saved.
+2. The method called `@Async` `emailService.sendOrderStatusUpdateEmail(order, ...)`.
+3. Spring's asynchronous task pool immediately spawned worker thread `[task-X]` which evaluated `order.getUser()`, attempting to lazy-load related entity rows using the caller thread's open Hibernate `Session`.
+4. Simultaneously, the HTTP Request Thread executed `OrderResponse.fromEntity(order)`, lazy-loading `order.getItems()` and `item.getProduct()` on the exact same `Session`.
+5. The concurrent JDBC executions corrupted Hibernate's internal `JdbcValuesSourceProcessingState` state stack, throwing `IllegalStateException: Illegal pop() with non-matching JdbcValuesSourceProcessingState` and returning HTTP 500 to the caller.
+
+### 22.2 Decoupled Asynchronous Architecture
+To guarantee thread-safety and eliminate cross-thread session contention:
+
+```mermaid
+graph TD
+    subgraph HTTP Request Thread [Single-Threaded Transaction Scope]
+        Controller[AdminController.java] --> OrderService[OrderService.java]
+        OrderService --> Repo[OrderRepository: findByIdWithDetails]
+        OrderService --> Extract[Synchronously Extract recipientEmail & recipientName]
+        OrderService --> EmailSvc[EmailServiceImpl.java]
+        EmailSvc --> Template[EmailTemplateService: buildOrderStatusUpdateEmail]
+        EmailSvc --> PackageMsg[Create Immutable EmailMessage Record]
+        OrderService --> DTO[OrderResponse.fromEntity: In-Memory Mapping]
+    end
+
+    subgraph Background Worker Thread [Spring @Async Task Pool]
+        EmailSvc -->|Pure EmailMessage| Dispatcher[AsyncEmailDispatcher.java]
+        Dispatcher --> Provider[EmailProvider: SmtpEmailProvider / ResendEmailProvider]
+        Provider --> Network[SMTP / REST API Dispatch]
+    end
+```
+
+### 22.3 Key Architectural Tenets
+1. **Zero Managed Entity Leakage Across Threads:** Asynchronous methods accept strictly immutable data records (`EmailMessage`) or primitives (`orderNumber`, `recipientEmail`, `recipientName`, `newStatus`), never managed JPA entities.
+2. **Synchronous Template Generation:** All entity property navigation and template rendering occur synchronously on the transaction thread where the session is open and owned by a single thread.
+3. **Eager Details Loading:** `OrderRepository.findByIdWithDetails` and `findByOrderNumberWithDetails` utilize `LEFT JOIN FETCH` for `items`, `product`, and `user`, ensuring all required data is initialized in a single database query.
+4. **Resilient Non-Blocking I/O:** The slow network I/O (`emailProvider.sendEmail`) remains completely asynchronous via `AsyncEmailDispatcher.dispatch`, ensuring instantaneous API response times without blocking the admin dashboard.
+
+
+
 
 
 

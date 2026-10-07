@@ -334,6 +334,17 @@ export const OrderService = {
   },
 
   /**
+   * Admin: Update customer order fulfillment & tracking status
+   */
+  async updateOrderStatus(orderIdOrNumber: string, status: string): Promise<any> {
+    if (!IS_BACKEND_CONFIGURED) return null;
+    return apiFetch<any>(`admin/orders/${encodeURIComponent(orderIdOrNumber)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  /**
    * Download official Flora Fusion Tax Invoice PDF (Privacy Protected by Backend)
    */
   async downloadInvoice(orderNumber: string): Promise<void> {

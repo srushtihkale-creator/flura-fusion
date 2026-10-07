@@ -18,17 +18,14 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
   useEffect(() => {
     setMounted(true);
-    // Fetch directly from backend if not already in store
-    const existing = orders.find((o) => o.orderId === orderId);
-    if (!existing) {
-      OrderService.getById(orderId).then((ord) => {
-        if (ord) {
-          setFetchedOrder(ord);
-          addOrder(ord);
-        }
-      });
-    }
-  }, [orderId, orders, addOrder]);
+    // Fetch authoritative order status from backend
+    OrderService.getById(orderId).then((ord) => {
+      if (ord) {
+        setFetchedOrder(ord);
+        addOrder(ord);
+      }
+    });
+  }, [orderId, addOrder]);
 
   if (!mounted) {
     return (
@@ -38,7 +35,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
     );
   }
 
-  const order = orders.find((o) => o.orderId === orderId) || fetchedOrder;
+  const order = fetchedOrder || orders.find((o) => o.orderId === orderId);
 
   const handleDownloadInvoice = async () => {
     if (!order) return;

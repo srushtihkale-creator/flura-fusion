@@ -7,6 +7,7 @@ import { apiFetch, IS_BACKEND_CONFIGURED } from "@/lib/api";
 import { CouponResponse, CouponService, AdminOfferPayload } from "@/services/coupon.service";
 import { Product, AdminProductPayload, AdminCategory } from "@/types/product";
 import { ProductService } from "@/services/product.service";
+import { OrderService } from "@/services/order.service";
 import { AdminProductModal } from "./AdminProductModal";
 
 interface DashboardStats {
@@ -243,6 +244,24 @@ export function AdminDashboardView() {
       addToast(`Category "${cat.name}" is now ${updated.isActive ? "ACTIVE" : "INACTIVE"}`, "success");
     } catch (err: any) {
       addToast(err?.message || "Failed to toggle category", "error");
+    }
+  };
+
+  // Order Fulfillment Status Handler
+  const handleOrderStatusChange = async (order: AdminOrder, newStatus: string) => {
+    try {
+      const orderIdentifier = order.orderId || order.orderNumber;
+      await OrderService.updateOrderStatus(orderIdentifier, newStatus);
+      setOrders((prev) =>
+        prev.map((o) =>
+          (o.orderId === order.orderId || o.orderNumber === order.orderNumber)
+            ? { ...o, orderStatus: newStatus }
+            : o
+        )
+      );
+      addToast(`Order ${order.orderNumber} status updated to "${newStatus}"`, "success");
+    } catch (err: any) {
+      addToast(err?.message || "Failed to update order status", "error");
     }
   };
 
@@ -1339,19 +1358,39 @@ export function AdminDashboardView() {
                           ₹{o.total}
                         </td>
                         <td style={{ padding: "12px 14px" }}>
-                          <span
+                          <select
+                            value={o.orderStatus || "Placed"}
+                            onChange={(e) => handleOrderStatusChange(o, e.target.value)}
+                            aria-label={`Update fulfillment status for order ${o.orderNumber}`}
                             style={{
-                              display: "inline-block",
-                              padding: "3px 10px",
+                              padding: "4px 10px",
                               borderRadius: "var(--radius-pill, 999px)",
                               fontSize: "0.75rem",
-                              fontWeight: 600,
-                              backgroundColor: "var(--color-brand-sage-light, #DDE7D8)",
-                              color: "var(--color-brand-forest, #173F2B)",
+                              fontWeight: 700,
+                              border: "none",
+                              cursor: "pointer",
+                              backgroundColor:
+                                o.orderStatus === "Cancelled"
+                                  ? "#FDE8E8"
+                                  : o.orderStatus === "Delivered"
+                                  ? "#EBF8EE"
+                                  : "var(--color-brand-sage-light, #DDE7D8)",
+                              color:
+                                o.orderStatus === "Cancelled"
+                                  ? "#C81E1E"
+                                  : o.orderStatus === "Delivered"
+                                  ? "#276749"
+                                  : "var(--color-brand-forest, #173F2B)",
                             }}
                           >
-                            {o.orderStatus || "Placed"}
-                          </span>
+                            <option value="Placed">● Placed</option>
+                            <option value="Confirmed">● Confirmed</option>
+                            <option value="Packed">● Packed</option>
+                            <option value="Dispatched">● Dispatched / Shipped</option>
+                            <option value="Out for Delivery">● Out for Delivery</option>
+                            <option value="Delivered">● Delivered</option>
+                            <option value="Cancelled">✕ Cancelled</option>
+                          </select>
                         </td>
                         <td style={{ padding: "12px 14px", color: "var(--color-brand-green, #24583B)", fontSize: "0.8125rem" }}>
                           {o.paymentMethod || "UPI"} • {o.paymentStatus || "COMPLETED"}

@@ -21,5 +21,13 @@ public interface EmailService {
 
     CompletableFuture<EmailSendResult> sendOrderStatusUpdateEmail(Order order, String previousStatus, String newStatus);
 
+    CompletableFuture<EmailSendResult> sendOrderStatusUpdateEmail(
+            String orderNumber,
+            String recipientEmail,
+            String recipientName,
+            String previousStatus,
+            String newStatus
+    );
+
     CompletableFuture<EmailSendResult> sendPasswordResetEmail(String toEmail, String userName, String resetToken);
 }

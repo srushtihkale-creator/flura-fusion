@@ -29,7 +29,8 @@ public record OrderResponse(
     List<TrackingStepDto> trackingSteps
 ) {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    private static final DateTimeFormatter formatter = FORMATTER;
 
     public record OrderItemDto(
         String id,
@@ -109,9 +110,17 @@ public record OrderResponse(
         );
     }
 
-    private static List<TrackingStepDto> generateDefaultTrackingSteps(String currentStatus, String dateStr) {
+    public static List<TrackingStepDto> generateDefaultTrackingSteps(String currentStatus, String dateStr) {
+        if ("Cancelled".equalsIgnoreCase(currentStatus)) {
+            return List.of(
+                new TrackingStepDto("Order Placed", dateStr, true),
+                new TrackingStepDto("Order Cancelled", dateStr, true)
+            );
+        }
         List<String> stages = List.of("Placed", "Confirmed", "Packed", "Dispatched", "Out for Delivery", "Delivered");
-        int currentIndex = stages.indexOf(currentStatus);
+        String lookupStatus = currentStatus;
+        if ("Shipped".equalsIgnoreCase(lookupStatus)) lookupStatus = "Dispatched";
+        int currentIndex = stages.indexOf(lookupStatus);
         if (currentIndex < 0) currentIndex = 0;
 
         List<TrackingStepDto> steps = new ArrayList<>();

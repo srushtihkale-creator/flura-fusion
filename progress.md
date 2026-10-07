@@ -34,6 +34,7 @@
 | **Top Offer Marquee & Products** | ✅ Complete | Slim infinite right-to-left marquee, auto-apply, subtle product chips, admin CRUD, RBAC privacy | 100% Tested & Verified with E2E Suite |
 | **Resend Transactional Emails** | ✅ Complete | Welcome & Order Confirmation with attached PDF Tax Invoice via Resend REST API | 100% Live Verified (HTTP 200) |
 | **SMTP Transactional Emails** | ✅ Complete | Live Gmail SMTP integration with JavaMailSender & STARTTLS (`srushti.h.kale2004@gmail.com`) | 100% Live Verified (HTTP 200) |
+| **Manual Order-Status Mgmt** | ✅ Complete | Admin status control, PostgreSQL persistence, transit milestone sync, customer privacy | 100% Tested & Verified |
 | **GitHub Remote Sync** | ✅ Synced | Branch `main`, Clean tree | 100% Synchronized with `origin/main` |
 
 
@@ -885,8 +886,52 @@
   - Added live diagnostic test endpoint `GET /api/v1/auth/test-email` in [AuthController.java](file:///d:/flora%20fusion/backend/src/main/java/com/florafusion/controller/AuthController.java).
 - [x] **Infrastructure & Production Verification:**
   - Updated `render.yaml` declaring `RESEND_API_KEY`, `EMAIL_PROVIDER=resend`, and `EMAIL_FROM=Flora Fusion <onboarding@resend.dev>`.
-  - Configured `RESEND_API_KEY` on Render Dashboard environment settings.
-  - Verified live end-to-end email delivery via Resend API directly to user's inbox.
+### Milestone 34: Manual Customer Order-Status Management & Real-Time Customer Transit Sync
+- [x] **PostgreSQL Schema & Model Re-use:**
+  - Strictly leveraged the existing database check constraint from `01_schema.sql` / `V1__init_schema.sql`:
+    `order_status VARCHAR(30) DEFAULT 'Placed' NOT NULL CHECK (order_status IN ('Placed', 'Confirmed', 'Packed', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'))`.
+  - Zero duplicate order status systems created.
+- [x] **Backend Status Normalization & Synchronization (`OrderService.java`):**
+  - Added `normalizeOrderStatus(rawStatus)` mapping variants (`PLACED`, `CONFIRMED`, `PACKED`, `SHIPPED` / `DISPATCHED`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`) directly to exact DB constraint values.
+  - Implemented overloaded `updateOrderStatus(String identifier, String newStatus)` resolving by either UUID or human-readable order number (`FF-XXXXXX`).
+  - Synchronized `tracking_milestones` JSONB alongside `order_status` in PostgreSQL on every update.
+  - Enhanced `OrderResponse.generateDefaultTrackingSteps` for clean Cancelled (2-step) and Shipped (`Dispatched`) progress rendering.
+  - Preserved asynchronous email dispatches (`emailService.sendOrderStatusUpdateEmail`) in a non-blocking `try/catch`.
+- [x] **Admin Fulfillment API (`AdminController.java`):**
+  - Configured `@RequestMapping(value = "/orders/{id}/status", method = {RequestMethod.PATCH, RequestMethod.PUT})` accepting `@PathVariable String id`.
+  - Added support for reading both `status` and `orderStatus` keys from JSON body payloads.
+  - Secured via `@PreAuthorize("hasRole('ADMIN')")`.
+- [x] **UI/UX Freeze Compliant Admin Control (`AdminDashboardView.tsx`):**
+  - In the Orders table (`<td>`), replaced the un-editable static `<span>` with an inline pill `<select>` using the identical styling tokens (`var(--radius-pill)`, `fontSize: 0.75rem`, `fontWeight: 700`, contextual green/sage/red badges) matching the product status dropdown.
+  - Connected to `handleOrderStatusChange` calling `OrderService.updateOrderStatus` with instant state update and toast feedback.
+- [x] **Customer Orders Real-Time Sync (`OrderDetailView.tsx` & `useFloraStore.ts`):**
+  - Updated `OrderDetailView.tsx` to always fetch fresh authoritative status from `OrderService.getById(orderId)` on mount, eliminating stale cache issues.
+  - Deduplicated `addOrder` in Zustand store to ensure order status updates replace existing records instead of duplicating them.
+- [x] **Comprehensive Verification & Testing:**
+  - Backend unit tests (`mvn test -Dtest=OrderServiceTest`): 5/5 PASSED.
+  - Backend test suite (`mvn test`): 28/28 PASSED.
+  - Frontend verification tests (`npm test`): 17/17 PASSED.
+  - TypeScript compiler (`npx tsc --noEmit`): 0 errors.
+  - Live End-to-End status transitions tested on running backend (`FF-604521`): `Placed` ➔ `Confirmed` ➔ `Packed` ➔ `Dispatched` ➔ `Out for Delivery` ➔ `Delivered` ➔ `Cancelled` (all persisted to PostgreSQL and verified via GET API).
+  - RBAC verification: Non-admin customer received HTTP 403 Forbidden on admin status endpoints, customer `/orders/my-orders` strictly isolated to own orders.
+
+---
+
+### Milestone 35: Order Status Update Hibernate Concurrency Resolution (JdbcValuesSourceProcessingState Fix)
+- [x] **Root Cause Diagnosis:**
+  - Diagnosed that when an admin updated an order's status, `OrderService.updateOrderStatus` passed the managed `Order` JPA entity directly to the `@Async` method `emailService.sendOrderStatusUpdateEmail`.
+  - On the background `@Async` worker thread (`task-X`), `resolveOrderRecipientEmail` and `buildOrderStatusUpdateEmail` navigated uninitialized lazy associations (`order.getUser()`), while the main HTTP request thread simultaneously executed `OrderResponse.fromEntity(order)`, triggering lazy queries for `order.getItems()` and `item.getProduct()`.
+  - Concurrent multi-threaded queries on Hibernate 6's non-thread-safe `Session` corrupted the `JdbcValuesSourceProcessingState` internal state stack, throwing `IllegalStateException: Illegal pop() with non-matching JdbcValuesSourceProcessingState` and returning HTTP 500 to the admin dashboard.
+- [x] **Permanent Engineering Solutions Implemented:**
+  - **`AsyncEmailDispatcher.java`:** Created a dedicated asynchronous worker bean that accepts strictly immutable `EmailMessage` payloads, ensuring background threads never receive JPA entities or touch database sessions.
+  - **Caller-Thread Template Generation (`EmailServiceImpl.java`):** Refactored `EmailServiceImpl` so that template generation and recipient resolution happen synchronously on the caller's transaction thread where the Hibernate session is open and owned by a single thread, before handing off immutable `EmailMessage` records to `AsyncEmailDispatcher`.
+  - **Pure-String Parameters (`EmailService.java` & `EmailTemplateService.java`):** Added pure-string parameter overloads for `sendOrderStatusUpdateEmail(orderNumber, recipientEmail, recipientName, previousStatus, newStatus)` and `buildOrderStatusUpdateEmail(...)`.
+  - **Eager Fetching (`OrderRepository.java`):** Added `findByIdWithDetails` and `findByOrderNumberWithDetails` utilizing `LEFT JOIN FETCH` for `items`, `product`, and `user`, eliminating N+1 lazy queries when loading orders.
+  - **`OrderService.java` Refinement:** Pre-extracts recipient email and name synchronously before dispatching status notifications with zero cross-thread entity leakage.
+- [x] **Verification & Test Suite:**
+  - Backend unit and service test suite: 30/30 PASSED (`mvn test`).
+  - Frontend test suite: 17/17 PASSED (`npm test`).
+  - Live status transitions verified end-to-end on running server (`Placed` ➔ `Packed` ➔ `Dispatched`) with zero exceptions and automated status emails delivered.
 
 ---
 

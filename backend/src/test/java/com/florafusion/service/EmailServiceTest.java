@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.florafusion.entity.Order;
 import com.florafusion.entity.OrderItem;
 import com.florafusion.entity.User;
+import com.florafusion.service.email.AsyncEmailDispatcher;
 import com.florafusion.service.email.EmailService;
 import com.florafusion.service.email.EmailServiceImpl;
 import com.florafusion.service.email.provider.EmailProvider;
@@ -40,7 +41,8 @@ class EmailServiceTest {
         objectMapper = new ObjectMapper();
         mockEmailProvider = new MockEmailProvider();
         templateService = new EmailTemplateService(objectMapper);
-        emailService = new EmailServiceImpl(mockEmailProvider, templateService);
+        AsyncEmailDispatcher asyncEmailDispatcher = new AsyncEmailDispatcher();
+        emailService = new EmailServiceImpl(mockEmailProvider, templateService, asyncEmailDispatcher);
         ReflectionTestUtils.setField(emailService, "frontendUrl", "http://localhost:3000");
     }
 

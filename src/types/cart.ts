@@ -51,7 +51,7 @@ export interface OrderTrackingStep {
   completed: boolean;
 }
 
-export type OrderStatus = "Placed" | "Confirmed" | "Packed" | "Dispatched" | "Out for Delivery" | "Delivered";
+export type OrderStatus = "Placed" | "Confirmed" | "Packed" | "Dispatched" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled";
 
 export interface Order {
   orderId: string; // e.g. "FF-482910"

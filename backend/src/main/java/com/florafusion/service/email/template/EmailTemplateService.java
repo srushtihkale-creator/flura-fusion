@@ -243,8 +243,8 @@ public class EmailTemplateService {
     // ==========================================
     // 5. ORDER STATUS UPDATE
     // ==========================================
-    public String buildOrderStatusUpdateEmail(Order order, String previousStatus, String newStatus, String trackingUrl) {
-        String recipientName = getRecipientName(order);
+    public String buildOrderStatusUpdateEmail(String orderNumber, String recipientName, String previousStatus, String newStatus, String trackingUrl) {
+        String safeRecipientName = sanitize(recipientName != null ? recipientName : "Valued Customer");
         String statusMessage = switch (newStatus.toLowerCase()) {
             case "confirmed" -> "Your order has been confirmed by our nursery and is being prepared for fulfillment.";
             case "packed" -> "Your plants and pots have been safely insulated and packed in transit-safe eco containers.";
@@ -276,15 +276,20 @@ public class EmailTemplateService {
             </div>
             """.formatted(
                 newStatus,
-                order.getOrderNumber(),
+                orderNumber,
                 newStatus,
-                recipientName,
+                safeRecipientName,
                 statusMessage,
                 newStatus,
                 trackingUrl
         );
 
-        return wrapInBaseLayout("Order " + order.getOrderNumber() + " Status: " + newStatus, content);
+        return wrapInBaseLayout("Order " + orderNumber + " Status: " + newStatus, content);
+    }
+
+    public String buildOrderStatusUpdateEmail(Order order, String previousStatus, String newStatus, String trackingUrl) {
+        String recipientName = getRecipientName(order);
+        return buildOrderStatusUpdateEmail(order.getOrderNumber(), recipientName, previousStatus, newStatus, trackingUrl);
     }
 
     // ==========================================

@@ -604,7 +604,10 @@ export const useFloraStore = create<FloraState>()(
 
       // Orders
       orders: [],
-      addOrder: (order) => set((state) => ({ orders: [order, ...state.orders] })),
+      addOrder: (order) =>
+        set((state) => ({
+          orders: [order, ...state.orders.filter((o) => o.orderId !== order.orderId)],
+        })),
     }),
     {
       name: "flora-fusion-storage",

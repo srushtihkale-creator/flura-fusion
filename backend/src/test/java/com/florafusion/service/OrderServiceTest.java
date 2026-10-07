@@ -52,6 +52,9 @@ class OrderServiceTest {
     private PaymentService paymentService;
 
     @Mock
+    private com.florafusion.service.email.EmailService emailService;
+
+    @Mock
     private ObjectMapper objectMapper;
 
     @InjectMocks
@@ -146,5 +149,44 @@ class OrderServiceTest {
         assertFalse(response.valid());
         assertFalse(response.errors().isEmpty());
         assertTrue(response.errors().get(0).contains("out of stock"));
+    }
+
+    @Test
+    @DisplayName("Status normalizer maps uppercase, spaced and variant statuses to database check constraint values")
+    void testNormalizeOrderStatus() {
+        assertEquals("Placed", orderService.normalizeOrderStatus("PLACED"));
+        assertEquals("Confirmed", orderService.normalizeOrderStatus("CONFIRMED"));
+        assertEquals("Packed", orderService.normalizeOrderStatus("packed"));
+        assertEquals("Dispatched", orderService.normalizeOrderStatus("SHIPPED"));
+        assertEquals("Dispatched", orderService.normalizeOrderStatus("dispatched"));
+        assertEquals("Out for Delivery", orderService.normalizeOrderStatus("OUT_FOR_DELIVERY"));
+        assertEquals("Out for Delivery", orderService.normalizeOrderStatus("out for delivery"));
+        assertEquals("Delivered", orderService.normalizeOrderStatus("DELIVERED"));
+        assertEquals("Cancelled", orderService.normalizeOrderStatus("CANCELLED"));
+        assertEquals("Cancelled", orderService.normalizeOrderStatus("canceled"));
+    }
+
+    @Test
+    @DisplayName("Admin manual order status update persists to order and updates milestones")
+    void testUpdateOrderStatus() {
+        UUID orderId = UUID.randomUUID();
+        com.florafusion.entity.Order existingOrder = com.florafusion.entity.Order.builder()
+                .id(orderId)
+                .orderNumber("FF-554433")
+                .orderStatus("Placed")
+                .shippingAddressSnapshot("{\"name\":\"Srushti\"}")
+                .trackingMilestones("[]")
+                .subtotal(new BigDecimal("1299.00"))
+                .totalAmount(new BigDecimal("1299.00"))
+                .build();
+
+        when(orderRepository.findByOrderNumber("FF-554433")).thenReturn(Optional.of(existingOrder));
+        when(orderRepository.save(any(com.florafusion.entity.Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        com.florafusion.dto.order.OrderResponse response = orderService.updateOrderStatus("FF-554433", "SHIPPED");
+
+        assertNotNull(response);
+        assertEquals("Dispatched", response.orderStatus());
+        assertEquals("Dispatched", existingOrder.getOrderStatus());
     }
 }

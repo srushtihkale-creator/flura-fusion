@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 
 @Slf4j
@@ -362,25 +363,108 @@ public class OrderService {
         return OrderResponse.fromEntity(order);
     }
 
+    public String normalizeOrderStatus(String rawStatus) {
+        if (rawStatus == null || rawStatus.isBlank()) {
+            return "Placed";
+        }
+        String clean = rawStatus.trim();
+        if (clean.equalsIgnoreCase("PLACED")) return "Placed";
+        if (clean.equalsIgnoreCase("CONFIRMED")) return "Confirmed";
+        if (clean.equalsIgnoreCase("PACKED")) return "Packed";
+        if (clean.equalsIgnoreCase("SHIPPED") || clean.equalsIgnoreCase("DISPATCHED")) return "Dispatched";
+        if (clean.equalsIgnoreCase("OUT_FOR_DELIVERY") || clean.equalsIgnoreCase("OUT FOR DELIVERY") || clean.equalsIgnoreCase("OUT-FOR-DELIVERY")) return "Out for Delivery";
+        if (clean.equalsIgnoreCase("DELIVERED")) return "Delivered";
+        if (clean.equalsIgnoreCase("CANCELLED") || clean.equalsIgnoreCase("CANCELED")) return "Cancelled";
+
+        for (String valid : List.of("Placed", "Confirmed", "Packed", "Dispatched", "Out for Delivery", "Delivered", "Cancelled")) {
+            if (valid.equalsIgnoreCase(clean)) {
+                return valid;
+            }
+        }
+        return clean;
+    }
+
     @Transactional
-    public OrderResponse updateOrderStatus(UUID orderId, String newStatus) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+    public OrderResponse updateOrderStatus(String identifier, String newStatus) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new ResourceNotFoundException("Order identifier is required");
+        }
+        Order order = null;
+        UUID uuid = parseUuid(identifier);
+        if (uuid != null) {
+            order = orderRepository.findByIdWithDetails(uuid).orElse(null);
+        }
+        if (order == null) {
+            order = orderRepository.findByOrderNumberWithDetails(identifier.trim()).orElse(null);
+        }
+        if (order == null && uuid != null) {
+            order = orderRepository.findById(uuid).orElse(null);
+        }
+        if (order == null) {
+            order = orderRepository.findByOrderNumber(identifier.trim()).orElse(null);
+        }
+        if (order == null) {
+            throw new ResourceNotFoundException("Order not found with identifier: " + identifier);
+        }
 
         String previousStatus = order.getOrderStatus();
-        if (newStatus != null && !newStatus.isBlank()) {
-            order.setOrderStatus(newStatus.trim());
-            order = orderRepository.save(order);
+        String normalizedStatus = normalizeOrderStatus(newStatus);
+        order.setOrderStatus(normalizedStatus);
 
-            // Asynchronously dispatch Order Status Update email
-            try {
-                emailService.sendOrderStatusUpdateEmail(order, previousStatus, newStatus.trim());
-            } catch (Exception e) {
-                log.warn("[OrderService] Non-blocking status email dispatch failed for order {}: {}", order.getOrderNumber(), e.getMessage());
-            }
+        // Synchronize tracking milestones in JSONB with the newly assigned fulfillment status
+        try {
+            String formattedDate = order.getCreatedAt() != null
+                ? OrderResponse.FORMATTER.format(order.getCreatedAt().atZone(ZoneId.systemDefault()))
+                : "Today";
+            List<OrderResponse.TrackingStepDto> updatedSteps = OrderResponse.generateDefaultTrackingSteps(normalizedStatus, formattedDate);
+            order.setTrackingMilestones(objectMapper.writeValueAsString(updatedSteps));
+        } catch (Exception e) {
+            log.warn("[OrderService] Non-blocking: Could not serialize tracking milestones for order {}: {}", order.getOrderNumber(), e.getMessage());
+        }
+
+        order = orderRepository.save(order);
+
+        // Asynchronously dispatch Order Status Update email with pure-string parameters (zero cross-thread entity access)
+        try {
+            String recipientEmail = resolveOrderRecipientEmail(order);
+            String recipientName = getOrderRecipientName(order);
+            emailService.sendOrderStatusUpdateEmail(order.getOrderNumber(), recipientEmail, recipientName, previousStatus, normalizedStatus);
+        } catch (Exception e) {
+            log.warn("[OrderService] Non-blocking status email dispatch failed for order {}: {}", order.getOrderNumber(), e.getMessage());
         }
 
         return OrderResponse.fromEntity(order);
+    }
+
+    private String resolveOrderRecipientEmail(Order order) {
+        if (order.getUser() != null && order.getUser().getEmail() != null && !order.getUser().getEmail().isBlank()) {
+            return order.getUser().getEmail().trim().toLowerCase();
+        }
+        if (order.getGuestEmail() != null && !order.getGuestEmail().isBlank()) {
+            return order.getGuestEmail().trim().toLowerCase();
+        }
+        return null;
+    }
+
+    private String getOrderRecipientName(Order order) {
+        if (order.getUser() != null && order.getUser().getName() != null && !order.getUser().getName().isBlank()) {
+            return order.getUser().getName().trim();
+        }
+        try {
+            if (order.getShippingAddressSnapshot() != null && !order.getShippingAddressSnapshot().isBlank()) {
+                var node = objectMapper.readTree(order.getShippingAddressSnapshot());
+                if (node.has("name") && !node.get("name").asText().isBlank()) {
+                    return node.get("name").asText().trim();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "Valued Customer";
+    }
+
+    @Transactional
+    public OrderResponse updateOrderStatus(UUID orderId, String newStatus) {
+        return updateOrderStatus(orderId != null ? orderId.toString() : null, newStatus);
     }
 
     @Transactional(readOnly = true)
