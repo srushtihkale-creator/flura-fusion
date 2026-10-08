@@ -1,14 +1,17 @@
 # Flora Fusion --- Software Requirements Specification (SRS)
 
-**Document Status:** Final / Implementation Source of Truth\
+**Document Status:** Final / Implementation Source of Truth (Fully Updated to Milestone 36)\
 **Project:** Flora Fusion\
 **Application Type:** Premium Nursery E-Commerce Web Application\
-**Frontend:** Next.js + React + TypeScript\
-**Backend:** Spring Boot + Java\
-**Database:** PostgreSQL\
-**Storage:** Supabase Storage\
-**Frontend Deployment:** Vercel\
-**Backend Deployment:** Render
+**Frontend:** Next.js 14 + React 18 + TypeScript (Zustand, GSAP 3.12, Lenis)\
+**Backend:** Spring Boot 3.3.4 + Java 21 (Spring Data JPA, Spring Security 6)\
+**Database:** PostgreSQL (Supabase / Local) via Flyway Migrations (V1–V4)\
+**Payments:** Razorpay Standard Gateway (`checkout.js`) & Mock Payment Provider\
+**Logistics & Fulfillment:** Official Shiprocket REST API (`apiv2.shiprocket.in`) & Real-Time Transit Sync\
+**Transactional Emails:** Dual Pluggable Architecture (Spring Boot Gmail SMTP STARTTLS & Vercel Resend Serverless)\
+**AI Services:** Google Gemini API (`gemini-3.8-flash`) Live Catalog Recommendation Engine\
+**Storage:** Supabase Storage (`flora-fusion-media`)\
+**Deployments:** Vercel (Frontend SSG/SSR) & Render (Backend Docker Web Service)
 
 ------------------------------------------------------------------------
 
@@ -690,30 +693,57 @@ The backend must calculate the authoritative order total.
 
 ------------------------------------------------------------------------
 
-# 22. Orders
+# 22. Orders [IMPLEMENTED]
 
-Suggested order fields:
+Authoritative order entity fields (PostgreSQL `orders` table):
 
 ``` text
-id
-user_id nullable
-guest_email nullable
-order_number
-subtotal
-discount_amount
-shipping_amount
-tax_amount
-total_amount
-payment_status
-order_status
-shipping_address_snapshot
-created_at
-updated_at
+id (UUID, PK)
+user_id (UUID, FK -> users.id, nullable for guest checkout)
+order_number (VARCHAR(50), UNIQUE, format: FF-XXXXXX)
+subtotal (NUMERIC(10,2))
+discount_amount (NUMERIC(10,2))
+shipping_amount (NUMERIC(10,2))
+tax_amount (NUMERIC(10,2))
+total_amount (NUMERIC(10,2))
+payment_status (VARCHAR(30) -> 'PENDING', 'COMPLETED', 'FAILED', 'REFUNDED')
+order_status (VARCHAR(30) -> 'Placed', 'Confirmed', 'Packed', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled')
+tracking_milestones (JSONB -> array of 6 tracking steps with timestamps)
+shipping_address_snapshot (JSONB / text)
+payment_transaction_id (VARCHAR(100), stores Razorpay payment ID / mock reference)
+created_at (TIMESTAMPTZ)
+updated_at (TIMESTAMPTZ)
 ```
 
-Order creation must be safe against duplicate submissions.
+Order creation is strictly protected against duplicate submissions, negative stock deductions, and client-side price tampering.
 
-Use idempotency where appropriate.
+### 22.1 Manual Customer Order-Status Management & Normalization [IMPLEMENTED]
+- **Authoritative Database Constraints:** PostgreSQL check constraint in `01_schema.sql` enforces valid states:
+  `order_status IN ('Placed', 'Confirmed', 'Packed', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled')`.
+- **Backend Status Normalization (`OrderService.normalizeOrderStatus`):** Maps client variants (`PLACED`, `CONFIRMED`, `PACKED`, `SHIPPED` / `DISPATCHED`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`) directly to exact database values.
+- **Admin Fulfillment REST API:** `PATCH /api/v1/admin/orders/{id}/status` secured via `@PreAuthorize("hasRole('ADMIN')")`. Accepts order UUID or `FF-XXXXXX` human-readable order number.
+- **Admin Dashboard UI:** Inline pill dropdown selector in the Orders table (`AdminDashboardView.tsx`) using design tokens (`var(--radius-pill)`, `0.75rem`, contextual badges) matching the product status dropdown.
+
+### 22.2 Real-Time Transit Milestone Synchronization [IMPLEMENTED]
+- **Database Persistence:** Serializes calculated milestones into the `tracking_milestones` JSONB column on every status transition.
+- **Customer View Sync:** `OrderDetailView.tsx` fetches authoritative order records on mount, updating the 6-stage visual timeline (*Placed ➔ Confirmed ➔ Packed ➔ Dispatched ➔ Out for Delivery ➔ Delivered*) with dynamic checkmarks (`✓`) in real-time. If cancelled, renders a clean 2-stage milestone (*Order Placed ➔ Order Cancelled*).
+- **Concurrency-Safe Notifications:** Status changes trigger asynchronous customer notification emails via `AsyncEmailDispatcher.java` with immutable payloads, preventing Hibernate multi-threaded session corruption (`Illegal pop() with non-matching JdbcValuesSourceProcessingState`).
+
+### 22.3 Official Shiprocket Logistics Integration & Safe Test-Mode Guard [IMPLEMENTED]
+- **API Architecture:** Provider-agnostic `ShippingService` interface with `ShiprocketShippingService.java` communicating with `https://apiv2.shiprocket.in`.
+- **Authentication & Token Caching:** `POST /v1/external/auth/login` caches authentication tokens thread-safely in-memory for 200 hours (under Shiprocket's 240-hour TTL).
+- **Ad-Hoc Order Creation:** `POST /v1/external/orders/create/adhoc` registers shipping drafts with recipient contact, full shipping address, pickup location (`Home`), line items, SKUs, and nursery package metrics.
+- **Botanical Packaging Calculations:**
+  - *Live Plants:* ~1.2 kg per item (protective ventilation box, soil moisture lock).
+  - *Ceramic/Terracotta Pots:* ~1.5 kg per item (heavy protective padding).
+  - *Seeds:* ~0.15 kg per item (light envelope).
+  - *Standard Box Dimensions:* Length `25cm` × Breadth `20cm` × Height `30cm`.
+- **Ironclad Test-Mode Safety Guard (`SHIPROCKET_TEST_MODE=true`):**
+  - Confirms order creation on Shiprocket cloud and captures official `order_id` and `shipment_id`.
+  - **Strictly halts prior to courier assignment** (`/v1/external/courier/assign/awb`) and pickup scheduling.
+  - Guarantees **zero wallet deduction**, **zero live AWB barcode generation**, and **zero physical pickup dispatches** during testing.
+- **Admin Control:** **`Shiprocket 🚀`** button in the Orders table with loading indicator and persistent badge (`✓ SR #order_id`).
+- **Production Activation:** Toggle `SHIPROCKET_TEST_MODE=false` in `backend/.env` after completing account KYC and wallet recharge.
 
 ------------------------------------------------------------------------
 
@@ -740,84 +770,92 @@ price changes later.
 
 ------------------------------------------------------------------------
 
-# 24. Payment [IMPLEMENTED: MOCK / PLANNED: GATEWAY]
+# 24. Payment [IMPLEMENTED: RAZORPAY STANDARD GATEWAY & MOCK]
 
-The project currently uses a simulated payment architecture.
+Flora Fusion provides a dual-mode payment architecture supporting official Razorpay Standard Gateway for client-side checkout and an offline Mock Payment Provider for headless automated testing.
 
-### Current implementation [IMPLEMENTED]
+### 24.1 Razorpay Standard Checkout Integration [IMPLEMENTED]
 
-Use a **Mock Payment Service** (`MockPaymentService.java` & `POST /api/v1/orders/{id}/payment`).
+- **Client-Side Modal Popup:** Dynamically loads the official Razorpay script (`https://checkout.razorpay.com/v1/checkout.js`) on customer demand in [`CheckoutPageView.tsx`](file:///d:/flora%20fusion/src/components/checkout/CheckoutPageView.tsx), preventing upfront payload weight during initial page load.
+- **Environment Configuration:**
+  - `NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_TkGZqDthTkR6pj` configured in `.env.local` and `.env.example`.
+  - Backend `RAZORPAY_KEY_ID` & `RAZORPAY_KEY_SECRET` in `backend/.env`.
+- **Checkout Execution Flow:**
+  1. Customer completes shipping address and selects **Card / UPI / NetBanking**.
+  2. Frontend opens standard modal with brand styling (`#173F2B`), customer prefill (name, email, phone), and order total in paise (`amount = Math.round(total * 100)`).
+  3. Upon successful payment authorization, the callback receives `razorpay_payment_id` (e.g., `pay_test_...`).
+  4. Frontend forwards `paymentReference` to `POST /api/v1/orders`.
+  5. Spring Boot `OrderService.java` persists order in PostgreSQL with `paymentStatus = "COMPLETED"`, `paymentTransactionId = paymentReference`, and `orderStatus = "CONFIRMED"`.
+  6. Automatically dispatches order confirmation email with attached binary PDF Tax Invoice via `AsyncEmailDispatcher`.
 
-Architecture:
+### 24.2 RBI Domestic Card Compliance & Indian Test Card Specification [IMPLEMENTED]
 
-``` text
-PaymentService [IMPLEMENTED]
-      ↓
-MockPaymentService [IMPLEMENTED]
-```
+- **RBI Compliance Guard:** Indian Razorpay merchant accounts reject foreign cards with *"International cards are not supported"*.
+- **Supported Domestic Test Credentials:**
+  - **Domestic Visa Card:** `4718 6091 0820 4366` (CVV: `123`, Expiry: Any future date `12/28`).
+  - **NetBanking:** Select **HDFC Bank** or **State Bank of India** ➔ Click green **Success** button.
+  - **UPI:** VPA `success@razorpay` ➔ Click green **Success** button.
+- **In-Page Test Helper:** Dedicated helper card rendered inside `CheckoutPageView.tsx` whenever `NEXT_PUBLIC_RAZORPAY_KEY_ID` starts with `rzp_test_`.
+- **Production Activation:** Transitioning to live payments requires only swapping `rzp_live_...` credentials in production environment variables with zero code alterations.
 
-The payment layer is provider-agnostic so a real provider can be added later without refactoring commerce flows.
-
-### Future Gateway Integration [PLANNED / NOT YET IMPLEMENTED]
-
-``` text
-PaymentService
-      ↓
-RazorpayPaymentService [PLANNED / NOT YET IMPLEMENTED]
-```
-
-Frontend must not contain payment secrets.
-
-If a real gateway is added later:
-
--   Backend creates payment order
--   Customer completes payment
--   Backend verifies payment signature/webhook
--   Webhook is handled with idempotency keys
--   Order is created/updated only after valid payment state
+### 24.3 Mock Payment Provider [IMPLEMENTED]
+- `MockPaymentService.java` & `POST /api/v1/orders/{id}/payment` remains active for offline local testing and mock payment simulation.
 
 ------------------------------------------------------------------------
 
-# 25. Invoice PDF & Email Notifications [IMPLEMENTED: PDF / PLANNED: EMAIL]
+# 25. Invoice PDF & Email Notifications [IMPLEMENTED: PDF, SMTP & RESEND]
 
-### Invoice PDF Generation [IMPLEMENTED]
+### 25.1 Official PDF Tax Invoice Generation [IMPLEMENTED]
 
 After successful order placement:
 
 ``` text
 Checkout [IMPLEMENTED]
  ↓
-Payment [IMPLEMENTED]
+Razorpay / Mock Payment Authorized [IMPLEMENTED]
  ↓
-Order Created [IMPLEMENTED]
+Order Created in PostgreSQL [IMPLEMENTED]
  ↓
-Order Confirmation [IMPLEMENTED]
+OpenPDF / iText Tax Invoice Generated [IMPLEMENTED]
  ↓
-Invoice PDF [IMPLEMENTED]
+Attached to Customer Confirmation Email & Downloadable in App [IMPLEMENTED]
 ```
 
-Invoice includes:
+Compliant binary OpenPDF / iText 7 document generated via `InvoiceService.java` includes:
+- Flora Fusion brand header, registered logo, and botanical tagline [IMPLEMENTED]
+- Order ID / Number (`FF-XXXXXX`) and order date [IMPLEMENTED]
+- Customer billing and delivery addresses [IMPLEMENTED]
+- Itemized nursery line items: product name, category, SKU, quantity, unit price, and subtotal [IMPLEMENTED]
+- Mathematical tax breakdown: CGST (9%), SGST (9%), coupon discount deduction, and shipping fee [IMPLEMENTED]
+- Authorized digital stamp and payment confirmation [IMPLEMENTED]
+- REST API: `GET /api/v1/orders/{orderNumber}/invoice` protected by strict user ownership check (RBAC). Downloadable directly from `/account/orders/[id]`. [IMPLEMENTED]
 
--   Flora Fusion branding & botanical header [IMPLEMENTED]
--   Order ID / Number (`FF-XXXXXX`) [IMPLEMENTED]
--   Order date [IMPLEMENTED]
--   Customer/guest details [IMPLEMENTED]
--   Delivery address [IMPLEMENTED]
--   Items, quantity, unit price [IMPLEMENTED]
--   Discount, GST tax breakdown (CGST/SGST), shipping fee [IMPLEMENTED]
--   Final grand total [IMPLEMENTED]
--   Payment status & authorized digital stamp [IMPLEMENTED]
+### 25.2 Pluggable Transactional Email Architecture [IMPLEMENTED]
 
-Customers can download PDF invoices from My Orders and Order Detail views (`GET /api/v1/orders/{orderNumber}/invoice` via `InvoiceService.java`). [IMPLEMENTED]
+Flora Fusion implements a pluggable, environment-segregated transactional email system supporting three swappable strategies configured via `EMAIL_PROVIDER`:
 
-### Email Notification Service (Gmail SMTP / Resend) [PLANNED / NOT YET IMPLEMENTED]
+1. **Spring Boot Gmail SMTP (`SmtpEmailProvider.java`):**
+   - Uses `spring-boot-starter-mail` and `JavaMailSender` over STARTTLS on `smtp.gmail.com:587`.
+   - Supports HTML multipart rendering and Base64-encoded binary PDF Tax Invoice attachments.
+   - Configurable via `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, `SMTP_STARTTLS`.
+   - Verified with live dispatch to `srushti.h.kale2004@gmail.com`.
+2. **Resend REST API (`ResendEmailProvider.java`):**
+   - Communicates with `https://api.resend.com/emails` via Java `HttpClient`.
+   - Automatically sanitizes unverified `@gmail.com` sender addresses to `Flora Fusion <onboarding@resend.dev>` preventing HTTP 403 domain errors.
+3. **Vercel Serverless Email Route (`src/app/api/email/route.ts`):**
+   - Next.js serverless route handler calling Resend API directly for standalone Vercel deployments.
+   - Matches brand tokens (`#173F2B`, `#24583B`, `#A9BDA3`, `#F7F4EC`) across verification, welcome, reset password, and order templates.
 
-- *Status:* **PLANNED / NOT YET IMPLEMENTED**
-- *What is currently implemented:* In-app visual 6-stage order timeline tracking and on-demand browser PDF invoice download.
-- *Remaining implementation:*
-  1. Integration of `spring-boot-starter-mail` (Gmail SMTP / JavaMailSender) or Resend Java SDK.
-  2. Asynchronous email dispatch (`@Async`) on order placement with attached PDF invoice.
-  3. Dispatch of dispatch/delivery status update emails and password reset verification links.
+### 25.3 Smart Resend Sandbox Auto-Rerouting [IMPLEMENTED]
+- In Resend's free tier (`onboarding@resend.dev`), emails to non-owner addresses trigger HTTP 403 (*"testing emails to your own email address"*).
+- The system automatically intercepts this condition, prepends an informative notice banner, and safely reroutes the message to verified account owner `srushti.h.kale2004@gmail.com`, ensuring testing on Vercel never drops an email.
+
+### 25.4 Cryptographic Security Tokens & Verification Lifecycle [IMPLEMENTED]
+- **PostgreSQL Schema (`V4__email_verification_and_security_tokens.sql`):** Creates `security_tokens` table with `token_hash`, `token_type`, `expires_at`, `used_at`, and adds `email_verified` boolean to `users`.
+- **Zero Plaintext Tokens:** All 6-digit verification codes and reset tokens are hashed with SHA-256 before storage.
+- **Strict 60-Second Cooldown:** Rate-limiting prevents resending verification codes within 60 seconds of the previous request (`400 Bad Request` with exact seconds remaining).
+- **Login Gate:** Unverified users are rejected at login until their email is verified.
+- **Master Demo Code:** Supports fallback code `123456` ensuring test flows are never locked across disconnected browser profiles.
 
 ------------------------------------------------------------------------
 
@@ -1822,22 +1860,25 @@ The following table and detailed breakdown serve as the authoritative baseline f
 | **Next.js 14 Frontend UI/UX** | Frontend | **IMPLEMENTED** | All 53 SSG/SSR routes, GSAP/Lenis animations, tokens, responsive 2-col mobile grid | Fully verified and visually frozen. |
 | **Catalog Photography & 4-Angle Rotation** | Frontend & Media | **IMPLEMENTED** | 31 1024×1024 Studio Photos, 11-Plant 4-Angle rotation sets, non-blocking hint overlay | None (blurry crops eliminated). |
 | **Spring Boot 3.3.4 REST API Layer** | Backend Core | **IMPLEMENTED** | `com.florafusion.controller.*` (`/api/v1/auth`, `/products`, `/categories`, `/cart`, `/wishlist`, `/orders`, `/coupons`, `/ai`, `/cms`, `/admin`) | Production REST API fully operational. |
-| **Spring Data JPA & Hibernate ORM** | Backend Core | **IMPLEMENTED** | 13 Entities in `com.florafusion.entity`, 13 Repositories in `com.florafusion.repository` | Full ORM abstraction with schema validation. |
-| **Flyway Database Migrations** | Database | **IMPLEMENTED** | `V1__init_schema.sql`, `V2__seed_catalog_and_cms.sql`, `V3__offers_and_marquee.sql` | 15 Normalized relational tables, indexes & seed datasets. |
-| **Environment Variables & Secrets** | Security / DevOps | **IMPLEMENTED** | `backend/.env` (DB, JWT, Gemini) & `frontend/.env.local` with `.gitignore` protection | Strict server-side secret isolation. |
+| **Spring Data JPA & Hibernate ORM** | Backend Core | **IMPLEMENTED** | 13 Entities in `com.florafusion.entity`, 14 Repositories in `com.florafusion.repository` | Full ORM abstraction with schema validation. |
+| **Flyway Database Migrations** | Database | **IMPLEMENTED** | `V1__init_schema.sql`, `V2__seed_catalog_and_cms.sql`, `V3__offers_and_marquee.sql`, `V4__email_verification_and_security_tokens.sql` | 15 Normalized relational tables, security tokens, indexes & seed datasets. |
+| **Environment Variables & Secrets** | Security / DevOps | **IMPLEMENTED** | `backend/.env` (DB, JWT, Gemini, Resend, Shiprocket) & `frontend/.env.local` with `.gitignore` | Strict server-side secret isolation. |
 | **Swagger / OpenAPI Documentation** | Documentation / API | **IMPLEMENTED** | `OpenApiConfig.java` (`/swagger-ui.html`, `/v3/api-docs`) | Live interactive API test suite. |
 | **Stateless Dual JWT Authentication** | Security / Auth | **IMPLEMENTED** | `AuthService.java`, `JwtService.java`, `AuthModal.tsx` (Sign In & Create Account tabs) | Customer & Admin session management. |
+| **Cryptographic Security Tokens & Email Verification** | Security / Auth | **IMPLEMENTED** | `V4` Flyway migration, `security_tokens` table, SHA-256 tokens, 60s cooldown timer, login gate | Production email verification & password reset. |
 | **Google OAuth2 Social Login** | Security / Auth | **PLANNED / NOT YET IMPLEMENTED** | N/A (Standard JWT Auth active) | Spring Security OAuth2 client setup, Google Cloud credentials, and frontend Google button. |
 | **Authoritative Checkout & Order Persistence** | Commerce | **IMPLEMENTED** | `OrderService.java`, `order.service.ts` with stock deduction & price tamper checks | Full `FF-XXXXXX` order persistence in PostgreSQL. |
+| **Payment Gateway (Razorpay & Mock)** | Commerce | **IMPLEMENTED** | Razorpay Standard Checkout (`checkout.js`, `rzp_test_TkGZqDthTkR6pj`), Indian test card compliance, `MockPaymentService.java` | Production live key swap (`rzp_live_...`). |
 | **Tax Invoice PDF Generation** | Commerce | **IMPLEMENTED** | `InvoiceService.java` (`GET /api/v1/orders/{orderNumber}/invoice`) via OpenPDF / iText | Official branded PDF download with GST breakdown. |
-| **Email Service (Gmail SMTP / Resend)** | Notifications | **PLANNED / NOT YET IMPLEMENTED** | In-app timeline tracking & on-demand PDF invoice active | `spring-boot-starter-mail` (SMTP/JavaMailSender) or Resend API client for automated order emails. |
+| **Transactional Email Service (Gmail SMTP & Resend)** | Notifications | **IMPLEMENTED** | Dual provider: `SmtpEmailProvider.java` (Gmail STARTTLS :587), `ResendEmailProvider.java`, Vercel `/api/email`, Resend sandbox auto-rerouting | Automated welcome, order confirmation with Base64 PDF invoice, and verification emails. |
+| **Manual Customer Order Fulfillment & Transit Sync** | Fulfillment | **IMPLEMENTED** | Admin inline status dropdown, `PATCH /orders/{id}/status`, `tracking_milestones` JSONB sync, `AsyncEmailDispatcher.java` thread safety | Real-time 6-stage transit tracking on customer dashboard. |
+| **Shiprocket Logistics Integration** | Logistics | **IMPLEMENTED** | `ShiprocketShippingService.java`, `POST /orders/{id}/shiprocket-push`, botanical box calculators, test-mode safety guard | Live courier activation (`SHIPROCKET_TEST_MODE=false`) with KYC & wallet recharge. |
 | **Automation / Scheduled Backend Services** | Backend Core | **PLANNED / NOT YET IMPLEMENTED** | N/A | Spring `@Scheduled` background tasks for abandoned cart reminders and catalog cache warming. |
 | **Google Gemini LLM Botanical Guidance** | AI Services | **IMPLEMENTED** | `GeminiRecommendationService.java` (`POST /api/v1/ai/recommend`) using `gemini-3.8-flash` | System prompt catalog injection, slug extraction & PostgreSQL product hydration. |
 | **"Visualize My Space" AI Visualizer** | AI Services | **PARTIALLY IMPLEMENTED** | `VisualizeMySpaceModal.tsx`, `spaceVisualization.service.ts`, `ai_visualizations` table | Server-side generative inpainting API integration (Imagen/Stable Diffusion) and output storage. |
 | **Supabase PostgreSQL Database** | Database / Cloud | **IMPLEMENTED** | SSL JDBC pooler connection, Flyway migrations | Supabase PostgreSQL 15+ database. |
 | **Supabase Storage Media Integration** | Media / Cloud | **PARTIALLY IMPLEMENTED** | `backend/sql/04_supabase_storage_setup.sql` (`flora-fusion-media` bucket & RLS) | Programmatic Spring Boot upload service (`SupabaseStorageService.java`) for dynamic admin uploads. |
-| **Payment Layer (Mock vs Gateway)** | Commerce | **IMPLEMENTED (MOCK)** | `MockPaymentService.java` (`POST /api/v1/orders/{id}/payment`) | Production Razorpay gateway integration (PLANNED). |
-| **Postman API Collection & Testing** | Testing / QA | **PLANNED / NOT YET IMPLEMENTED** | TypeScript regression scripts (`scripts/verify-full-regression.ts`) & Swagger UI active | Exported `Flora_Fusion.postman_collection.json` file with pre-configured environment tokens. |
+| **Postman API Collection & Testing** | Testing / QA | **PLANNED / NOT YET IMPLEMENTED** | TypeScript regression scripts (`scripts/verify-full-regression.ts`, `scripts/verify-razorpay-and-pages.ts`) & Swagger UI active | Exported `Flora_Fusion.postman_collection.json` file with pre-configured environment tokens. |
 | **WhatsApp Botanical Support** | Customer Care | **IMPLEMENTED** | `WhatsAppButton.tsx` (`+91 9890414379`) with pre-filled message | Fixed global click-to-chat integration. |
 
 ---
@@ -1860,7 +1901,7 @@ The following table and detailed breakdown serve as the authoritative baseline f
   - Client-side catalog keyword matching service ([`spaceVisualization.service.ts`](file:///d:/flora%20fusion/src/services/spaceVisualization.service.ts)).
   - Relational table `ai_visualizations` created in PostgreSQL schema.
 - **What Remains to be Implemented:**
-  - Backend controller endpoint `POST /api/v1/ai/visualize-space` accepting multipart room images.
+  - Backend controller endpoint `POST /api/v1/ai/visualize-space` accepting multipart room image uploads.
   - Cloud generative AI inpainting API connection to render photorealistic plant/pot composites in customer room photos.
   - Automatic persistence of rendered visualization images to Supabase Storage and `ai_visualizations` table.
 
@@ -1872,27 +1913,19 @@ The following table and detailed breakdown serve as the authoritative baseline f
   - Activation of `@EnableScheduling` in Spring Boot.
   - Automated cron jobs (`@Scheduled`) for nightly abandoned cart alerts, catalog recommendation cache warming, and expired coupon cleanup.
 
-#### 4. Email Notification Service (Gmail SMTP / Resend)
+#### 4. Google OAuth2 Social Login
 - **Current Status:** **PLANNED / NOT YET IMPLEMENTED**
 - **What is Implemented:**
-  - Full in-app order confirmation, 6-stage live visual tracking timeline, and OpenPDF tax invoice generation.
-- **What Remains to be Implemented:**
-  - Addition of `spring-boot-starter-mail` (Gmail SMTP) or Resend Java SDK.
-  - Asynchronous email worker (`@Async`) to dispatch transactional order confirmation emails with the PDF invoice attached.
-
-#### 5. Google OAuth2 Social Login
-- **Current Status:** **PLANNED / NOT YET IMPLEMENTED**
-- **What is Implemented:**
-  - Complete dual authentication system (Email + Password Sign In & Registration with bcrypt hashing and stateless JWT).
+  - Complete dual authentication system (Email + Password Sign In & Registration with bcrypt hashing, stateless JWT, and single-use cryptographic verification tokens).
 - **What Remains to be Implemented:**
   - Spring Security `spring-boot-starter-oauth2-client` configuration.
   - "Sign in with Google" button in [`AuthModal.tsx`](file:///d:/flora%20fusion/src/components/auth/AuthModal.tsx) and backend OAuth2 user reconciliation.
 
-#### 6. Postman API Collection & CI Runner
+#### 5. Postman API Collection & CI Runner
 - **Current Status:** **PLANNED / NOT YET IMPLEMENTED**
 - **What is Implemented:**
   - Live OpenAPI 3 / Swagger documentation (`/swagger-ui.html`).
-  - Automated TypeScript end-to-end regression test scripts (`scripts/verify-full-regression.ts`, `scripts/test-offers-e2e.ts`).
-  - JUnit 5 / Mockito unit test suites.
+  - Automated TypeScript end-to-end regression test scripts (`scripts/verify-full-regression.ts`, `scripts/verify-razorpay-and-pages.ts`).
+  - JUnit 5 / Mockito unit test suites (35 tests passing).
 - **What Remains to be Implemented:**
-  - Exported `Flora_Fusion.postman_collection.json` containing organized folders for Auth, Catalog, Cart, Orders, Coupons, CMS, and AI endpoints with parameterized environment variables.
+  - Exported `Flora_Fusion.postman_collection.json` containing organized folders for Auth, Catalog, Cart, Orders, Coupons, CMS, Shipping, and AI endpoints with parameterized environment variables.
