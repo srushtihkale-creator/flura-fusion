@@ -28,3 +28,12 @@ services:
         value: resend
       - key: EMAIL_FROM
         value: Flora Fusion <onboarding@resend.dev>
+      - key: SHIPROCKET_EMAIL
+        sync: false
+      - key: SHIPROCKET_PASSWORD
+        sync: false
+      - key: SHIPROCKET_TEST_MODE
+        value: "true"
+      - key: SHIPROCKET_PICKUP_LOCATION
+        value: "Home"
+
