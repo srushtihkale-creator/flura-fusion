@@ -1,0 +1,44 @@
+package com.florafusion.dto.shipping;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record ShiprocketOrderRequest(
+        String order_id,
+        String order_date,
+        String pickup_location,
+        String channel_id,
+        String comment,
+        String billing_customer_name,
+        String billing_last_name,
+        String billing_address,
+        String billing_address_2,
+        String billing_city,
+        String billing_pincode,
+        String billing_state,
+        String billing_country,
+        String billing_email,
+        String billing_phone,
+        boolean shipping_is_billing,
+        String shipping_customer_name,
+        String shipping_last_name,
+        String shipping_address,
+        String shipping_address_2,
+        String shipping_city,
+        String shipping_pincode,
+        String shipping_state,
+        String shipping_country,
+        String shipping_email,
+        String shipping_phone,
+        List<ShiprocketOrderItemRequest> order_items,
+        String payment_method,
+        BigDecimal shipping_charges,
+        BigDecimal giftwrap_charges,
+        BigDecimal transaction_charges,
+        BigDecimal total_discount,
+        BigDecimal sub_total,
+        double length,
+        double breadth,
+        double height,
+        double weight
+) {}

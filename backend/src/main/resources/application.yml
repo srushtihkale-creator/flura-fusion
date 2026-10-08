@@ -75,6 +75,15 @@ application:
       auth: ${SMTP_AUTH:true}
       starttls: ${SMTP_STARTTLS:true}
 
+  shipping:
+    provider: ${SHIPPING_PROVIDER:shiprocket}
+    shiprocket:
+      base-url: ${SHIPROCKET_BASE_URL:https://apiv2.shiprocket.in}
+      test-mode: ${SHIPROCKET_TEST_MODE:true}
+      email: ${SHIPROCKET_EMAIL:}
+      password: ${SHIPROCKET_PASSWORD:}
+      pickup-location: ${SHIPROCKET_PICKUP_LOCATION:Primary}
+
 # Actuator Configuration
 management:
   endpoints:

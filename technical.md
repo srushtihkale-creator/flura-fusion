@@ -1216,6 +1216,70 @@ graph TD
 3. **Eager Details Loading:** `OrderRepository.findByIdWithDetails` and `findByOrderNumberWithDetails` utilize `LEFT JOIN FETCH` for `items`, `product`, and `user`, ensuring all required data is initialized in a single database query.
 4. **Resilient Non-Blocking I/O:** The slow network I/O (`emailProvider.sendEmail`) remains completely asynchronous via `AsyncEmailDispatcher.dispatch`, ensuring instantaneous API response times without blocking the admin dashboard.
 
+---
+
+## 23. Shiprocket Logistics Architecture, Test-Mode Safety Guard & Production Readiness
+
+### 23.1 High-Level Architecture
+Flora Fusion decouples physical delivery operations from core checkout and inventory management through a provider-agnostic shipping abstraction layer:
+
+```mermaid
+graph TD
+    AdminUI[Admin Dashboard: AdminDashboardView.tsx] -->|POST /api/v1/admin/orders/{id}/shiprocket-push| AdminCtrl[AdminController.java]
+    AdminCtrl --> OrderRepo[OrderRepository: findByIdWithDetails]
+    AdminCtrl --> ShippingSvc[ShippingService Interface]
+    ShippingSvc --> ShiprocketImpl[ShiprocketShippingService.java]
+    
+    subgraph Official Shiprocket REST API [https://apiv2.shiprocket.in]
+        ShiprocketImpl -->|1. Auth with Token Cache 240h| AuthAPI[POST /v1/external/auth/login]
+        ShiprocketImpl -->|2. Adhoc Order Payload| OrderAPI[POST /v1/external/orders/create/adhoc]
+        OrderAPI -->|Returns Official IDs| Resp[order_id, shipment_id, status: NEW]
+    end
+
+    subgraph Test-Mode Safety Guard
+        Resp --> CheckTest{SHIPROCKET_TEST_MODE == true?}
+        CheckTest -- YES: Test Mode --> SafeHalt[SAFE HALT: Never call courier assign or pickup]
+        CheckTest -- NO: Production --> LiveCourier[Call Courier Assignment & Generate AWB]
+    end
+
+    SafeHalt --> DTO[ShippingShipmentDto: success=true, testMode=true]
+    AdminCtrl --> AdminUI
+    AdminUI --> Badge[Render '✓ SR #order_id' Badge]
+```
+
+### 23.2 Official API Specifications
+* **Base URL:** `https://apiv2.shiprocket.in`
+* **Authentication Endpoint:** `POST /v1/external/auth/login`
+  - Body: `{ "email": "...", "password": "..." }`
+  - Response: `{ "token": "...", "id": ..., "email": "..." }`
+  - Token Caching: The service caches the token in-memory with a 200-hour TTL (under Shiprocket's 240-hour expiration window) with synchronized thread-safe renewal.
+* **Order Creation Endpoint:** `POST /v1/external/orders/create/adhoc`
+  - Headers: `Authorization: Bearer <TOKEN>`, `Content-Type: application/json`
+  - Payload: Buyer contact details (first/last name split, phone, email), delivery address (address lines, city, state, country, pincode), pickup location nickname (`Home`), nursery item line list (name, sku, units, selling price), payment method (`Prepaid` or `COD`), dimensions, and total calculated weight.
+
+### 23.3 Botanical Package Sizing & Weight Calculations
+Live plants require specialized protective packaging, damp moisture barriers, and potting soil. The service automatically calculates parcel parameters:
+* **Live Plants:** `1.2 kg` per plant.
+* **Pots (Ceramic/Terracotta):** `1.5 kg` per pot.
+* **Seeds:** `0.15 kg` per seed packet.
+* **Standard Nursery Box Dimensions:** Length `25.0 cm`, Breadth `20.0 cm`, Height `30.0 cm`.
+
+### 23.4 Test-Mode Safety Guard
+When `SHIPROCKET_TEST_MODE=true` is set:
+1. The service creates the order on Shiprocket's live cloud server to confirm payload validity and receive official identifiers (`order_id`, `shipment_id`).
+2. **Guaranteed Zero Wallet Deduction:** In Shiprocket, charges are deducted only when an AWB is assigned. The test-mode guard strictly avoids invoking `/v1/external/courier/assign/awb`.
+3. **Guaranteed Zero Physical Dispatches:** Couriers are never alerted, and pickup drivers are never dispatched to the nursery address during testing.
+
+### 23.5 Production Activation Path
+Transitioning from Test Mode to live commercial parcel delivery requires zero code changes:
+1. Complete Shiprocket account KYC (PAN and Aadhaar) on the Shiprocket console.
+2. Recharge the Shiprocket prepaid shipping wallet (e.g. ₹500).
+3. In `backend/.env`, toggle:
+   ```env
+   SHIPROCKET_TEST_MODE=false
+   ```
+4. Clicking **`Shiprocket 🚀`** in production will automatically book the courier partner, generate an official printable AWB barcode label, and schedule an on-site pickup truck at the registered pickup address (`Home`).
+
 
 
 

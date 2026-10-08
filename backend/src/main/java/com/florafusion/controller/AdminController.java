@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.florafusion.dto.shipping.ShippingShipmentDto;
+import com.florafusion.service.shipping.ShippingService;
+
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
@@ -46,6 +49,7 @@ public class AdminController {
     private final OrderService orderService;
     private final UserRepository userRepository;
     private final CouponService couponService;
+    private final ShippingService shippingService;
 
     // ==========================================
     // DASHBOARD & ANALYTICS
@@ -238,6 +242,39 @@ public class AdminController {
     ) {
         String newStatus = body != null ? (body.get("status") != null ? body.get("status") : body.get("orderStatus")) : null;
         return ResponseEntity.ok(orderService.updateOrderStatus(id, newStatus));
+    }
+
+    // ==========================================
+    // LOGISTICS & SHIPPING (SHIPROCKET)
+    // ==========================================
+
+    @GetMapping("/shipping/config")
+    @Operation(summary = "Get logistics configuration and test mode status")
+    public ResponseEntity<Map<String, Object>> getShippingConfig() {
+        return ResponseEntity.ok(Map.of(
+            "provider", shippingService.getProviderName(),
+            "configured", shippingService.isConfigured(),
+            "testMode", shippingService.isTestMode()
+        ));
+    }
+
+    @PostMapping("/orders/{id}/shiprocket-push")
+    @Operation(summary = "Push order to Shiprocket (Test Mode safely guards against courier assignment)")
+    public ResponseEntity<ShippingShipmentDto> pushOrderToShiprocket(@PathVariable String id) {
+        Order order = null;
+        try {
+            UUID uuid = UUID.fromString(id);
+            order = orderRepository.findByIdWithDetails(uuid).orElse(null);
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        if (order == null) {
+            order = orderRepository.findByOrderNumberWithDetails(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found with identifier: " + id));
+        }
+
+        ShippingShipmentDto shipmentDto = shippingService.pushOrderToShipping(order);
+        return ResponseEntity.ok(shipmentDto);
     }
 
     // ==========================================

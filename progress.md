@@ -35,6 +35,7 @@
 | **Resend Transactional Emails** | ✅ Complete | Welcome & Order Confirmation with attached PDF Tax Invoice via Resend REST API | 100% Live Verified (HTTP 200) |
 | **SMTP Transactional Emails** | ✅ Complete | Live Gmail SMTP integration with JavaMailSender & STARTTLS (`srushti.h.kale2004@gmail.com`) | 100% Live Verified (HTTP 200) |
 | **Manual Order-Status Mgmt** | ✅ Complete | Admin status control, PostgreSQL persistence, transit milestone sync, customer privacy | 100% Tested & Verified |
+| **Shiprocket Logistics Integration** | ✅ Complete | Official Shiprocket REST API (`apiv2.shiprocket.in`), test-mode safety guard, dimension/weight calculations, token caching, admin push | 100% Tested & Verified with live account |
 | **GitHub Remote Sync** | ✅ Synced | Branch `main`, Clean tree | 100% Synchronized with `origin/main` |
 
 
@@ -935,11 +936,47 @@
 
 ---
 
+### Milestone 36: Official Shiprocket Logistics Integration & Safe Test-Mode Architecture
+- [x] **Official API Research & Integration:**
+  - Evaluated official Shiprocket REST API (`https://apiv2.shiprocket.in`).
+  - Implemented dedicated API user authentication (`POST /v1/external/auth/login`) with thread-safe token caching within the 240-hour token validity window.
+  - Implemented ad-hoc order registration (`POST /v1/external/orders/create/adhoc`) passing buyer contact, full delivery address, nursery items, and pickup location nickname (`Home`).
+- [x] **Test-Mode Safety Guard (`SHIPROCKET_TEST_MODE=true`):**
+  - Built an ironclad safety guard in `ShiprocketShippingService.pushOrderToShipping`: in test mode, the service registers the official order draft in Shiprocket to obtain `order_id` and `shipment_id`, but **strictly halts** prior to courier assignment (`POST /v1/external/courier/assign/awb`) or pickup scheduling.
+  - Zero wallet balance deduction, zero live AWB barcode generation, zero physical pickup dispatches in test mode.
+- [x] **Botanical Packaging Algorithms:**
+  - Designed automated package weight and dimension calculators tailored to plant nursery logistics:
+    - Plants: ~1.2 kg per item (soil, root ball, breathable ventilation box).
+    - Ceramic/Terracotta Pots: ~1.5 kg per item (heavy protective packaging).
+    - Seeds: ~0.15 kg per item (light envelope/box).
+    - Standard package volume dimensions: 25cm × 20cm × 30cm.
+- [x] **Architectural Isolation (`ShippingService → ShiprocketShippingService`):**
+  - Created provider-agnostic `ShippingService` interface with `pushOrderToShipping`, `isConfigured`, `isTestMode`, and `getProviderName`.
+  - Kept `OrderService` completely isolated; admin endpoints orchestrated via `AdminController` with `@PreAuthorize("hasRole('ADMIN')")`.
+- [x] **UI/UX Freeze Compliant Admin Control:**
+  - Added a minimal `Logistics` column in the Orders table of `AdminDashboardView.tsx`.
+  - Added an existing-token styled button (`Shiprocket 🚀`) with loading state (`"Pushing..."`) and persistent status badge (`✓ SR #...`) upon successful creation.
+  - Fully preserved manual order status dropdown and customer tracking timeline.
+- [x] **Live Testing & Verification:**
+  - **Backend Tests:** 35/35 PASSED (`mvn test`), including 5 unit tests in `ShiprocketShippingServiceTest.java`.
+  - **Frontend Tests:** 17/17 PASSED (`npm test`).
+  - **Live Account Push:** Pushed live database order `FF-745430` to user's real Shiprocket account:
+    - Shiprocket Order ID: `1636864255`
+    - Shipment ID: `1632940963`
+    - Status: `NEW`
+    - Live verified directly on `https://app.shiprocket.in/orders`.
+- [x] **Production Readiness:**
+  - Switching to live production courier dispatch requires only setting `SHIPROCKET_TEST_MODE=false` in `backend/.env` with an active KYC-verified Shiprocket wallet balance.
+
+---
+
 ## 🔮 Upcoming Roadmap & Next Steps
 
 1. **Production Razorpay Activation:**
    - Transition Razorpay API keys from test mode (`rzp_test_...`) to live merchant credentials (`rzp_live_...`) in production environments.
-2. **Monstera 360° Asset Acquisition:**
+2. **Production Shiprocket Courier Activation:**
+   - Set `SHIPROCKET_TEST_MODE=false` in production environment after completing Shiprocket KYC and wallet recharge.
+3. **Monstera 360° Asset Acquisition:**
    - Supply clean, studio-lit 24-frame 800×800 WebP turntable photography for `monstera-deliciosa`.
 3. **Advanced Customer Garden Tracker:**
    - Add watering reminder schedule and digital plant care logs linked to customer account.

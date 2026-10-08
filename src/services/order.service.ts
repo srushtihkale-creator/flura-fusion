@@ -345,6 +345,38 @@ export const OrderService = {
   },
 
   /**
+   * Admin: Push order to Shiprocket logistics (Safe in test mode: never assigns courier AWB)
+   */
+  async pushToShiprocket(orderIdOrNumber: string): Promise<{
+    success: boolean;
+    testMode: boolean;
+    floraOrderNumber: string;
+    shiprocketOrderId?: number;
+    shiprocketShipmentId?: number;
+    status: string;
+    message: string;
+    awbCode?: string;
+    courierName?: string;
+  }> {
+    if (!IS_BACKEND_CONFIGURED) {
+      throw new Error("Backend not configured");
+    }
+    return apiFetch<any>(`admin/orders/${encodeURIComponent(orderIdOrNumber)}/shiprocket-push`, {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Admin: Get shipping / logistics configuration
+   */
+  async getShippingConfig(): Promise<{ provider: string; configured: boolean; testMode: boolean }> {
+    if (!IS_BACKEND_CONFIGURED) {
+      return { provider: "shiprocket", configured: false, testMode: true };
+    }
+    return apiFetch<any>("admin/shipping/config");
+  },
+
+  /**
    * Download official Flora Fusion Tax Invoice PDF (Privacy Protected by Backend)
    */
   async downloadInvoice(orderNumber: string): Promise<void> {

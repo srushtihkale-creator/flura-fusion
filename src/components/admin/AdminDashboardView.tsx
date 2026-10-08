@@ -265,6 +265,38 @@ export function AdminDashboardView() {
     }
   };
 
+  // Shiprocket Shipping Handler
+  const [shippingLoading, setShippingLoading] = useState<Record<string, boolean>>({});
+  const [pushedShipments, setPushedShipments] = useState<Record<string, { orderId: number; shipmentId: number }>>({});
+
+  const handlePushToShiprocket = async (order: AdminOrder) => {
+    const idKey = order.orderNumber || order.orderId;
+    setShippingLoading((prev) => ({ ...prev, [idKey]: true }));
+    try {
+      const res = await OrderService.pushToShiprocket(idKey);
+      if (res.success) {
+        if (res.shiprocketOrderId) {
+          setPushedShipments((prev) => ({
+            ...prev,
+            [idKey]: { orderId: res.shiprocketOrderId!, shipmentId: res.shiprocketShipmentId! },
+          }));
+        }
+        addToast(
+          res.testMode
+            ? `Shiprocket draft created (Test Mode): Order #${res.shiprocketOrderId || idKey}`
+            : `Order dispatched to Shiprocket: #${res.shiprocketOrderId}`,
+          "success"
+        );
+      } else {
+        addToast(res.message || "Shiprocket rejected order push", "error");
+      }
+    } catch (err: any) {
+      addToast(err?.message || "Failed to push order to Shiprocket", "error");
+    } finally {
+      setShippingLoading((prev) => ({ ...prev, [idKey]: false }));
+    }
+  };
+
   // Offer Handlers
   const handleToggleOffer = async (id: string, currentStatus: boolean) => {
     try {
@@ -1340,6 +1372,7 @@ export function AdminDashboardView() {
                       <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Total</th>
                       <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Status</th>
                       <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Payment</th>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Logistics</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1394,6 +1427,61 @@ export function AdminDashboardView() {
                         </td>
                         <td style={{ padding: "12px 14px", color: "var(--color-brand-green, #24583B)", fontSize: "0.8125rem" }}>
                           {o.paymentMethod || "UPI"} • {o.paymentStatus || "COMPLETED"}
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          {pushedShipments[o.orderNumber || o.orderId] ? (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "4px 8px",
+                                borderRadius: "var(--radius-pill, 999px)",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                backgroundColor: "#F0FDF4",
+                                color: "#166534",
+                                border: "1px solid #BBF7D0",
+                              }}
+                              title={`Shiprocket Order ID: ${pushedShipments[o.orderNumber || o.orderId].orderId}`}
+                            >
+                              ✓ SR #{pushedShipments[o.orderNumber || o.orderId].orderId}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={!!shippingLoading[o.orderNumber || o.orderId]}
+                              onClick={() => handlePushToShiprocket(o)}
+                              aria-label={`Push order ${o.orderNumber} to Shiprocket`}
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: "var(--radius-pill, 999px)",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                border: "1px solid var(--color-brand-forest, #173F2B)",
+                                backgroundColor: "#FFFFFF",
+                                color: "var(--color-brand-forest, #173F2B)",
+                                cursor: shippingLoading[o.orderNumber || o.orderId] ? "not-allowed" : "pointer",
+                                opacity: shippingLoading[o.orderNumber || o.orderId] ? 0.6 : 1,
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!shippingLoading[o.orderNumber || o.orderId]) {
+                                  e.currentTarget.style.backgroundColor = "var(--color-brand-forest, #173F2B)";
+                                  e.currentTarget.style.color = "#FFFFFF";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!shippingLoading[o.orderNumber || o.orderId]) {
+                                  e.currentTarget.style.backgroundColor = "#FFFFFF";
+                                  e.currentTarget.style.color = "var(--color-brand-forest, #173F2B)";
+                                }
+                              }}
+                            >
+                              {shippingLoading[o.orderNumber || o.orderId] ? "Pushing..." : "Shiprocket 🚀"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
