@@ -66,8 +66,12 @@ application:
     url: ${FRONTEND_URL:http://localhost:3000}
 
   email:
-    provider: ${EMAIL_PROVIDER:resend}
-    from: ${EMAIL_FROM:Flora Fusion <onboarding@resend.dev>}
+    provider: ${EMAIL_PROVIDER:}
+    from: ${EMAIL_FROM:Flora Fusion <noreply@florafusion.com>}
+    brevo:
+      api-key: ${BREVO_API_KEY:}
+      sender-email: ${BREVO_SENDER_EMAIL:}
+      sender-name: ${BREVO_SENDER_NAME:Flora Fusion}
     resend:
       api-key: ${RESEND_API_KEY:}
     smtp:

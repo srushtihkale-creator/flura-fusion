@@ -59,18 +59,58 @@ export async function POST(req: Request) {
     }
 
     const cleanTo = (to || "").trim().toLowerCase();
+    const brevoKey = process.env.BREVO_API_KEY;
     const apiKey = process.env.RESEND_API_KEY;
     const fromAddress = process.env.EMAIL_FROM || "Flora Fusion <onboarding@resend.dev>";
 
-    // If Resend API key is not configured, simulate success safely without crashing frontend
+    // 1. Primary Production Provider: Brevo REST API v3
+    if (brevoKey && !brevoKey.includes("placeholder") && !brevoKey.startsWith("your_")) {
+      try {
+        const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_FROM || "noreply@florafusion.com";
+        const senderName = process.env.BREVO_SENDER_NAME || "Flora Fusion";
+
+        const cleanSenderEmail = senderEmail.includes("<") && senderEmail.includes(">")
+          ? senderEmail.substring(senderEmail.indexOf("<") + 1, senderEmail.indexOf(">")).trim()
+          : senderEmail.trim();
+
+        const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "api-key": brevoKey.trim(),
+          },
+          body: JSON.stringify({
+            sender: { name: senderName, email: cleanSenderEmail },
+            to: [{ email: cleanTo, name: name || "Customer" }],
+            subject,
+            htmlContent: html,
+          }),
+        });
+
+        const brevoData = await brevoRes.json().catch(() => ({}));
+        if (brevoRes.ok) {
+          console.log(`[Brevo Vercel] Successfully dispatched email to ${cleanTo}, Message ID: ${brevoData.messageId}`);
+          return NextResponse.json({
+            success: true,
+            provider: "brevo",
+            id: brevoData.messageId,
+          });
+        }
+
+        console.warn(`[Brevo Vercel] Brevo API error (${brevoRes.status}):`, brevoData, "Attempting fallback to Resend...");
+      } catch (brevoErr) {
+        console.error("[Brevo Vercel] Exception during Brevo dispatch:", brevoErr);
+      }
+    }
+
+    // 2. Preserved Fallback Provider: Resend REST API
     if (!apiKey) {
-      console.warn(`[Resend Vercel] RESEND_API_KEY not configured. Simulating email dispatch to: ${cleanTo}`);
+      console.warn(`[Email Vercel] Neither Brevo nor Resend API keys are configured. Cannot dispatch email to: ${cleanTo}`);
       return NextResponse.json({
-        success: true,
-        simulated: true,
-        messageId: `resend-simulated-${Date.now()}`,
-        message: "Email dispatch simulated (RESEND_API_KEY not set)",
-      });
+        success: false,
+        error: "Email provider not configured. Please configure BREVO_API_KEY or RESEND_API_KEY.",
+      }, { status: 503 });
     }
 
     // Call Resend REST API

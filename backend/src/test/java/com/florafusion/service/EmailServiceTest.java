@@ -242,4 +242,21 @@ class EmailServiceTest {
         assertTrue(result.success());
         assertTrue(result.messageId().startsWith("smtp-simulated-"));
     }
+
+    @Test
+    @DisplayName("9. Provider Swappability: BrevoEmailProvider clear failure when unconfigured")
+    void testBrevoEmailProviderUnconfigured() {
+        com.florafusion.service.email.provider.BrevoEmailProvider brevoProvider =
+                new com.florafusion.service.email.provider.BrevoEmailProvider(objectMapper);
+        assertEquals("BREVO", brevoProvider.getProviderName());
+
+        EmailMessage msg = new EmailMessage("test@example.com", "Brevo Subject", "<p>Hello via Brevo</p>");
+        EmailSendResult result = brevoProvider.sendEmail(msg);
+
+        // When unconfigured, Brevo provider must clearly fail without false success claims (Requirement 8)
+        assertFalse(result.success());
+        assertNotNull(result.error());
+        assertTrue(result.error().contains("BREVO_API_KEY"));
+    }
 }
+
