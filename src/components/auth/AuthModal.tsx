@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useFloraStore } from "@/store/useFloraStore";
 
 export function AuthModal() {
@@ -10,6 +10,7 @@ export function AuthModal() {
     authMode,
     setAuthMode,
     login,
+    loginWithGoogle,
     register,
     verifyEmail,
     resendVerification,
@@ -40,6 +41,196 @@ export function AuthModal() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+
+  const [isGoogleGsiRendered, setIsGoogleGsiRendered] = useState(false);
+  const signinGsiContainerRef = useRef<HTMLDivElement>(null);
+  const signupGsiContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleGoogleSuccess = useCallback(async (credential: string) => {
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+    const result = await loginWithGoogle(credential);
+    setLoading(false);
+    if (!result.success) {
+      setErrorMessage(result.error || "Google authentication failed. Please try again.");
+    }
+  }, [loginWithGoogle]);
+
+  // Listen for Google OAuth callback message from popup window
+  useEffect(() => {
+    const handleAuthMessage = async (event: MessageEvent) => {
+      if (typeof window === "undefined") return;
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
+        await handleGoogleSuccess(event.data.idToken);
+      } else if (event.data?.type === "GOOGLE_AUTH_ERROR") {
+        setErrorMessage(event.data?.error || "Google authentication failed. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener("message", handleAuthMessage);
+    return () => window.removeEventListener("message", handleAuthMessage);
+  }, [handleGoogleSuccess]);
+
+  useEffect(() => {
+    if (!isAuthModalOpen) return;
+
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId || clientId.includes("your_google_client_id_here") || clientId.includes("your-client-id-here")) {
+      return;
+    }
+
+    const initGsi = () => {
+      const google = (window as any).google;
+      if (!google?.accounts?.id) return;
+
+      try {
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (res: any) => {
+            if (res?.credential) {
+              handleGoogleSuccess(res.credential);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        const container = authMode === "signup" ? signupGsiContainerRef.current : signinGsiContainerRef.current;
+        if (container) {
+          container.innerHTML = "";
+          google.accounts.id.renderButton(container, {
+            theme: "outline",
+            size: "large",
+            width: 360,
+            text: "continue_with",
+            shape: "pill",
+          });
+          setIsGoogleGsiRendered(true);
+        }
+      } catch (err) {
+        console.warn("[AuthModal] GSI initialization error:", err);
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      initGsi();
+    } else {
+      let script = document.getElementById("google-gsi-client") as HTMLScriptElement;
+      if (!script) {
+        script = document.createElement("script");
+        script.id = "google-gsi-client";
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+      }
+      script.addEventListener("load", initGsi);
+      return () => script.removeEventListener("load", initGsi);
+    }
+  }, [isAuthModalOpen, authMode, handleGoogleSuccess]);
+
+  const handleGoogleSignInClick = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId || clientId.includes("your_google_client_id_here") || clientId.includes("your-client-id-here")) {
+      setErrorMessage(
+        "Google Client ID is not configured yet. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment (.env.local) and configure Authorized redirect URIs in Google Cloud Console."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+
+    // Generate secure random nonce for OpenID Connect
+    const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("flora_oauth_nonce", nonce);
+    }
+
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.set("client_id", clientId);
+    authUrl.searchParams.set("redirect_uri", redirectUri);
+    authUrl.searchParams.set("response_type", "id_token");
+    authUrl.searchParams.set("scope", "openid email profile");
+    authUrl.searchParams.set("nonce", nonce);
+    authUrl.searchParams.set("prompt", "select_account");
+
+    // Open Google's real account-selection screen in an official popup
+    const width = 500;
+    const height = 640;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const popup = window.open(
+      authUrl.toString(),
+      "google_oauth_popup",
+      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+    );
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      // Fallback to full page redirect if popup was blocked
+      window.location.href = authUrl.toString();
+    } else {
+      popup.focus();
+      const checkPopupClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkPopupClosed);
+          setLoading(false);
+        }
+      }, 1000);
+    }
+  };
+
+  const renderGoogleAuthButton = (containerRef: React.RefObject<HTMLDivElement>) => (
+    <>
+      <div style={{ display: "flex", alignItems: "center", margin: "14px 0", gap: "10px" }}>
+        <div style={{ flex: 1, height: "1px", backgroundColor: "var(--color-border-light, #E2E8F0)" }} />
+        <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted, #718096)", textTransform: "uppercase", letterSpacing: "0.05em" }}>or</span>
+        <div style={{ flex: 1, height: "1px", backgroundColor: "var(--color-border-light, #E2E8F0)" }} />
+      </div>
+
+      <div style={{ marginBottom: "16px", minHeight: "44px", display: "flex", justifyContent: "center" }}>
+        <div ref={containerRef} style={{ width: "100%", display: isGoogleGsiRendered ? "flex" : "none", justifyContent: "center" }} />
+        {!isGoogleGsiRendered && (
+          <button
+            type="button"
+            onClick={handleGoogleSignInClick}
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "11px 16px",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              borderRadius: "var(--radius-pill, 999px)",
+              border: "1px solid var(--color-border, #CBD5E1)",
+              backgroundColor: "#FFFFFF",
+              color: "#1F2937",
+              cursor: loading ? "wait" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12c0 1.97.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            Continue with Google
+          </button>
+        )}
+      </div>
+    </>
+  );
 
   useEffect(() => {
     let timer: any;
@@ -628,6 +819,8 @@ export function AuthModal() {
                 {loading ? "Signing in..." : "Sign In to Flora Fusion →"}
               </button>
 
+              {renderGoogleAuthButton(signinGsiContainerRef)}
+
               <div style={{ textAlign: "center", fontSize: "0.8125rem", color: "var(--color-text-secondary, #4A5568)" }}>
                 Don&apos;t have an account?{" "}
                 <button
@@ -802,6 +995,8 @@ export function AuthModal() {
               >
                 {loading ? "Sending verification..." : "Create Account →"}
               </button>
+
+              {renderGoogleAuthButton(signupGsiContainerRef)}
 
               <div style={{ textAlign: "center", fontSize: "0.8125rem", color: "var(--color-text-secondary, #4A5568)" }}>
                 Already have an account?{" "}

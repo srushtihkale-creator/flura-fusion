@@ -420,6 +420,85 @@ export const AuthService = {
     throw new Error("Cannot login in non-browser context.");
   },
 
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    if (IS_BACKEND_CONFIGURED) {
+      const res = await apiFetch<AuthResponse>("auth/google", {
+        method: "POST",
+        body: JSON.stringify({ idToken, credential: idToken }),
+      });
+
+      if (res && res.token) {
+        const user: AuthUser = {
+          id: res.id,
+          email: res.email,
+          name: res.name,
+          role: res.role,
+          emailVerified: res.emailVerified ?? true,
+        };
+        AuthService.setSession(res.token, user);
+      }
+      return res;
+    }
+
+    // Standalone / Vercel fallback
+    if (typeof window !== "undefined") {
+      let email = "google.user@example.com";
+      let name = "Google User";
+
+      // Decode Google JWT payload if standard token (header.payload.signature)
+      try {
+        const parts = idToken.split(".");
+        if (parts.length >= 2) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+          if (payload.email) email = payload.email.toLowerCase();
+          if (payload.name) name = payload.name;
+        } else if (idToken.startsWith("test_google_token:")) {
+          const parts = idToken.split(":");
+          if (parts[1]) email = parts[1].toLowerCase();
+          if (parts[2]) name = parts[2];
+        }
+      } catch (e) {
+        console.warn("[AuthService] Could not parse Google token payload:", e);
+      }
+
+      const users = JSON.parse(localStorage.getItem("flora_users_db") || "{}");
+      let userRecord = users[email];
+      if (!userRecord) {
+        userRecord = {
+          id: "usr_g_" + Math.random().toString(36).substring(2, 9),
+          name,
+          email,
+          role: "CUSTOMER",
+          emailVerified: true,
+        };
+        users[email] = userRecord;
+        localStorage.setItem("flora_users_db", JSON.stringify(users));
+      }
+
+      const token = "mock_jwt_google_" + Date.now();
+      const user: AuthUser = {
+        id: userRecord.id,
+        email,
+        name: userRecord.name,
+        role: userRecord.role || "CUSTOMER",
+        emailVerified: true,
+      };
+      AuthService.setSession(token, user);
+
+      return {
+        token,
+        id: userRecord.id,
+        email,
+        name: userRecord.name,
+        role: "CUSTOMER",
+        emailVerified: true,
+        message: "Signed in with Google successfully.",
+      };
+    }
+
+    throw new Error("Cannot login in non-browser context.");
+  },
+
   async getMe(): Promise<AuthUser | null> {
     if (!IS_BACKEND_CONFIGURED) return null;
     const token = AuthService.getToken();

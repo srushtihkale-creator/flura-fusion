@@ -36,6 +36,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/google")
+    @Operation(summary = "Authenticate or register customer via Google OAuth ID token")
+    public ResponseEntity<AuthResponse> googleAuth(@RequestBody GoogleAuthRequest request) {
+        AuthResponse response = authService.loginWithGoogle(request);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/forgot-password")
     @Operation(summary = "Request a password reset email")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {

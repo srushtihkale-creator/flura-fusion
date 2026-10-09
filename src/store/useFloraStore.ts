@@ -26,6 +26,7 @@ interface FloraState {
   openAuthModal: (mode?: "signin" | "signup" | "verify" | "forgot" | "reset") => void;
   closeAuthModal: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (idToken: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean; email?: string }>;
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   resendVerification: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
@@ -123,6 +124,35 @@ export const useFloraStore = create<FloraState>()(
           return { success: true };
         } catch (err: any) {
           const msg = err?.message || "Invalid credentials. Please try again.";
+          return { success: false, error: msg };
+        }
+      },
+
+      loginWithGoogle: async (idToken: string) => {
+        try {
+          const res = await AuthService.loginWithGoogle(idToken);
+          const user: AuthUser = {
+            id: res.id,
+            email: res.email,
+            name: res.name,
+            role: res.role,
+            emailVerified: res.emailVerified ?? true,
+          };
+          set({
+            user,
+            token: res.token,
+            isAuthenticated: true,
+            isAuthModalOpen: false,
+            // Clear any previous user's cached cart, wishlist, orders before loading fresh user data
+            cart: [],
+            wishlist: [],
+            orders: [],
+          });
+          get().addToast(`Welcome to Flora Fusion, ${res.name}! 🌿`, "success");
+          await get().loadUserData();
+          return { success: true };
+        } catch (err: any) {
+          const msg = err?.message || "Google authentication failed. Please try again.";
           return { success: false, error: msg };
         }
       },

@@ -1280,6 +1280,90 @@ Transitioning from Test Mode to live commercial parcel delivery requires zero co
    ```
 4. Clicking **`Shiprocket 🚀`** in production will automatically book the courier partner, generate an official printable AWB barcode label, and schedule an on-site pickup truck at the registered pickup address (`Home`).
 
+---
+
+## 24. Google Authentication Architecture, Token Verification & Guest Checkout Security
+
+### 24.1 High-Level Architecture
+
+Google Authentication is engineered as an additional, non-disruptive authentication and registration channel that seamlessly joins into Flora Fusion's unified customer security and authorization model:
+
+```mermaid
+graph TD
+    Client[Browser: Next.js Client Component] -->|1. Click 'Continue with Google'| GIS[Google Identity Services: accounts.google.com/gsi/client]
+    GIS -->|2. Returns credential JWT / ID Token| Client
+    Client -->|3. POST /api/v1/auth/google {idToken}| API[Spring Boot: AuthController.java]
+    API --> AuthService[AuthService.java]
+    
+    subgraph Token Verification
+        AuthService --> TokenCheck{Test Token or Live Token?}
+        TokenCheck -- Test / Demo Bypass --> MockProfile[Parse test_google_token:... for Offline QA]
+        TokenCheck -- Live Token --> GoogleAPI[GET https://oauth2.googleapis.com/tokeninfo?id_token=...]
+        GoogleAPI --> VerifyAud{Audience Matches GOOGLE_CLIENT_ID?}
+        VerifyAud -- Valid --> Extracted[Extract email, name, sub]
+        VerifyAud -- Invalid --> ThrowBad[400 Bad Request / 401 Unauthorized]
+    end
+
+    subgraph User Identity Resolution
+        Extracted --> Lookup[UserRepository.findByEmail]
+        Lookup -- User Exists --> UpdatePending[Activate if PENDING or unverified]
+        Lookup -- New User --> CreateUser[Create User: emailVerified=true, status=ACTIVE, Role=CUSTOMER, Random UUID BCrypt Hash]
+    end
+
+    subgraph Session Issuance
+        UpdatePending --> JWTGen[JwtService.generateToken]
+        CreateUser --> JWTGen
+        JWTGen --> Response[AuthResponse: JWT Bearer Token, User Profile]
+    end
+
+    Response --> Client
+    Client --> Store[Zustand useFloraStore: setSession, loadUserData]
+```
+
+### 24.2 Key Engineering Principles
+
+1. **Zero-Duplication Dual Auth System:**
+   - Instead of building a secondary table or parallel auth system, Google users map directly to the canonical `users` table (`com.florafusion.entity.User`).
+   - The PostgreSQL schema enforces `password_hash VARCHAR(255) NOT NULL`. For Google signups, `AuthService` sets a cryptographic UUID BCrypt hash (`passwordEncoder.encode(UUID.randomUUID().toString())`), ensuring full database constraint satisfaction and safety against accidental empty password logins.
+   - Google identity certifiably proves email ownership: Google accounts automatically receive `email_verified = true` and `status = 'ACTIVE'`.
+   - Existing accounts created via Email/Password that were pending verification are automatically certified and activated upon signing in with their matching Google account.
+
+2. **Strict Frictionless Guest Checkout Guarantee:**
+   - Guest checkout remains completely open and unaffected.
+   - The order endpoint (`POST /api/v1/orders`) is explicitly designed to handle unauthenticated requests without an `Authorization` header.
+   - When a guest places an order, `OrderService` accepts the guest shipping address, generates the official `FF-XXXXXX` order number, persists the order with `user_id = NULL`, creates tax invoice records, and returns HTTP 201 Created.
+   - Google Auth is reserved solely for customer-facing convenience: managing persistent profiles, viewing order history in `/account/orders`, and saving items to personal wishlists.
+
+3. **Secure Token Verification:**
+   - **Live Token Verification:** ID tokens are verified against Google's authoritative endpoint: `https://oauth2.googleapis.com/tokeninfo?id_token=<TOKEN>`.
+   - **Audience Verification:** When `GOOGLE_CLIENT_ID` is configured, the service verifies that the `aud` claim matches the configured client ID, mitigating confused deputy vulnerabilities.
+   - **Deterministic Offline QA:** Supports token prefix `test_google_token:<email>:<name>` for offline unit testing, CI/CD pipelines, and local development before credentials are configured.
+
+4. **Environment Variable Configuration:**
+   * **Backend (`backend/.env`):**
+     ```env
+     GOOGLE_CLIENT_ID=your-client-id-here.apps.googleusercontent.com
+     ```
+   * **Frontend (`.env.local`):**
+     ```env
+     NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id-here.apps.googleusercontent.com
+     ```
+
+### 24.3 Google OAuth 2.0 Authorization Endpoint & Callback Route (`/auth/callback`)
+* **Authorization Initiation:**
+  - Endpoint: `https://accounts.google.com/o/oauth2/v2/auth`
+  - Parameters: `client_id`, `redirect_uri` (`/auth/callback`), `response_type=id_token`, `scope=openid email profile`, `prompt=select_account`, `nonce`.
+  - UX: Opens in a centered popup window (`500×640`) preserving active page state, cart, and inputs, with graceful fallback to full-page navigation.
+* **Callback Route Architecture (`src/app/auth/callback/page.tsx`):**
+  - Parses OIDC ID token from URL hash fragment (`#id_token=...`) or search parameters.
+  - In popup mode, broadcasts `{ type: "GOOGLE_AUTH_SUCCESS", idToken }` to `window.opener` via `postMessage` and closes popup.
+  - In full-page redirect mode, invokes `store.loginWithGoogle(idToken)` directly and navigates to `/account`.
+* **Google Cloud Console Requirements:**
+  - **Authorized JavaScript Origins:** `http://localhost:3000`, `https://flura-fusion.vercel.app`
+  - **Authorized Redirect URIs:** `http://localhost:3000/auth/callback`, `https://flura-fusion.vercel.app/auth/callback`
+
+
+
 
 
 

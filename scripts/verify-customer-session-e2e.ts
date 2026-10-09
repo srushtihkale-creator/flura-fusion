@@ -167,8 +167,18 @@ async function main() {
   });
   if (!regGuestRes.ok) throw new Error("Registration for guest email failed");
   const regGuestAuth = await regGuestRes.json();
-  const guestUserToken = regGuestAuth.token;
-  console.log(`  ✓ Customer registered account with email: ${uniqueGuestEmail}`);
+  let guestUserToken = regGuestAuth.token;
+  if (!guestUserToken) {
+    const verifyRes = await fetch(`${BACKEND_BASE}/auth/verify-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: uniqueGuestEmail, code: "123456" }),
+    });
+    if (!verifyRes.ok) throw new Error("Email verification for guest failed: " + (await verifyRes.text()));
+    const verifyData = await verifyRes.json();
+    guestUserToken = verifyData.token;
+  }
+  console.log(`  ✓ Customer registered & verified account with email: ${uniqueGuestEmail}`);
 
   // Query order history after account creation
   const guestUserOrdersRes = await fetch(`${BACKEND_BASE}/orders/my-orders?page=0&size=50`, {
