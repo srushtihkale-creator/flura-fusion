@@ -209,8 +209,13 @@ export function AuthModal() {
       sessionStorage.setItem("flora_oauth_nonce", nonce);
     }
 
-    // Support both origin root (default for Google Cloud Console) or custom redirect URI
-    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || window.location.origin;
+    // Support custom redirect URI or automatically adapt to local vs production Google Cloud Console settings
+    const isLocal =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    const redirectUri =
+      process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ||
+      (isLocal ? window.location.origin : `${window.location.origin}/auth/callback`);
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set("redirect_uri", redirectUri);
