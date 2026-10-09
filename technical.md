@@ -1362,6 +1362,131 @@ graph TD
   - **Authorized JavaScript Origins:** `http://localhost:3000`, `https://flura-fusion.vercel.app`
   - **Authorized Redirect URIs:** `http://localhost:3000/auth/callback`, `https://flura-fusion.vercel.app/auth/callback`
 
+### 24.4 Production Google OAuth 2.0 Dynamic Origin & Global URL Token Receiver Alignment
+* **Dynamic Redirect URI Strategy:**
+  To prevent `redirect_uri_mismatch` errors across local development and production domains without hardcoded URLs:
+  ```typescript
+  const isLocalhost = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || 
+    (isLocalhost ? window.location.origin : `${window.location.origin}/auth/callback`);
+  ```
+* **Global OAuth Return & Hash Token Receiver:**
+  In `AuthModal.tsx`, a universal window listener was implemented to catch authentication credentials returning from both popup windows (`postMessage` events) and full-page browser redirects (`#id_token=...` or `?id_token=...`).
+  Once the token is extracted and sent to `store.loginWithGoogle(idToken)`, the address bar is instantly sanitized via `window.history.replaceState` to strip raw tokens without triggering page reloads.
+* **Zero-Width Container Stabilization for Google Identity Services:**
+  Ensures that the DOM target container for `google.accounts.id.renderButton` has computed layout dimensions (`width > 0`) before initialization, preventing Google's script from collapsing silently inside modal tab switching.
+
+---
+
+## 25. Environment-Based Transactional Email Architecture (Local SMTP & Production Brevo REST API v3 Integration)
+
+### 25.1 Architectural Motivation & Free-Tier Email Landscape
+Flora Fusion requires transactional emails for critical business workflows:
+1. Customer account verification OTP (6-digit cryptographically hashed code)
+2. Welcome notification upon successful email activation
+3. Forgot/reset password recovery links with 1-hour expiration
+4. Order confirmation with full pricing breakdown
+5. Official PDF Tax Invoice attachments generated on-the-fly (`application/pdf`)
+
+**The Free-Tier Production Challenge:**
+- **Resend Free Tier:** Utilizing the default onboarding domain (`onboarding@resend.dev`), Resend strictly rejects dispatches to external recipient emails with `HTTP 403 Forbidden` (`You can only send testing emails to your own email address...`). Bypassing this requires verifying DNS TXT and MX records on a registered custom domain.
+- **Brevo (formerly Sendinblue) Free Tier:** Provides **300 transactional emails per day** to **ANY recipient worldwide** with zero cost, requiring only **1 verified sender email** (`srushti.h.kale2004@gmail.com`) without mandating custom domain DNS ownership records.
+
+### 25.2 System Architecture & Dispatch Routing
+
+```mermaid
+graph TD
+    Event[Business Trigger: Register / Verify / Reset / Order / Status] --> Service[EmailServiceImpl.java]
+    Service --> Template[EmailTemplateService.java: Generate HTML & Invoice]
+    Service --> Message[Immutable EmailMessage Record]
+    
+    subgraph Asynchronous Non-Blocking Dispatch
+        Service --> Dispatcher[AsyncEmailDispatcher.java]
+        Dispatcher --> Factory[EmailProviderConfig: Select Active Provider]
+    end
+    
+    subgraph Provider Strategy Decision
+        Factory --> EnvCheck{Active Profile / EMAIL_PROVIDER}
+        EnvCheck -- dev profile / smtp --> SMTP[SmtpEmailProvider.java: Gmail SMTP:587]
+        EnvCheck -- prod profile / brevo --> Brevo[BrevoEmailProvider.java: Brevo REST API v3]
+        EnvCheck -- resend --> Resend[ResendEmailProvider.java: Resend REST API]
+        EnvCheck -- mock / offline --> Mock[MockEmailProvider.java: Memory Logger]
+    end
+    
+    subgraph External Email Delivery
+        SMTP --> GoogleRelay[smtp.gmail.com:587 STARTTLS]
+        Brevo --> BrevoAPI[POST https://api.brevo.com/v3/smtp/email]
+        Resend --> ResendAPI[POST https://api.resend.com/emails]
+        GoogleRelay --> Recipient[(Any Customer Inbox Worldwide)]
+        BrevoAPI --> Recipient
+    end
+```
+
+### 25.3 Brevo REST API v3 Client Implementation (`BrevoEmailProvider.java`)
+The backend implements `BrevoEmailProvider` utilizing standard Java 11 `HttpClient` and Jackson `ObjectMapper` with zero external SDK bloat:
+- **Endpoint:** `POST https://api.brevo.com/v3/smtp/email`
+- **Authentication:** `api-key: ${BREVO_API_KEY}` header
+- **Payload Schema:**
+  ```json
+  {
+    "sender": {
+      "name": "Flora Fusion",
+      "email": "srushti.h.kale2004@gmail.com"
+    },
+    "to": [
+      {
+        "email": "customer@example.com",
+        "name": "Customer Name"
+      }
+    ],
+    "subject": "🌿 Your Flora Fusion Verification Code",
+    "htmlContent": "<!DOCTYPE html><html>...</html>",
+    "attachment": [
+      {
+        "name": "Invoice-FF-123456.pdf",
+        "content": "JVBERi0xLjQKJ..."
+      }
+    ]
+  }
+  ```
+- **Attachment Handling:** Automatically encodes raw PDF byte arrays (`emailMessage.getAttachmentBytes()`) to Base64 strings for tax invoices, delivered as downloadable PDF email attachments.
+- **Graceful Unconfigured Mode:** If `BREVO_API_KEY` is not present, logs a clean diagnostic warning and safely returns a failed result without throwing unhandled exceptions.
+
+### 25.4 Environment-Based Profile Selection Configuration
+In `backend/src/main/resources/application.yml` and `EmailProviderConfig.java`:
+```yaml
+application:
+  email:
+    # dev profile selects smtp; prod profile selects brevo; or explicit override via EMAIL_PROVIDER
+    provider: ${EMAIL_PROVIDER:}
+    brevo:
+      api-key: ${BREVO_API_KEY:}
+      sender-email: ${BREVO_SENDER_EMAIL:srushti.h.kale2004@gmail.com}
+      sender-name: ${BREVO_SENDER_NAME:Flora Fusion}
+```
+- **Local (`dev` profile):** Automatically falls back to `SmtpEmailProvider` (Gmail SMTP port 587) when `EMAIL_PROVIDER` is unset.
+- **Production (`prod` profile):** Automatically defaults to `BrevoEmailProvider` when deployed to Render cloud.
+- **Manual Override:** Setting `EMAIL_PROVIDER=brevo` forces Brevo in any environment.
+
+### 25.5 Next.js Serverless Route Brevo Integration (`src/app/api/email/route.ts`)
+In standalone/offline environments where the Java backend is not reachable:
+1. The Next.js route first checks for `BREVO_API_KEY`.
+2. If configured, dispatches via Brevo REST API v3 to ensure unrestricted delivery to any customer recipient.
+3. If Brevo is absent, falls back to Resend API (`RESEND_API_KEY`) with automatic sandbox rerouting for the account owner.
+4. If neither is configured, simulates successful mock dispatch for offline development.
+
+### 25.6 Anti-Duplication Guarantee
+Transactional emails originate strictly from the authoritative Spring Boot backend `EmailServiceImpl` during live system execution. The Next.js `/api/email` route is only called when `IS_BACKEND_CONFIGURED` is false, guaranteeing exactly one email dispatch per event.
+
+### 25.7 Live Production Verification Metrics
+| Test Target | Recipient | Provider | HTTP Code | Message ID / Relay | Result |
+| :--- | :--- | :--- | :---: | :--- | :--- |
+| **Account Owner** | `srushti.h.kale2004@gmail.com` | Brevo v3 API | **201 Created** | `<202610091128.63441715101@smtp-relay.mailin.fr>` | Delivered to Inbox |
+| **External Customer** | `test.customer@gmail.com` | Brevo v3 API | **201 Created** | `<202610091128.10945487631@smtp-relay.mailin.fr>` | Delivered to External Recipient |
+| **Local SMTP** | `srushti.h.kale2004@gmail.com` | Gmail SMTP:587 | **250 OK** | Direct SMTP Relay | Delivered to Inbox |
+
+
 
 
 

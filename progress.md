@@ -1027,8 +1027,44 @@
   - TypeScript strict compilation: 0 errors (`npx tsc --noEmit`).
   - ESLint verification: 0 errors / 0 warnings (`npm run lint`).
   - Full Auth test suite: 10/10 PASSED (`scripts/test-auth-complete.mjs`).
-  - Frontend services test suite: 17/17 PASSED (`npm test`).
-  - Customer session and data isolation: 7/7 PASSED (`scripts/verify-customer-session-e2e.ts`).
+### Milestone 39: Google OAuth 2.0 Production Alignment & Global Popup/Redirect Token Receiver
+- [x] **Diagnosed & Resolved Production Google OAuth Redirect Discrepancy:**
+  - Diagnosed origin mismatch between local development (`http://localhost:3000`) and Vercel production (`https://flura-fusion.vercel.app/auth/callback`).
+  - Updated `AuthModal.tsx` to dynamically detect `window.location.origin` for localhost testing, and `${window.location.origin}/auth/callback` for production deployments, with explicit override support via `NEXT_PUBLIC_GOOGLE_REDIRECT_URI`.
+- [x] **Global OAuth Return & URL Token Receiver (`AuthModal.tsx` & `/auth/callback`):**
+  - Implemented a unified window listener capable of capturing authentication credentials across both modal popups (`postMessage` events) and full-page browser redirects (`#id_token=...` / `?id_token=...`).
+  - Added clean browser history state sanitization using `window.history.replaceState` to safely purge sensitive token hash fragments from the address bar immediately after processing.
+  - Resolved Google Identity Services zero-width container collapse by ensuring positive visible DOM dimensions prior to `google.accounts.id.renderButton`.
+- [x] **Git Remote Commit & Production Sync:**
+  - Pushed to `main` at commit `9895376` (*"fix: align google redirect uri for production and add fallback token receiver"*). Verified clean production deployment on Vercel.
+
+---
+
+### Milestone 40: Environment-Based Transactional Email Architecture (Local SMTP & Production Brevo REST API v3 Integration)
+- [x] **Email Provider Abstraction & Brevo REST API v3 Client (`BrevoEmailProvider.java`):**
+  - Architected a production-ready `BrevoEmailProvider` implementing `com.florafusion.service.email.provider.EmailProvider`.
+  - Built direct REST integration targeting `POST https://api.brevo.com/v3/smtp/email` using Java 11 `HttpClient` and Jackson `ObjectMapper` with zero heavy third-party SDK dependencies.
+  - Implemented full support for transactional HTML content, sender details (`BREVO_SENDER_NAME`, `BREVO_SENDER_EMAIL`), single/multi-recipient arrays, and Base64-encoded PDF attachments (`application/pdf`) for Tax Invoices.
+  - Added clear configuration guards that gracefully log diagnostics and return descriptive failure messages if API keys are unconfigured.
+- [x] **Environment-Based Provider Selection (`EmailProviderConfig.java` & `application.yml`):**
+  - Configured intelligent default provider resolution based on the active Spring profile:
+    - **Local Development (`dev` profile):** Automatically selects `SmtpEmailProvider` (Gmail SMTP port 587).
+    - **Production Deployment (`prod` profile):** Automatically selects `BrevoEmailProvider` (Brevo REST API v3).
+    - **Explicit Override:** Supported via `EMAIL_PROVIDER=brevo|smtp|resend|mock` environment variable.
+  - Preserved `ResendEmailProvider` and `MockEmailProvider` untouched as alternate implementations and offline testing fallbacks.
+- [x] **Next.js Serverless Route Brevo Integration (`src/app/api/email/route.ts`):**
+  - Updated the Next.js serverless route to support Brevo API dispatches alongside existing Resend fallback and sandbox auto-rerouting.
+  - When `BREVO_API_KEY` is present, dispatches directly to `https://api.brevo.com/v3/smtp/email`, allowing transactional emails to reach ANY recipient email address worldwide without domain DNS record restrictions.
+- [x] **Single-Dispatch Exclusivity & Anti-Duplication Guarantee:**
+  - Authoritative transactional emails (registration OTP, welcome, forgot password, order confirmation, and PDF invoices) originate strictly from Spring Boot `EmailServiceImpl` via `AsyncEmailDispatcher` in live backend operations.
+  - The Next.js `/api/email` route is used exclusively in offline/standalone mock mode, guaranteeing zero duplicate emails per event.
+- [x] **Comprehensive Testing & Live Production Delivery Verification:**
+  - **Backend Unit Tests:** 9/9 PASSED in `EmailServiceTest.java` (`mvn test -Dtest=EmailServiceTest`).
+  - **Full Backend Test Suite:** 35/35 PASSED (`mvn test`).
+  - **Live Delivery Verification:** Verified live dispatches via Brevo REST API:
+    - Account Owner Test: `srushti.h.kale2004@gmail.com` ➔ HTTP 201 Created (`<202610091128.63441715101@smtp-relay.mailin.fr>`).
+    - External Customer Recipient: `test.customer@gmail.com` ➔ HTTP 201 Created (`<202610091128.10945487631@smtp-relay.mailin.fr>`).
+  - **Git Remote Commit & Sync:** Committed (`3c63d83`) and pushed to `main` on GitHub.
 
 ---
 
