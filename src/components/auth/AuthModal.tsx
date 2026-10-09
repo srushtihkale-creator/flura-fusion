@@ -57,7 +57,7 @@ export function AuthModal() {
     }
   }, [loginWithGoogle]);
 
-  // Listen for Google OAuth callback message from popup window
+  // Listen for Google OAuth callback message from popup window & handle hash/search params across the app
   useEffect(() => {
     const handleAuthMessage = async (event: MessageEvent) => {
       if (typeof window === "undefined") return;
@@ -72,6 +72,63 @@ export function AuthModal() {
     };
 
     window.addEventListener("message", handleAuthMessage);
+
+    // Global listener for OAuth hash or search redirects (handles root redirect when redirect_uri is origin)
+    const handleHashCallback = () => {
+      if (typeof window === "undefined") return;
+      const hash = window.location.hash;
+      const search = window.location.search;
+      let idToken: string | null = null;
+      let error: string | null = null;
+
+      if (hash && hash.includes("id_token=")) {
+        const params = new URLSearchParams(hash.replace(/^#/, ""));
+        idToken = params.get("id_token");
+        error = params.get("error");
+      } else if (search && (search.includes("id_token=") || search.includes("error="))) {
+        const params = new URLSearchParams(search);
+        idToken = params.get("id_token");
+        error = params.get("error");
+      }
+
+      if (idToken) {
+        if (window.opener && window.opener !== window) {
+          // Inside popup window: notify opener and close cleanly
+          try {
+            window.opener.postMessage(
+              { type: "GOOGLE_AUTH_SUCCESS", idToken },
+              window.location.origin
+            );
+            window.close();
+            return;
+          } catch (e) {
+            console.error("[AuthModal] Failed to postMessage to opener:", e);
+          }
+        }
+
+        // Full page redirect flow: clean address bar and authenticate
+        window.history.replaceState(null, "", window.location.pathname);
+        handleGoogleSuccess(idToken);
+      } else if (error) {
+        if (window.opener && window.opener !== window) {
+          try {
+            window.opener.postMessage(
+              { type: "GOOGLE_AUTH_ERROR", error },
+              window.location.origin
+            );
+            window.close();
+            return;
+          } catch (e) {
+            console.error("[AuthModal] Failed to postMessage error to opener:", e);
+          }
+        }
+        setErrorMessage(`Google authentication failed: ${error}`);
+        setLoading(false);
+      }
+    };
+
+    handleHashCallback();
+
     return () => window.removeEventListener("message", handleAuthMessage);
   }, [handleGoogleSuccess]);
 
@@ -152,7 +209,8 @@ export function AuthModal() {
       sessionStorage.setItem("flora_oauth_nonce", nonce);
     }
 
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    // Support both origin root (default for Google Cloud Console) or custom redirect URI
+    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || window.location.origin;
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set("redirect_uri", redirectUri);
@@ -194,8 +252,16 @@ export function AuthModal() {
         <div style={{ flex: 1, height: "1px", backgroundColor: "var(--color-border-light, #E2E8F0)" }} />
       </div>
 
-      <div style={{ marginBottom: "16px", minHeight: "44px", display: "flex", justifyContent: "center" }}>
-        <div ref={containerRef} style={{ width: "100%", display: isGoogleGsiRendered ? "flex" : "none", justifyContent: "center" }} />
+      <div style={{ marginBottom: "16px", minHeight: "44px", display: "flex", justifyContent: "center", position: "relative" }}>
+        <div
+          ref={containerRef}
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            ...(isGoogleGsiRendered ? {} : { position: "absolute", opacity: 0, pointerEvents: "none" }),
+          }}
+        />
         {!isGoogleGsiRendered && (
           <button
             type="button"
