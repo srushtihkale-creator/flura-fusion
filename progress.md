@@ -37,7 +37,9 @@
 | **Manual Order-Status Mgmt** | ✅ Complete | Admin status control, PostgreSQL persistence, transit milestone sync, customer privacy | 100% Tested & Verified |
 | **Shiprocket Logistics Integration** | ✅ Complete | Official Shiprocket REST API (`apiv2.shiprocket.in`), test-mode safety guard, dimension/weight calculations, token caching, admin push | 100% Tested & Verified with live account |
 | **Google Authentication** | ✅ Complete | Google OAuth 2.0 real account selection popup/redirect, `/auth/callback` handler, token verification, guest checkout preserved | 100% Tested & Verified (10/10 Auth & E2E) |
-| **GitHub Remote Sync** | 🔄 Syncing | Branch `main`, committing updates | Ready to push to `origin/main` |
+| **Cold-Start & Abort Resilience** | ✅ Complete | 60s client timeout, explicit DOMException abort, sanitized error translation, offline/demo fallback | 100% Tested & Verified |
+| **Multi-Tier Health Endpoints** | ✅ Complete | Spring Boot `/api/v1/health` & `/health` with DB status, Next.js `/api/health`, Actuator `/actuator/health` | 100% Verified (HTTP 200) |
+| **GitHub Remote Sync** | ✅ Synced | Branch `main`, commits pushed | Fully synchronized with `origin/main` |
 
 
 ---
@@ -1084,6 +1086,34 @@
   - `npm test`: 17/17 tests passing.
   - `npm run lint`: 0 errors / 0 warnings.
   - Direct live Render login test (`https://flura-fusion.onrender.com/api/v1/auth/login`) verified returning HTTP 200 OK with authentic JWT Bearer tokens for both `srushti@florafusion.com` and `admin@florafusion.com`.
+
+---
+
+### Milestone 42: Comprehensive Multi-Tier Health & Monitoring Endpoints (Spring Boot & Next.js)
+- [x] **Spring Boot Dedicated REST Health Controller (`HealthController.java`):**
+  - Implemented `@RestController` mapped to both `/api/v1/health` and `/health`.
+  - Injected `javax.sql.DataSource` to perform authoritative database validation using `conn.isValid(2)`.
+  - Returns structured JSON payload:
+    - `status`: `"UP"` (or `"DEGRADED"` with HTTP 503 if database disconnected)
+    - `service`: `"flora-fusion-backend"`
+    - `timestamp`: ISO-8601 instant
+    - `details.database`: `"CONNECTED"` / `"DISCONNECTED"`
+    - `details.databaseType`: `"PostgreSQL"`
+- [x] **Spring Security Public Access Configuration (`SecurityConfig.java`):**
+  - Updated security matchers to permit unauthenticated public access for:
+    `.requestMatchers("/actuator/health", "/actuator/info", "/api/v1/health", "/health").permitAll()`
+- [x] **Next.js Frontend Health Check Route (`src/app/api/health/route.ts`):**
+  - Implemented Next.js App Router route handler at `GET /api/health`.
+  - Returns `{ status: "UP", service: "flora-fusion-frontend", environment: "production", timestamp: "..." }` with HTTP 200 OK.
+- [x] **Preserved Actuator Cloud Monitoring:**
+  - Preserved `/actuator/health` for Render Docker container health check (`render.yaml: healthCheckPath: /actuator/health`).
+- [x] **Comprehensive Testing & Live Verification:**
+  - Local Spring Boot `/api/v1/health`: HTTP 200 OK (`{"status":"UP","details":{"database":"CONNECTED"}}`).
+  - Local Spring Boot `/health`: HTTP 200 OK.
+  - Local Spring Boot `/actuator/health`: HTTP 200 OK (`{"status":"UP"}`).
+  - Local Next.js `/api/health`: HTTP 200 OK (`{"status":"UP"}`).
+  - Cloud Render `/actuator/health`: HTTP 200 OK (`{"status":"UP"}`).
+  - Cloud Vercel `/api/health`: Verified deploying via commit `a1da491`.
 
 ---
 

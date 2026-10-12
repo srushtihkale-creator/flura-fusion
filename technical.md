@@ -1534,6 +1534,90 @@ In Flora Fusion's centralized API client (`src/lib/api.ts`), HTTP requests were 
    * Real credential rejections (HTTP 401 Unauthorized, "Bad credentials", "Account not verified") are re-thrown immediately so customers see authentic security feedback.
    * If a network or server timeout occurs, the service checks if the request matches known demo accounts (`srushti@florafusion.com` or `admin@florafusion.com` with `Password@123`) or accounts stored in browser `localStorage`. If matched, it provides a seamless local session, guaranteeing that testing on Vercel is never blocked by cloud spin-down latency.
 
+---
+
+## 27. Multi-Tier System Health & Monitoring Architecture
+
+Flora Fusion implements a multi-tier health and observability architecture across its containerized Spring Boot backend, PostgreSQL database, and serverless Next.js frontend to support cloud auto-healing, uptime monitoring, and client-side diagnostics:
+
+```mermaid
+graph TD
+    Client[Uptime Monitor / Developer / Cloud Provider] --> Router{Target URL}
+    
+    subgraph Spring Boot Backend :8080 / Render
+        Router -->|GET /api/v1/health| HealthCtrl[HealthController.java]
+        Router -->|GET /health| HealthCtrl
+        Router -->|GET /actuator/health| Actuator[Spring Boot Actuator Health]
+        
+        HealthCtrl --> DBCheck[DataSource.getConnection: conn.isValid]
+        DBCheck --> PostgreSQL[(PostgreSQL Database :5432)]
+        Actuator --> DBCheck
+        
+        HealthCtrl --> Resp1[200 OK: status: UP, db: CONNECTED]
+        Actuator --> Resp2[200 OK: status: UP, components: db, diskSpace, ping]
+    end
+    
+    subgraph Next.js Frontend :3000 / Vercel
+        Router -->|GET /api/health| NextRoute[src/app/api/health/route.ts]
+        NextRoute --> Resp3[200 OK: status: UP, service: flora-fusion-frontend]
+    end
+```
+
+### 27.1 Spring Boot REST Health Endpoints (`HealthController.java`)
+* **Paths:** `GET /api/v1/health` and `GET /health`
+* **Annotations:** `@RestController`, `@RequestMapping({"/api/v1/health", "/health"})`, `@RequiredArgsConstructor`
+* **Database Verification:**
+  Injects `javax.sql.DataSource` and validates live JDBC connections using `conn.isValid(2)` (2-second timeout):
+  ```java
+  boolean dbConnected = false;
+  try (Connection conn = dataSource.getConnection()) {
+      dbConnected = conn.isValid(2);
+  } catch (Exception ignored) {
+      dbConnected = false;
+  }
+  ```
+* **Payload Structure:**
+  ```json
+  {
+    "status": "UP",
+    "service": "flora-fusion-backend",
+    "timestamp": "2026-10-12T10:13:30.771838Z",
+    "details": {
+      "database": "CONNECTED",
+      "databaseType": "PostgreSQL"
+    }
+  }
+  ```
+* **Degraded State:** If database connectivity fails, returns `HTTP 503 Service Unavailable` with `"status": "DEGRADED"` and `"database": "DISCONNECTED"`.
+
+### 27.2 Spring Security Whitelisting (`SecurityConfig.java`)
+Configured public access in the filter chain without requiring JWT Bearer authentication:
+```java
+.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+.requestMatchers("/actuator/health", "/actuator/info", "/api/v1/health", "/health").permitAll()
+```
+
+### 27.3 Next.js Serverless Health Endpoint (`src/app/api/health/route.ts`)
+* **Path:** `GET /api/health`
+* **Implementation:** Next.js App Router API route returning JSON:
+  ```json
+  {
+    "status": "UP",
+    "service": "flora-fusion-frontend",
+    "environment": "production",
+    "timestamp": "2026-10-12T10:13:31.105Z"
+  }
+  ```
+
+### 27.4 Health Monitoring Matrix
+| Tier / Endpoint | Protocol / Method | Public? | Health Scope | Expected Status |
+| :--- | :--- | :---: | :--- | :---: |
+| **Backend REST Health** (`/api/v1/health`) | HTTP GET | Yes | Spring Boot application & live PostgreSQL pool | `200 OK` (`UP`) |
+| **Backend Root Health** (`/health`) | HTTP GET | Yes | Same as above (root alias) | `200 OK` (`UP`) |
+| **Container Actuator** (`/actuator/health`) | HTTP GET | Yes | Render deployment health check & disk/db probes | `200 OK` (`UP`) |
+| **Frontend Health** (`/api/health`) | HTTP GET | Yes | Next.js serverless execution environment & uptime | `200 OK` (`UP`) |
+
+
 
 
 
