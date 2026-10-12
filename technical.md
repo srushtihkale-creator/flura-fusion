@@ -1486,6 +1486,55 @@ Transactional emails originate strictly from the authoritative Spring Boot backe
 | **External Customer** | `test.customer@gmail.com` | Brevo v3 API | **201 Created** | `<202610091128.10945487631@smtp-relay.mailin.fr>` | Delivered to External Recipient |
 | **Local SMTP** | `srushti.h.kale2004@gmail.com` | Gmail SMTP:587 | **250 OK** | Direct SMTP Relay | Delivered to Inbox |
 
+---
+
+## 26. Production Client Abort Signal Resolution & Cloud Cold-Start Resilience Architecture
+
+### 26.1 Root Cause of `DOMException: signal is aborted without reason`
+In modern web browsers (Chrome, Edge, Safari, Firefox), when an `AbortController` instance executes `controller.abort()` without supplying an explicit reason parameter, the browser marks the associated `AbortSignal` as aborted with a default exception:
+`DOMException: signal is aborted without reason`.
+
+In Flora Fusion's centralized API client (`src/lib/api.ts`), HTTP requests were configured with a dual timeout strategy:
+1. `timeoutMs = 5000` (5 seconds) during server-side static generation (`typeof window === "undefined"`) to prevent build-time stalls.
+2. `timeoutMs = 15000` (15 seconds) in browser environments (`typeof window !== "undefined"`).
+
+**The Production Cloud Failure Mode:**
+* The production frontend deployed on Vercel (`https://flura-fusion.vercel.app`) communicates with the Spring Boot REST API deployed on Render (`https://flura-fusion.onrender.com/api/v1`).
+* Under Render's free tier, backend instances automatically enter cold sleep after 15 minutes of inactivity.
+* When a customer attempts to sign in after a period of dormancy, the initial HTTP request to Render requires between **25 and 50 seconds** to complete container spinning, JVM initialization, and PostgreSQL connection pool establishment.
+* Because the client timeout was limited to **15 seconds**, `setTimeout(() => controller.abort(), 15000)` triggered while Render was still mid-boot.
+* `fetch()` rejected with `AbortError` / `"signal is aborted without reason"`, and `useFloraStore.login` surfaced the raw message directly to `AuthModal.tsx`.
+
+### 26.2 Architecture Improvements Implemented
+
+1. **Extended Client Browser Timeout (60 Seconds):**
+   ```typescript
+   // 5s during SSG pre-rendering, 60s in client browser to accommodate Render cold starts
+   const timeoutMs = typeof window === "undefined" ? 5000 : 60000;
+   ```
+   This gives Render instances complete time to wake up, load Flyway migrations, and respond with HTTP 200 OK without getting terminated prematurely.
+
+2. **Explicit Abort Signal Reason & Code:**
+   When the timer fires, the controller is aborted with an explicit `DOMException`:
+   ```typescript
+   controller.abort(
+     new DOMException(
+       "Server connection timed out. The backend service may be waking up from sleep.",
+       "TimeoutError"
+     )
+   );
+   ```
+
+3. **Sanitized Error Translation in `apiFetch`:**
+   Intercepts any `AbortError`, `TimeoutError`, or errors with message containing `"aborted"` or `"signal is aborted"`, replacing confusing browser internals with an actionable message:
+   > *"Connection timed out. The cloud server may be waking up from sleep (Render cold start). Please try again in a moment."*
+
+4. **Graceful Authentication Fallback in `AuthService.login`:**
+   In `src/services/auth.service.ts`:
+   * Real credential rejections (HTTP 401 Unauthorized, "Bad credentials", "Account not verified") are re-thrown immediately so customers see authentic security feedback.
+   * If a network or server timeout occurs, the service checks if the request matches known demo accounts (`srushti@florafusion.com` or `admin@florafusion.com` with `Password@123`) or accounts stored in browser `localStorage`. If matched, it provides a seamless local session, guaranteeing that testing on Vercel is never blocked by cloud spin-down latency.
+
+
 
 
 

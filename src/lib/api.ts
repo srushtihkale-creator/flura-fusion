@@ -34,10 +34,23 @@ export async function apiFetch<T>(
   const token = typeof window !== "undefined" ? localStorage.getItem("flora_token") : null;
   const url = `${API_BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
   
-  // 5-second timeout during static page building, 15s in client browser
-  const timeoutMs = typeof window === "undefined" ? 5000 : 15000;
+  // 5-second timeout during static page building, 60s in client browser (permits Render cold starts)
+  const timeoutMs = typeof window === "undefined" ? 5000 : 60000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let isTimedOut = false;
+  const timeoutId = setTimeout(() => {
+    isTimedOut = true;
+    try {
+      controller.abort(
+        new DOMException(
+          "Server connection timed out. The backend service may be waking up from sleep.",
+          "TimeoutError"
+        )
+      );
+    } catch {
+      controller.abort();
+    }
+  }, timeoutMs);
 
   try {
     const response = await fetch(url, {
@@ -61,8 +74,26 @@ export async function apiFetch<T>(
     }
 
     return response.json();
-  } catch (err) {
+  } catch (err: any) {
     clearTimeout(timeoutId);
+
+    // Provide helpful, user-friendly error translation for aborted requests & cold start timeouts
+    const isAbortOrTimeout =
+      isTimedOut ||
+      err?.name === "AbortError" ||
+      err?.name === "TimeoutError" ||
+      err?.code === 20 ||
+      (typeof err?.message === "string" &&
+        (err.message.toLowerCase().includes("aborted") ||
+          err.message.toLowerCase().includes("abort") ||
+          err.message.toLowerCase().includes("timeout")));
+
+    if (isAbortOrTimeout) {
+      throw new Error(
+        "Connection timed out. The cloud server may be waking up from sleep (Render cold start). Please try again in a moment."
+      );
+    }
+
     throw err;
   }
 }
