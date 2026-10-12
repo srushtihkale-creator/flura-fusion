@@ -53,9 +53,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/orders/{orderNumber}/invoice").permitAll() // Guest invoice download
                 .requestMatchers("/api/v1/ai/**").permitAll()
                 
-                // OpenAPI / Swagger & Actuator
+                // OpenAPI / Swagger & Actuator / Health
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/info", "/api/v1/health", "/health").permitAll()
                 
                 // Protected Admin Endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
