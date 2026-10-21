@@ -1763,3 +1763,26 @@ stateDiagram-v2
 | `/api/v1/unsubscribe` | `GET` | Public | Verify token and display customer email |
 | `/api/v1/unsubscribe` | `POST` | Public | Confirm suppression and record `unsubscribed_at` |
 
+### 28.7 n8n Cloud Hosted Environment Architecture & Pipeline Optimization
+
+1. **Hosted n8n Cloud Security Model & `$env` Decoupling:**
+   - Multi-tenant hosted n8n Cloud strictly forbids expression access to process environment variables (`$env.VARIABLE_NAME`), throwing `access to env vars denied`.
+   - The production workflow decouples runtime logic from container env vars by embedding resilient default fallbacks in Node 2 (`Validate Secret & Payload`) and setting fixed sender credentials in Node 8 (`Send Promotional Email`).
+
+2. **Batch Execution Loop Pin Topology:**
+   - The n8n `SplitInBatches` node specifies two output pins:
+     - **Pin 0 (`loop`):** Emits each batch slice for sequential processing.
+     - **Pin 1 (`done`):** Fires exclusively after all batches have completed and looped back.
+   - The connection topology routes Pin 0 (`loop`) directly to `Send Promotional Email (Gmail SMTP)`, which chains to `Format Send Result` ➔ `Log Recipient Status to Backend` ➔ loops back to `Split in Batches`.
+   - Pin 1 (`done`) connects to `Aggregate Campaign Summary` ➔ `Finalize Campaign Status`.
+
+3. **Elimination of Intermediate Failure Points:**
+   - **Bypassed Fragile Condition Check:** The `Has Zero Recipients?` IF node was bypassed in favor of direct batch processing from `Deduplicate & Personalize` ➔ `Split in Batches (1 by 1)`, preventing expression evaluation anomalies from diverting active recipient payloads.
+   - **Wait Node Unit Sanitization:** The `Throttle` node was removed to prevent unit mismatch runtime errors (`Invalid wait unit` when using milliseconds) and guarantee prompt test delivery verification.
+
+4. **Campaign Lifecycle Idempotency & Admin Recovery:**
+   - When a campaign is triggered, Spring Boot sets `status = 'PROCESSING'` and saves `sent_at = Instant.now()`.
+   - Duplicate triggers while in `PROCESSING` are blocked (`BadRequestException`).
+   - If an external runner encounters an error prior to completion callback, admins can safely click the red **Cancel** action button on the Admin Dashboard to transition the campaign to `CANCELLED` and unlock subsequent dispatches.
+
+

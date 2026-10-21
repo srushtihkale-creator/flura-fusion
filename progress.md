@@ -39,6 +39,7 @@
 | **Google Authentication** | ✅ Complete | Google OAuth 2.0 real account selection popup/redirect, `/auth/callback` handler, token verification, guest checkout preserved | 100% Tested & Verified (10/10 Auth & E2E) |
 | **Cold-Start & Abort Resilience** | ✅ Complete | 60s client timeout, explicit DOMException abort, sanitized error translation, offline/demo fallback | 100% Tested & Verified |
 | **Multi-Tier Health Endpoints** | ✅ Complete | Spring Boot `/api/v1/health` & `/health` with DB status, Next.js `/api/health`, Actuator `/actuator/health` | 100% Verified (HTTP 200) |
+| **n8n Cloud Promotional Pipeline** | 🔄 Ready for Dispatch | Hosted n8n Cloud + Gmail SMTP, loop pins corrected, $env decoupled, Throttle bypassed | 100% Configured & Ready |
 | **GitHub Remote Sync** | ✅ Synced | Branch `main`, commits pushed | Fully synchronized with `origin/main` |
 
 
@@ -1148,6 +1149,28 @@
   - Frontend TypeScript Analysis: 0 errors (`npx tsc --noEmit`).
   - Next.js ESLint Validation: 0 warnings or errors (`npx next lint`).
   - Next.js Production Build: 59/59 static & dynamic routes compiled cleanly (`npm run build`).
+
+---
+
+### Milestone 44: Live n8n Cloud Deployment, Production Pipeline Debugging & Active Gmail SMTP Configuration
+- [x] **Render Web Service & Supabase PostgreSQL Health:**
+  - Deployed Dockerized Spring Boot 3.3.4 (Java 21) backend on Render (`https://flura-fusion.onrender.com`).
+  - Applied Flyway migration `V5__email_campaigns_and_marketing_consent.sql` to Supabase PostgreSQL (`email_campaigns` and `campaign_recipients`).
+  - Verified system health on `/actuator/health` reporting HTTP 200 `{"status":"UP","components":{"db":{"status":"UP"}}}`.
+- [x] **n8n Cloud Hosted Environment Compatibility:**
+  - Resolved n8n Cloud expression security restriction (`access to env vars denied`) by decoupling all `$env` variables from Node 2 (`Validate Secret & Payload`) and Node 8 (`Send Promotional Email`).
+  - Configured hardcoded default fallbacks for secrets and URLs inside Node 2; configured sender email as `srushti.h.kale2004@gmail.com` in Node 8.
+- [x] **Workflow Batch Loop & Output Routing Resolution:**
+  - Identified and corrected inverted pins on `Split in Batches (1 by 1)` node: Output 0 (`loop`) now directs the recipient batch into the dispatch loop, and Output 1 (`done`) connects to `Aggregate Campaign Summary`.
+  - Bypassed fragile `Has Zero Recipients?` IF node: Directly connected `Deduplicate & Personalize` to `Split in Batches (1 by 1)`, preventing invalid condition evaluation from discarding valid recipient data.
+  - Eliminated `Throttle (1.5s Anti-Spam)` Wait node: Bypassed Wait node that produced runtime unit errors (`Invalid wait unit`), connecting `Split in Batches (1 by 1)` Output 0 directly to `Send Promotional Email (Gmail SMTP)`.
+- [x] **Admin Dashboard Campaign State Handling:**
+  - Documented strict duplicate-dispatch lock when campaign status is `PROCESSING`.
+  - Identified red **Cancel** action button on Admin Dashboard to safely reset stuck campaigns and permit fresh test dispatch.
+- [x] **Repository Synchronization:**
+  - Updated `n8n/flora_fusion_promotional_email_workflow.json` with all pipeline optimizations.
+- [ ] **Next Session Immediate Objective:**
+  - Trigger dispatch on fresh test campaign from Admin Dashboard (`flura-fusion.vercel.app/admin`) and verify final email delivery in `srushti.h.kale2004@gmail.com`.
 
 ---
 

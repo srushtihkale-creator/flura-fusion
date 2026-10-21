@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. Validate Secret and Payload from Spring Boot\nconst headers = $input.first().json.headers || {};\nconst body = $input.first().json.body || {};\n\nconst providedSecret = headers['x-flora-secret'] || headers['X-Flora-Secret'] || '';\nconst expectedSecret = $env.FLORA_N8N_WEBHOOK_SECRET || 'flora_n8n_secret_change_in_production';\n\nif (providedSecret !== expectedSecret) {\n  throw new Error(`Unauthorized webhook call: Invalid X-Flora-Secret header provided.`);\n}\n\nif (!body.campaignId || !body.subject || !body.htmlContent) {\n  throw new Error(`Invalid payload: Missing campaignId, subject, or htmlContent.`);\n}\n\nreturn [{\n  json: {\n    campaignId: body.campaignId,\n    title: body.title || '',\n    subject: body.subject,\n    htmlContent: body.htmlContent,\n    couponCode: body.couponCode || null,\n    discountPercent: body.discountPercent || null,\n    testMode: Boolean(body.testMode),\n    testRecipient: body.testRecipient || null,\n    backendUrl: $env.FLORA_BACKEND_URL || 'http://localhost:8080',\n    internalSecret: $env.FLORA_INTERNAL_SECRET || 'flora_dev_secret_change_in_production'\n  }\n}];"
+        "jsCode": "// 1. Validate Secret and Payload from Spring Boot\nconst headers = $input.first().json.headers || {};\nconst body = $input.first().json.body || {};\n\nconst providedSecret = headers['x-flora-secret'] || headers['X-Flora-Secret'] || '';\nconst expectedSecret = 'flora-n8n-secret-token';\n\nif (providedSecret !== expectedSecret) {\n  throw new Error(`Unauthorized webhook call: Invalid X-Flora-Secret header provided.`);\n}\n\nif (!body.campaignId || !body.subject || !body.htmlContent) {\n  throw new Error(`Invalid payload: Missing campaignId, subject, or htmlContent.`);\n}\n\nreturn [{\n  json: {\n    campaignId: body.campaignId,\n    title: body.title || '',\n    subject: body.subject,\n    htmlContent: body.htmlContent,\n    couponCode: body.couponCode || null,\n    discountPercent: body.discountPercent || null,\n    testMode: Boolean(body.testMode),\n    testRecipient: body.testRecipient || null,\n    backendUrl: 'https://flura-fusion.onrender.com',\n    internalSecret: 'flora-internal-n8n-secret-2026'\n  }\n}];"
       },
       "id": "18c1a100-336e-4ad2-921b-cfc1dc6be002",
       "name": "Validate Secret & Payload",
@@ -106,8 +106,8 @@
     },
     {
       "parameters": {
-        "amount": 1500,
-        "unit": "milliseconds"
+        "amount": 2,
+        "unit": "seconds"
       },
       "id": "18c1a100-336e-4ad2-921b-cfc1dc6be007",
       "name": "Throttle (1.5s Anti-Spam)",
@@ -120,7 +120,7 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ $env.GMAIL_SENDER_EMAIL || 'srushti.h.kale2004@gmail.com' }}",
+        "fromEmail": "srushti.h.kale2004@gmail.com",
         "toEmail": "={{ $json.email }}",
         "subject": "={{ $json.subject }}",
         "html": "={{ $json.personalizedHtml }}",
@@ -302,7 +302,7 @@
       "main": [
         [
           {
-            "node": "Has Zero Recipients?",
+            "node": "Split in Batches (1 by 1)",
             "type": "main",
             "index": 0
           }
@@ -331,14 +331,14 @@
       "main": [
         [
           {
-            "node": "Aggregate Campaign Summary",
+            "node": "Send Promotional Email (Gmail SMTP)",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Throttle (1.5s Anti-Spam)",
+            "node": "Aggregate Campaign Summary",
             "type": "main",
             "index": 0
           }
