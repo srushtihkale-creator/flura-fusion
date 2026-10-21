@@ -1617,13 +1617,149 @@ Configured public access in the filter chain without requiring JWT Bearer authen
 | **Container Actuator** (`/actuator/health`) | HTTP GET | Yes | Render deployment health check & disk/db probes | `200 OK` (`UP`) |
 | **Frontend Health** (`/api/health`) | HTTP GET | Yes | Next.js serverless execution environment & uptime | `200 OK` (`UP`) |
 
+---
 
+## 28. Production Promotional Email Campaign Automation Architecture (n8n Cloud, Gmail SMTP, Supabase PostgreSQL, and Admin Workflow)
 
+### 28.1 System Architecture & Data Flow
 
+```mermaid
+graph TD
+    Admin([Flora Fusion Admin]) -->|Draft & Approve Campaign| Dashboard[AdminDashboardView.tsx: Email Campaigns Tab]
+    Dashboard -->|POST /api/v1/admin/campaigns| Backend[Spring Boot REST Backend]
+    
+    subgraph Data & Consent Engine
+        Backend --> DB[(Supabase PostgreSQL)]
+        DB -->|Query: marketing_consent=true AND unsubscribed_at IS NULL| Subscribers[Eligible Customer Subscribers]
+    end
 
+    subgraph Preview & Trigger Safeguards
+        Dashboard -->|POST /preview| TemplateBuilder[PromotionalEmailTemplateBuilder: Botanical HTML & Coupon Box]
+        TemplateBuilder --> PreviewIframe[Live Sandboxed Iframe Preview]
+        Dashboard -->|POST /trigger testMode=true| TestDispatch[Pre-Flight Test to srushti.h.kale2004@gmail.com]
+        Dashboard -->|POST /trigger live=true| LiveDispatch[Explicit Approval Gate]
+    end
 
+    subgraph n8n Cloud Automation Orchestration
+        LiveDispatch -->|POST Webhook + X-Flora-Secret| N8nWebhook[n8n Webhook Trigger Node]
+        N8nWebhook --> N8nValidate[Validate Signature & Payload]
+        N8nValidate --> N8nFetch[GET /api/v1/internal/campaigns/{id}/recipients + X-Flora-Internal-Secret]
+        N8nFetch --> N8nDedupe[Deduplicate & Sanitize Emails]
+        N8nDedupe --> N8nBatch[SplitInBatches: Batch Size 1]
+        N8nBatch --> N8nThrottle[Wait Node: 1500ms Anti-Spam Rate Limit]
+        N8nThrottle --> N8nGmail[Send Email Node: Gmail SMTP via Google App Password]
+        N8nGmail --> N8nLog[POST /api/v1/internal/campaigns/{id}/log: Atomic Status]
+        N8nLog --> N8nBatch
+        N8nBatch -->|All Batches Completed| N8nComplete[POST /api/v1/internal/campaigns/{id}/complete]
+    end
 
+    subgraph Customer Experience & Suppression
+        N8nGmail --> CustomerInbox[(Customer Inboxes)]
+        CustomerInbox -->|Click 1-Click Unsubscribe Link| UnsubRoute[/unsubscribe?token=...]
+        UnsubRoute -->|POST /api/v1/unsubscribe| UnsubAPI[UnsubscribeController.java]
+        UnsubAPI -->|Set unsubscribed_at=NOW| DB
+    end
+```
 
+### 28.2 PostgreSQL Schema & Flyway Migration (`V5__email_campaigns_and_marketing_consent.sql`)
 
+```sql
+-- 1. Extend users table with marketing consent, unsubscribe timestamp and unguessable token
+ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS unsubscribed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS unsubscribe_token VARCHAR(64) UNIQUE;
 
+-- 2. Populate secure tokens for existing users who do not have one yet
+UPDATE users 
+SET unsubscribe_token = encode(sha256((id::text || email || 'flora_fusion_unsub_salt')::bytea), 'hex')
+WHERE unsubscribe_token IS NULL;
+
+-- 3. High-Performance Indexing
+CREATE INDEX IF NOT EXISTS idx_email_campaigns_status ON email_campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_email_campaigns_created ON email_campaigns(created_at DESC);
+
+-- 4. Email Campaigns Table
+CREATE TABLE IF NOT EXISTS email_campaigns (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    preview_text VARCHAR(255),
+    message TEXT NOT NULL,
+    coupon_code VARCHAR(50),
+    discount_percent INTEGER,
+    cta_text VARCHAR(100),
+    cta_url VARCHAR(500),
+    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+    total_recipients INTEGER NOT NULL DEFAULT 0,
+    successful_sends INTEGER NOT NULL DEFAULT 0,
+    failed_sends INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP WITH TIME ZONE,
+    sent_at TIMESTAMP WITH TIME ZONE
+);
+
+-- 5. Campaign Recipients Table (Idempotent Unique Constraint)
+CREATE TABLE IF NOT EXISTS campaign_recipients (
+    id VARCHAR(64) PRIMARY KEY,
+    campaign_id VARCHAR(64) NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    sent_at TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
+    CONSTRAINT uq_campaign_recipient_email UNIQUE (campaign_id, email)
+);
+```
+
+### 28.3 Campaign State Machine
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: Admin creates campaign
+    DRAFT --> DRAFT: Admin edits title, message, coupon
+    DRAFT --> APPROVED: Admin reviews preview & approves
+    APPROVED --> DRAFT: Admin reverts to draft for edits
+    APPROVED --> PROCESSING: Admin triggers dispatch (Live / Test)
+    PROCESSING --> SENT: n8n completes batch execution (All logged)
+    PROCESSING --> FAILED: Critical workflow / connection failure
+    DRAFT --> CANCELLED: Admin cancels campaign
+    APPROVED --> CANCELLED: Admin cancels campaign
+```
+
+### 28.4 Cryptographic Security & Authentication Protocol
+
+1. **Spring Boot ➔ n8n Cloud Webhook Authentication:**
+   - Spring Boot signs every webhook call with custom header `X-Flora-Secret: ${N8N_WEBHOOK_SECRET}`.
+   - n8n's "Validate Secret & Payload" node checks that the header matches its internal environment variable `FLORA_N8N_WEBHOOK_SECRET` before proceeding. Unauthorized requests are aborted immediately.
+2. **n8n Cloud ➔ Spring Boot Internal API Authentication:**
+   - When n8n requests eligible recipients (`GET /api/v1/internal/campaigns/{id}/recipients`) or logs status (`POST /api/v1/internal/campaigns/{id}/log`), it passes `X-Flora-Internal-Secret: ${FLORA_INTERNAL_SECRET}`.
+   - `InternalCampaignController` enforces constant-time string comparison (`MessageDigest.isEqual`), rejecting any request that lacks the shared secret with `HTTP 401 Unauthorized`.
+   - Never exposes customer password hashes, auth tokens, or sensitive user fields to n8n.
+3. **Unguessable Token Unsubscribe Link Security:**
+   - Customer unsubscribe URLs take the format: `https://flura-fusion.vercel.app/unsubscribe?token=<SECURE_256BIT_HEX_TOKEN>` (64-character lowercase hex generated via `SecurityUtils.generateSecureToken()`).
+   - Modifying email addresses or guessing sequential IDs cannot unsubscribe another customer because the endpoint strictly verifies the database-indexed `unsubscribe_token`.
+   - Upon confirmation, `users.unsubscribed_at` is set to `CURRENT_TIMESTAMP`, instantly suppressing that customer from all future eligible queries.
+
+### 28.5 Anti-Spam Throttling & Rate Limits
+
+- **Gmail SMTP Limit:** Standard Gmail accounts permit up to 500 emails/24 hours. Intended for targeted boutique campaigns of 1–50 customers.
+- **Workflow Throttling:** The n8n workflow executes through a `SplitInBatches` node (size 1) coupled with a `Wait` node set to `1500 ms` (1.5 seconds) delay between consecutive sends, keeping send rates at ~40 emails/minute and preventing Google spam burst blocks.
+
+### 28.6 Complete Promotional Campaign API Reference
+
+| Endpoint | Method | Security Role | Description |
+| :--- | :---: | :--- | :--- |
+| `/api/v1/admin/campaigns` | `GET` | `ROLE_ADMIN` | List all promotional campaigns sorted by creation date |
+| `/api/v1/admin/campaigns` | `POST` | `ROLE_ADMIN` | Create a new campaign record in `DRAFT` status |
+| `/api/v1/admin/campaigns/{id}` | `GET` | `ROLE_ADMIN` | Retrieve single campaign details |
+| `/api/v1/admin/campaigns/{id}` | `PUT` | `ROLE_ADMIN` | Update campaign content, subject, coupon, or CTA |
+| `/api/v1/admin/campaigns/{id}` | `DELETE` | `ROLE_ADMIN` | Delete a draft campaign |
+| `/api/v1/admin/campaigns/{id}/approve` | `POST` | `ROLE_ADMIN` | Transition status from `DRAFT` to `APPROVED` |
+| `/api/v1/admin/campaigns/{id}/preview` | `POST` | `ROLE_ADMIN` | Render responsive botanical HTML template and eligible count |
+| `/api/v1/admin/campaigns/{id}/trigger` | `POST` | `ROLE_ADMIN` | Fire n8n webhook (supports `testMode=true` and live blast) |
+| `/api/v1/admin/campaigns/subscribers/count` | `GET` | `ROLE_ADMIN` | Live count of opted-in, non-unsubscribed customers |
+| `/api/v1/internal/campaigns/{id}/recipients` | `GET` | `X-Flora-Internal-Secret` | Retrieve recipient list for n8n execution |
+| `/api/v1/internal/campaigns/{id}/log` | `POST` | `X-Flora-Internal-Secret` | Record atomic send outcome (`SENT` or `FAILED`) |
+| `/api/v1/internal/campaigns/{id}/complete` | `POST` | `X-Flora-Internal-Secret` | Aggregate final counters and mark status `SENT` |
+| `/api/v1/unsubscribe` | `GET` | Public | Verify token and display customer email |
+| `/api/v1/unsubscribe` | `POST` | Public | Confirm suppression and record `unsubscribed_at` |
 

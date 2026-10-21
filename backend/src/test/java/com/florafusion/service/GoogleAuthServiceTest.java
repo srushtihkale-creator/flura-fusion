@@ -83,6 +83,8 @@ class GoogleAuthServiceTest {
         assertEquals(Role.CUSTOMER, savedUser.getRole());
         assertTrue(savedUser.isEmailVerified());
         assertEquals("ACTIVE", savedUser.getStatus());
+        assertNotNull(savedUser.getUnsubscribeToken(), "New Google OAuth user must have an unsubscribe token");
+        assertEquals(64, savedUser.getUnsubscribeToken().length(), "Unsubscribe token must be a 64-char hex string");
         assertEquals("bcrypt_generated_password_hash", savedUser.getPasswordHash());
     }
 
@@ -100,6 +102,7 @@ class GoogleAuthServiceTest {
                 .role(Role.CUSTOMER)
                 .emailVerified(true)
                 .status("ACTIVE")
+                .unsubscribeToken("existing_unsub_token_abc")
                 .build();
 
         when(userRepository.findByEmail("existing@florafusion.com")).thenReturn(Optional.of(existingUser));
@@ -130,6 +133,7 @@ class GoogleAuthServiceTest {
                 .role(Role.CUSTOMER)
                 .emailVerified(false)
                 .status("PENDING_VERIFICATION")
+                .unsubscribeToken("pending_unsub_token_xyz")
                 .build();
 
         when(userRepository.findByEmail("pending@florafusion.com")).thenReturn(Optional.of(pendingUser));

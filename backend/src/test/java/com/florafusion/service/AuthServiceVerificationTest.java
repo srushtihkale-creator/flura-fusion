@@ -104,6 +104,9 @@ class AuthServiceVerificationTest {
         User savedUser = userCaptor.getValue();
         assertEquals("PENDING_VERIFICATION", savedUser.getStatus());
         assertFalse(savedUser.isEmailVerified());
+        assertNotNull(savedUser.getUnsubscribeToken(), "New registered user must have an unsubscribe token");
+        assertEquals(64, savedUser.getUnsubscribeToken().length(), "Unsubscribe token must be a 64-char hex string");
+        assertFalse(savedUser.isMarketingConsent(), "Marketing consent must default to false unless explicitly opted in");
 
         verify(securityTokenRepository).save(any(SecurityToken.class));
         verify(emailService).sendVerificationEmail(eq("srushti.test@florafusion.com"), eq("Srushti Test"), anyString());

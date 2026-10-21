@@ -27,7 +27,7 @@ interface FloraState {
   closeAuthModal: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: (idToken: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean; email?: string }>;
+  register: (name: string, email: string, password: string, phone?: string, marketingConsent?: boolean) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean; email?: string }>;
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   resendVerification: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
@@ -157,9 +157,9 @@ export const useFloraStore = create<FloraState>()(
         }
       },
 
-      register: async (name: string, email: string, password: string, phone?: string) => {
+      register: async (name: string, email: string, password: string, phone?: string, marketingConsent = false) => {
         try {
-          const res = await AuthService.register(name, email, password, phone);
+          const res = await AuthService.register(name, email, password, phone, marketingConsent);
           if (res.token) {
             const user: AuthUser = {
               id: res.id,

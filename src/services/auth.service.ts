@@ -29,7 +29,7 @@ const TOKEN_KEY = "flora_token";
 const USER_KEY = "flora_user";
 
 export const AuthService = {
-  async register(name: string, email: string, password: string, phone?: string): Promise<AuthResponse> {
+  async register(name: string, email: string, password: string, phone?: string, marketingConsent = false): Promise<AuthResponse> {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name.trim();
 
@@ -41,6 +41,7 @@ export const AuthService = {
           email: cleanEmail,
           password,
           phone: phone?.trim() || undefined,
+          marketingConsent: Boolean(marketingConsent),
         }),
       });
 

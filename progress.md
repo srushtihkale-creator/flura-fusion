@@ -1117,6 +1117,40 @@
 
 ---
 
+### Milestone 43: Production Promotional Email Campaign Automation System (Supabase PostgreSQL + Spring Boot + n8n Cloud + Gmail SMTP)
+- [x] **Preserved Transactional Emails & Strict Pipeline Isolation:**
+  - Guaranteed 100% untouched preservation of existing transactional email flows: Registration OTP (`/api/v1/auth/verify-email`), Welcome email, Forgot/Reset password, Order confirmation with binary PDF Tax Invoice, and Shipping status transit updates.
+  - Kept production email providers (`Brevo` / `Resend` / `JavaMailSender`) intact; promotional campaigns run through a completely isolated pipeline using `n8n Cloud` and `Gmail SMTP`.
+- [x] **Supabase PostgreSQL Schema & Marketing Consent Migration (`V5__email_campaigns_and_marketing_consent.sql`):**
+  - Enhanced `users` table with `marketing_consent BOOLEAN NOT NULL DEFAULT false`, `unsubscribed_at TIMESTAMP WITH TIME ZONE NULL`, and unique `unsubscribe_token VARCHAR(128)`.
+  - Defaulted `marketing_consent` to `false` for all existing and new accounts (strict anti-spam & privacy compliance).
+  - Created `email_campaigns` table for tracking campaign lifecycle states (`DRAFT` ➔ `APPROVED` ➔ `PROCESSING` ➔ `SENT` / `FAILED` / `CANCELLED`), coupon attachments, CTA actions, and aggregate delivery counters.
+  - Created `campaign_recipients` table enforcing `CONSTRAINT uq_campaign_recipient_email UNIQUE (campaign_id, email)` for absolute delivery idempotency across n8n retries.
+- [x] **Spring Boot Campaign Domain Layer & Secure APIs:**
+  - Implemented `CampaignService` and `CampaignServiceImpl` managing lifecycle transitions, eligible recipient queries, approval checks, and atomic delivery logging.
+  - Built `PromotionalEmailTemplateBuilder.java` generating responsive botanical HTML emails matching approved brand tokens (`#173F2B`, `#24583B`, `#A9BDA3`, `#F7F4EC`) with dynamic coupon cards (`FLORA10`, `NATURE20`, `WELCOME50`), CTA buttons, and unguessable token-based unsubscribe URLs.
+  - Created `N8nTriggerService.java` sending campaign trigger webhooks with `X-Flora-Secret: ${N8N_WEBHOOK_SECRET}`.
+  - Built `AdminCampaignController.java` (`/api/v1/admin/campaigns`) guarded by `@PreAuthorize("hasRole('ADMIN')")`.
+  - Built `InternalCampaignController.java` (`/api/v1/internal/campaigns`) guarded by `X-Flora-Internal-Secret: ${N8N_INTERNAL_SECRET}` for recipient fetching and delivery logging without exposing sensitive user credentials.
+  - Built `UnsubscribeController.java` (`/api/v1/unsubscribe`) executing cryptographic token lookup and instant unsubscribe suppression.
+- [x] **Frontend Admin Dashboard Integration (`AdminDashboardView.tsx`):**
+  - Added **📧 Email Campaigns** tab with live eligible subscriber counter badge.
+  - Built `AdminCampaignModal.tsx` for campaign creation with coupon auto-fill.
+  - Built `AdminCampaignPreviewModal.tsx` rendering live email preview in a sandboxed iframe, supporting pre-flight test sends exclusively to `srushti.h.kale2004@gmail.com`, and requiring explicit admin confirmation for live blasts.
+  - Added optional marketing consent checkbox (default unchecked) during user sign-up in `AuthModal.tsx`.
+  - Created customer unsubscribe landing page at `/unsubscribe` (`src/app/unsubscribe/page.tsx`).
+- [x] **Importable n8n Cloud Workflow & Documentation:**
+  - Authored production-ready importable JSON in `n8n/flora_fusion_promotional_email_workflow.json` with signature validation, backend recipient fetch, 1.5s anti-spam throttling, Gmail SMTP sending, and atomic status callbacks.
+  - Authored comprehensive configuration guide in `n8n/README.md` covering Google App Password generation, n8n credentials, environment variables, and activation.
+- [x] **Quality Verification & Test Metrics:**
+  - Backend Unit & Integration Tests: 49/49 PASSED (`mvn test`), including 8/8 in `CampaignServiceTest.java`.
+  - Frontend Test Suite: 17/17 PASSED (`npm test`).
+  - Frontend TypeScript Analysis: 0 errors (`npx tsc --noEmit`).
+  - Next.js ESLint Validation: 0 warnings or errors (`npx next lint`).
+  - Next.js Production Build: 59/59 static & dynamic routes compiled cleanly (`npm run build`).
+
+---
+
 ## 🔮 Upcoming Roadmap & Next Steps
 
 1. **Production Razorpay Activation:**

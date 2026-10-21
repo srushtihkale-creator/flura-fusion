@@ -79,6 +79,8 @@ public class AuthService {
                 .role(Role.CUSTOMER)
                 .status("PENDING_VERIFICATION")
                 .emailVerified(false)
+                .marketingConsent(Boolean.TRUE.equals(request.marketingConsent()))
+                .unsubscribeToken(com.florafusion.security.SecurityUtils.generateSecureToken())
                 .build();
 
         user = userRepository.save(user);
@@ -400,13 +402,25 @@ public class AuthService {
             if ("SUSPENDED".equalsIgnoreCase(user.getStatus())) {
                 throw new BadRequestException("Your account has been suspended. Please contact customer support.");
             }
+            boolean needsSave = false;
             // If existing user was unverified or pending, Google authentication certifies their email
             if (!user.isEmailVerified() || "PENDING_VERIFICATION".equalsIgnoreCase(user.getStatus())) {
                 user.setEmailVerified(true);
                 user.setStatus("ACTIVE");
-                user = userRepository.save(user);
+                needsSave = true;
                 log.info("[AuthService] Activated pending account for user via Google Auth: {}", email);
             }
+
+            // Ensure existing user has valid unsubscribe token without overwriting existing
+            if (user.getUnsubscribeToken() == null || user.getUnsubscribeToken().isBlank()) {
+                user.setUnsubscribeToken(com.florafusion.security.SecurityUtils.generateSecureToken());
+                needsSave = true;
+            }
+
+            if (needsSave) {
+                user = userRepository.save(user);
+            }
+
             log.info("[AuthService] Existing user authenticated via Google: {}", email);
         } else {
             // New user registration via Google OAuth
@@ -421,6 +435,7 @@ public class AuthService {
                     .role(Role.CUSTOMER)
                     .status("ACTIVE")
                     .emailVerified(true)
+                    .unsubscribeToken(com.florafusion.security.SecurityUtils.generateSecureToken())
                     .build();
 
             user = userRepository.save(user);

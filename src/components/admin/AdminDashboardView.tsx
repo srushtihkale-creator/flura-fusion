@@ -9,6 +9,10 @@ import { Product, AdminProductPayload, AdminCategory } from "@/types/product";
 import { ProductService } from "@/services/product.service";
 import { OrderService } from "@/services/order.service";
 import { AdminProductModal } from "./AdminProductModal";
+import { EmailCampaign, CampaignCreatePayload, CampaignPreview } from "@/types/campaign";
+import { CampaignService } from "@/services/campaign.service";
+import { AdminCampaignModal } from "./AdminCampaignModal";
+import { AdminCampaignPreviewModal } from "./AdminCampaignPreviewModal";
 
 interface DashboardStats {
   totalProducts: number;
@@ -36,11 +40,19 @@ interface AdminOrder {
 export function AdminDashboardView() {
   const { user, isAuthenticated, openAuthModal, logout, addToast } = useFloraStore();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"products" | "offers" | "orders" | "categories">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "offers" | "orders" | "categories" | "campaigns">("products");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [offers, setOffers] = useState<CouponResponse[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState<boolean>(false);
+  const [eligibleSubscribersCount, setEligibleSubscribersCount] = useState<number>(0);
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState<boolean>(false);
+  const [campaignToEdit, setCampaignToEdit] = useState<EmailCampaign | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
+  const [previewData, setPreviewData] = useState<CampaignPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -128,6 +140,11 @@ export function AdminDashboardView() {
 
         const catRes = await ProductService.getCategoriesAdmin();
         setCategories(catRes);
+
+        const campRes = await CampaignService.getAllCampaigns();
+        setCampaigns(campRes);
+        const subCount = await CampaignService.getEligibleSubscribersCount();
+        setEligibleSubscribersCount(subCount);
       } else {
         setStats({
           totalProducts: 31,
@@ -139,6 +156,9 @@ export function AdminDashboardView() {
         setOffers(fallbackOffers);
         const fallbackCats = await ProductService.getCategoriesAdmin();
         setCategories(fallbackCats);
+        const fallbackCamps = await CampaignService.getAllCampaigns();
+        setCampaigns(fallbackCamps);
+        setEligibleSubscribersCount(2);
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load administrative data from backend.");
@@ -147,6 +167,20 @@ export function AdminDashboardView() {
     }
   };
 
+  const loadCampaigns = useCallback(async () => {
+    setCampaignsLoading(true);
+    try {
+      const data = await CampaignService.getAllCampaigns();
+      setCampaigns(data);
+      const count = await CampaignService.getEligibleSubscribersCount();
+      setEligibleSubscribersCount(count);
+    } catch (err: any) {
+      console.error("Failed to load campaigns:", err);
+    } finally {
+      setCampaignsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isAdmin) {
       setLoading(false);
@@ -154,7 +188,8 @@ export function AdminDashboardView() {
     }
     loadAdminData();
     loadProducts();
-  }, [isAdmin, loadProducts]);
+    loadCampaigns();
+  }, [isAdmin, loadProducts, loadCampaigns]);
 
   // Product CRUD Handlers
   const handleOpenCreateModal = () => {
@@ -354,6 +389,87 @@ export function AdminDashboardView() {
       addToast(err?.message || "Failed to create offer", "error");
     } finally {
       setIsSubmittingOffer(false);
+    }
+  };
+
+  // Campaign Handlers
+  const handleOpenCreateCampaignModal = () => {
+    setCampaignToEdit(null);
+    setIsCampaignModalOpen(true);
+  };
+
+  const handleOpenEditCampaignModal = (c: EmailCampaign) => {
+    setCampaignToEdit(c);
+    setIsCampaignModalOpen(true);
+  };
+
+  const handleSaveCampaign = async (payload: CampaignCreatePayload, campaignId?: string) => {
+    try {
+      if (campaignId) {
+        const updated = await CampaignService.updateCampaign(campaignId, payload);
+        setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? updated : c)));
+        addToast(`Campaign "${updated.title}" updated successfully!`, "success");
+      } else {
+        const created = await CampaignService.createCampaign(payload);
+        setCampaigns((prev) => [created, ...prev]);
+        addToast(`Campaign "${created.title}" created as DRAFT!`, "success");
+      }
+      loadCampaigns();
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const handleApproveCampaign = async (campaignId: string) => {
+    try {
+      const approved = await CampaignService.approveCampaign(campaignId);
+      setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? approved : c)));
+      if (previewData && previewData.campaignId === campaignId) {
+        setPreviewData({ ...previewData, status: "APPROVED" });
+      }
+      addToast(`Campaign "${approved.title}" APPROVED for sending! 🌿`, "success");
+    } catch (err: any) {
+      addToast(err?.message || "Failed to approve campaign", "error");
+    }
+  };
+
+  const handleTriggerCampaign = async (campaignId: string, testMode: boolean, testRecipient?: string) => {
+    try {
+      const triggered = await CampaignService.triggerCampaign(campaignId, testMode, testRecipient);
+      setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? triggered : c)));
+      addToast(
+        testMode
+          ? `Test email dispatched to ${testRecipient || "test recipient"} via n8n 🚀`
+          : `Campaign "${triggered.title}" dispatched to all eligible customers! 🚀`,
+        "success"
+      );
+      loadCampaigns();
+    } catch (err: any) {
+      addToast(err?.message || "Failed to trigger campaign", "error");
+    }
+  };
+
+  const handleCancelCampaign = async (c: EmailCampaign) => {
+    if (!window.confirm(`Are you sure you want to cancel campaign "${c.title}"?`)) return;
+    try {
+      const cancelled = await CampaignService.cancelCampaign(c.id);
+      setCampaigns((prev) => prev.map((item) => (item.id === c.id ? cancelled : item)));
+      addToast(`Campaign "${c.title}" has been cancelled.`, "info");
+    } catch (err: any) {
+      addToast(err?.message || "Failed to cancel campaign", "error");
+    }
+  };
+
+  const handleOpenPreviewModal = async (c: EmailCampaign) => {
+    setIsPreviewModalOpen(true);
+    setPreviewLoading(true);
+    try {
+      const prev = await CampaignService.getCampaignPreview(c.id);
+      setPreviewData(prev);
+    } catch (err: any) {
+      addToast(err?.message || "Failed to load email preview", "error");
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -707,6 +823,24 @@ export function AdminDashboardView() {
             }}
           >
             📁 Categories ({categories.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("campaigns")}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "var(--radius-pill, 999px)",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              border: "none",
+              cursor: "pointer",
+              backgroundColor: activeTab === "campaigns" ? "var(--color-brand-forest, #173F2B)" : "#FFFFFF",
+              color: activeTab === "campaigns" ? "#FFFFFF" : "var(--color-brand-forest, #173F2B)",
+              boxShadow: "var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.05))",
+              transition: "all var(--duration-fast)",
+            }}
+          >
+            📧 Email Campaigns ({campaigns.length})
           </button>
         </div>
 
@@ -1593,12 +1727,309 @@ export function AdminDashboardView() {
           </div>
         )}
 
+        {/* TAB 5: PROMOTIONAL EMAIL CAMPAIGNS */}
+        {activeTab === "campaigns" && (
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "var(--radius-lg, 16px)",
+              border: "1px solid var(--color-border-light, #E2E8F0)",
+              boxShadow: "var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.05))",
+              padding: "24px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "16px",
+                marginBottom: "20px",
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
+                    fontSize: "1.5rem",
+                    color: "var(--color-brand-forest, #173F2B)",
+                    margin: 0,
+                  }}
+                >
+                  Promotional Email Campaigns (n8n & Gmail SMTP)
+                </h2>
+                <p style={{ fontSize: "0.8125rem", color: "var(--color-text-muted, #718096)", margin: "4px 0 0" }}>
+                  Create seasonal offers, preview branded templates, and trigger automated delivery via n8n Cloud and Gmail SMTP.
+                </p>
+              </div>
+
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <span
+                  style={{
+                    backgroundColor: "var(--color-brand-sage-light, #DDE7D8)",
+                    color: "var(--color-brand-forest, #173F2B)",
+                    padding: "6px 14px",
+                    borderRadius: "var(--radius-pill, 999px)",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  👥 {eligibleSubscribersCount} Opted-In Subscriber(s)
+                </span>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateCampaignModal}
+                  className="btn-primary"
+                  style={{ padding: "10px 20px", fontSize: "0.875rem" }}
+                >
+                  + Create New Campaign
+                </button>
+              </div>
+            </div>
+
+            {campaignsLoading ? (
+              <div style={{ padding: "40px", textAlign: "center", color: "var(--color-text-muted)" }}>
+                Loading campaigns from database...
+              </div>
+            ) : campaigns.length > 0 ? (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--color-border-light, #E2E8F0)", textAlign: "left" }}>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Campaign & Subject</th>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Category & Coupon</th>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Target / Mode</th>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Status</th>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600 }}>Sent / Failed</th>
+                      <th style={{ padding: "12px 14px", color: "var(--color-text-muted, #718096)", fontWeight: 600, textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campaigns.map((camp) => (
+                      <tr key={camp.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                        <td style={{ padding: "12px 14px" }}>
+                          <div style={{ fontWeight: 700, color: "var(--color-brand-forest, #173F2B)", fontSize: "0.9375rem" }}>
+                            {camp.title}
+                          </div>
+                          <div style={{ color: "var(--color-text-secondary, #4A5568)", fontSize: "0.8125rem", marginTop: "2px" }}>
+                            {camp.subject}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <div style={{ textTransform: "capitalize", fontWeight: 600, color: "var(--color-brand-green, #24583B)" }}>
+                            {camp.targetCategory || "All Categories"}
+                          </div>
+                          {camp.couponCode ? (
+                            <code style={{ fontSize: "0.75rem", backgroundColor: "#F7F4EC", padding: "2px 6px", borderRadius: "4px" }}>
+                              {camp.couponCode}
+                            </code>
+                          ) : (
+                            <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>No voucher</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          {camp.testMode ? (
+                            <span
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "var(--radius-pill, 999px)",
+                                fontSize: "0.6875rem",
+                                fontWeight: 700,
+                                backgroundColor: "#FEF3C7",
+                                color: "#92400E",
+                              }}
+                              title={`Target: ${camp.testRecipient || "Designated Test Email"}`}
+                            >
+                              🛡️ Test Mode
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "var(--radius-pill, 999px)",
+                                fontSize: "0.6875rem",
+                                fontWeight: 700,
+                                backgroundColor: "#EBF8EE",
+                                color: "#276749",
+                              }}
+                            >
+                              👥 Live Customers ({camp.totalRecipients})
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <span
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: "var(--radius-pill, 999px)",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              backgroundColor:
+                                camp.status === "SENT"
+                                  ? "#EBF8EE"
+                                  : camp.status === "APPROVED"
+                                  ? "var(--color-brand-sage-light, #DDE7D8)"
+                                  : camp.status === "PROCESSING"
+                                  ? "#EFF6FF"
+                                  : camp.status === "FAILED" || camp.status === "CANCELLED"
+                                  ? "#FDE8E8"
+                                  : "#F7FAFC",
+                              color:
+                                camp.status === "SENT"
+                                  ? "#276749"
+                                  : camp.status === "APPROVED"
+                                  ? "var(--color-brand-forest, #173F2B)"
+                                  : camp.status === "PROCESSING"
+                                  ? "#1E40AF"
+                                  : camp.status === "FAILED" || camp.status === "CANCELLED"
+                                  ? "#C81E1E"
+                                  : "#4A5568",
+                            }}
+                          >
+                            ● {camp.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 14px", fontSize: "0.8125rem" }}>
+                          <span style={{ color: "#276749", fontWeight: 600 }}>{camp.sentCount} sent</span>
+                          {camp.failedCount > 0 && (
+                            <span style={{ color: "#C81E1E", marginLeft: "6px" }}>({camp.failedCount} failed)</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "right", whiteSpace: "nowrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPreviewModal(camp)}
+                            style={{
+                              padding: "4px 8px",
+                              borderRadius: "6px",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              border: "1px solid #CBD5E0",
+                              background: "#FFFFFF",
+                              cursor: "pointer",
+                              marginRight: "6px",
+                            }}
+                            title="Preview formatted email and approve"
+                          >
+                            👁️ Preview
+                          </button>
+
+                          {camp.status === "DRAFT" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditCampaignModal(camp)}
+                                style={{
+                                  padding: "4px 8px",
+                                  borderRadius: "6px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 600,
+                                  border: "1px solid #CBD5E0",
+                                  background: "#FFFFFF",
+                                  cursor: "pointer",
+                                  marginRight: "6px",
+                                }}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleApproveCampaign(camp.id)}
+                                style={{
+                                  padding: "4px 8px",
+                                  borderRadius: "6px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 600,
+                                  border: "1px solid var(--color-brand-green, #24583B)",
+                                  background: "var(--color-brand-sage-light, #DDE7D8)",
+                                  color: "var(--color-brand-forest, #173F2B)",
+                                  cursor: "pointer",
+                                  marginRight: "6px",
+                                }}
+                              >
+                                ✓ Approve
+                              </button>
+                            </>
+                          )}
+
+                          {camp.status === "APPROVED" && (
+                            <button
+                              type="button"
+                              onClick={() => handleTriggerCampaign(camp.id, camp.testMode, camp.testRecipient || undefined)}
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                border: "none",
+                                background: "var(--color-brand-forest, #173F2B)",
+                                color: "#FFFFFF",
+                                cursor: "pointer",
+                                marginRight: "6px",
+                              }}
+                            >
+                              🚀 Dispatch
+                            </button>
+                          )}
+
+                          {camp.status !== "SENT" && camp.status !== "CANCELLED" && (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelCampaign(camp)}
+                              style={{
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                border: "none",
+                                background: "none",
+                                color: "#E53E3E",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ padding: "40px", textAlign: "center", color: "var(--color-text-muted, #718096)" }}>
+                No promotional email campaigns created yet. Click &ldquo;+ Create New Campaign&rdquo; to draft one.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* COMPREHENSIVE PRODUCT CRUD MODAL */}
         <AdminProductModal
           isOpen={isProductModalOpen}
           onClose={() => setIsProductModalOpen(false)}
           onSave={handleSaveProduct}
           productToEdit={productToEdit}
+        />
+
+        {/* CAMPAIGN CREATION / EDIT MODAL */}
+        <AdminCampaignModal
+          isOpen={isCampaignModalOpen}
+          onClose={() => setIsCampaignModalOpen(false)}
+          onSave={handleSaveCampaign}
+          campaignToEdit={campaignToEdit}
+          coupons={offers}
+        />
+
+        {/* CAMPAIGN EMAIL PREVIEW & APPROVAL MODAL */}
+        <AdminCampaignPreviewModal
+          isOpen={isPreviewModalOpen}
+          onClose={() => setIsPreviewModalOpen(false)}
+          preview={previewData}
+          loading={previewLoading}
+          onApprove={handleApproveCampaign}
+          onTrigger={handleTriggerCampaign}
         />
 
         {/* MODAL: CREATE NEW PROMOTIONAL OFFER */}

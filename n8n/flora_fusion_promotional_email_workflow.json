@@ -1,0 +1,407 @@
+{
+  "name": "Flora Fusion — Promotional Email Campaign Dispatcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "flora-campaign",
+        "options": {}
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be001",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "webhookId": "flora-campaign-trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Validate Secret and Payload from Spring Boot\nconst headers = $input.first().json.headers || {};\nconst body = $input.first().json.body || {};\n\nconst providedSecret = headers['x-flora-secret'] || headers['X-Flora-Secret'] || '';\nconst expectedSecret = $env.FLORA_N8N_WEBHOOK_SECRET || 'flora_n8n_secret_change_in_production';\n\nif (providedSecret !== expectedSecret) {\n  throw new Error(`Unauthorized webhook call: Invalid X-Flora-Secret header provided.`);\n}\n\nif (!body.campaignId || !body.subject || !body.htmlContent) {\n  throw new Error(`Invalid payload: Missing campaignId, subject, or htmlContent.`);\n}\n\nreturn [{\n  json: {\n    campaignId: body.campaignId,\n    title: body.title || '',\n    subject: body.subject,\n    htmlContent: body.htmlContent,\n    couponCode: body.couponCode || null,\n    discountPercent: body.discountPercent || null,\n    testMode: Boolean(body.testMode),\n    testRecipient: body.testRecipient || null,\n    backendUrl: $env.FLORA_BACKEND_URL || 'http://localhost:8080',\n    internalSecret: $env.FLORA_INTERNAL_SECRET || 'flora_dev_secret_change_in_production'\n  }\n}];"
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be002",
+      "name": "Validate Secret & Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.backendUrl }}/api/v1/internal/campaigns/{{ $json.campaignId }}/recipients",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Flora-Internal-Secret",
+              "value": "={{ $json.internalSecret }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be003",
+      "name": "Fetch Eligible Recipients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deduplicate recipients and prepare individualized template data\nconst campaignData = $('Validate Secret & Payload').first().json;\nconst rawRecipients = $input.all();\n\nconst seenEmails = new Set();\nconst validRecipients = [];\n\nfor (const item of rawRecipients) {\n  const r = item.json;\n  if (!r || !r.email) continue;\n  const normalizedEmail = r.email.trim().toLowerCase();\n  \n  if (seenEmails.has(normalizedEmail)) continue;\n  seenEmails.add(normalizedEmail);\n\n  // Unsubscribe link with cryptographically secure token computed by backend\n  const unsubscribeUrl = r.unsubscribeUrl || (r.unsubscribeToken ? `https://flura-fusion.vercel.app/unsubscribe?token=${encodeURIComponent(r.unsubscribeToken)}` : 'https://flura-fusion.vercel.app/unsubscribe');\n  \n  // Replace placeholders if any in htmlContent\n  let personalizedHtml = (campaignData.htmlContent || '')\n    .replace(/\\{\\{RECIPIENT_NAME\\}\\}/g, r.name || 'Plant Lover')\n    .replace(/\\{\\{UNSUBSCRIBE_URL\\}\\}/g, unsubscribeUrl);\n\n  validRecipients.push({\n    json: {\n      campaignId: campaignData.campaignId,\n      recipientId: r.id,\n      name: r.name || 'Plant Lover',\n      email: normalizedEmail,\n      unsubscribeUrl: unsubscribeUrl,\n      subject: campaignData.subject,\n      personalizedHtml: personalizedHtml,\n      backendUrl: campaignData.backendUrl,\n      internalSecret: campaignData.internalSecret\n    }\n  });\n}\n\nif (validRecipients.length === 0) {\n  return [{\n    json: {\n      hasRecipients: false,\n      campaignId: campaignData.campaignId,\n      backendUrl: campaignData.backendUrl,\n      internalSecret: campaignData.internalSecret\n    }\n  }];\n}\n\nreturn validRecipients;"
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be004",
+      "name": "Deduplicate & Personalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasRecipients === false }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be005",
+      "name": "Has Zero Recipients?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be006",
+      "name": "Split in Batches (1 by 1)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1500,
+        "unit": "milliseconds"
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be007",
+      "name": "Throttle (1.5s Anti-Spam)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.GMAIL_SENDER_EMAIL || 'srushti.h.kale2004@gmail.com' }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.personalizedHtml }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be008",
+      "name": "Send Promotional Email (Gmail SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1760,
+        420
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "flora-gmail-smtp-credential",
+          "name": "Flora Fusion Gmail SMTP"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract send outcome\nconst prev = $('Split in Batches (1 by 1)').first().json;\nconst sendResult = $input.first().json;\n\nconst hasError = sendResult.error !== undefined || sendResult.message === 'Error';\nconst sendStatus = hasError ? 'FAILED' : 'SENT';\nconst errorMessage = hasError ? (sendResult.error?.message || JSON.stringify(sendResult.error)) : null;\n\nreturn [{\n  json: {\n    campaignId: prev.campaignId,\n    email: prev.email,\n    status: sendStatus,\n    errorMessage: errorMessage,\n    backendUrl: prev.backendUrl,\n    internalSecret: prev.internalSecret\n  }\n}];"
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be009",
+      "name": "Format Send Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backendUrl }}/api/v1/internal/campaigns/{{ $json.campaignId }}/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Flora-Internal-Secret",
+              "value": "={{ $json.internalSecret }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $json.email }}\",\n  \"status\": \"{{ $json.status }}\",\n  \"errorMessage\": {{ $json.errorMessage ? JSON.stringify($json.errorMessage) : null }}\n}",
+        "options": {}
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be010",
+      "name": "Log Recipient Status to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate results after batch loop\nconst logs = $('Format Send Result').all();\nconst campaign = $('Validate Secret & Payload').first().json;\n\nlet successCount = 0;\nlet failureCount = 0;\n\nfor (const log of logs) {\n  if (log.json.status === 'SENT') {\n    successCount++;\n  } else {\n    failureCount++;\n  }\n}\n\nreturn [{\n  json: {\n    campaignId: campaign.campaignId,\n    successCount: successCount,\n    failureCount: failureCount,\n    backendUrl: campaign.backendUrl,\n    internalSecret: campaign.internalSecret,\n    notes: `Completed via n8n Cloud and Gmail SMTP with 1.5s throttling: ${successCount} sent, ${failureCount} failed.`\n  }\n}];"
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be011",
+      "name": "Aggregate Campaign Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backendUrl }}/api/v1/internal/campaigns/{{ $json.campaignId }}/complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Flora-Internal-Secret",
+              "value": "={{ $json.internalSecret }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"successCount\": {{ $json.successCount }},\n  \"failureCount\": {{ $json.failureCount }},\n  \"notes\": \"{{ $json.notes }}\"\n}",
+        "options": {}
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be012",
+      "name": "Finalize Campaign Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backendUrl }}/api/v1/internal/campaigns/{{ $json.campaignId }}/complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Flora-Internal-Secret",
+              "value": "={{ $json.internalSecret }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"successCount\": 0,\n  \"failureCount\": 0,\n  \"notes\": \"Campaign executed with 0 eligible opted-in recipients.\"\n}",
+        "options": {}
+      },
+      "id": "18c1a100-336e-4ad2-921b-cfc1dc6be013",
+      "name": "Handle Zero Recipients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Secret & Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Secret & Payload": {
+      "main": [
+        [
+          {
+            "node": "Fetch Eligible Recipients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Eligible Recipients": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate & Personalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate & Personalize": {
+      "main": [
+        [
+          {
+            "node": "Has Zero Recipients?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Zero Recipients?": {
+      "main": [
+        [
+          {
+            "node": "Handle Zero Recipients",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split in Batches (1 by 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split in Batches (1 by 1)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Campaign Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Throttle (1.5s Anti-Spam)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Throttle (1.5s Anti-Spam)": {
+      "main": [
+        [
+          {
+            "node": "Send Promotional Email (Gmail SMTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Promotional Email (Gmail SMTP)": {
+      "main": [
+        [
+          {
+            "node": "Format Send Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Send Result": {
+      "main": [
+        [
+          {
+            "node": "Log Recipient Status to Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Recipient Status to Backend": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches (1 by 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Campaign Summary": {
+      "main": [
+        [
+          {
+            "node": "Finalize Campaign Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

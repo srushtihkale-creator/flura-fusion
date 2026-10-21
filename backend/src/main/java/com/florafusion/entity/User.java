@@ -46,6 +46,15 @@ public class User {
     @Builder.Default
     private boolean emailVerified = false;
 
+    @Column(name = "marketing_consent", nullable = false)
+    @Builder.Default
+    private boolean marketingConsent = false;
+
+    @Column(name = "unsubscribed_at")
+    private Instant unsubscribedAt;
+
+    @Column(name = "unsubscribe_token", length = 64, unique = true)
+    private String unsubscribeToken;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -54,4 +63,11 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @PrePersist
+    public void ensureUnsubscribeToken() {
+        if (this.unsubscribeToken == null || this.unsubscribeToken.isBlank()) {
+            this.unsubscribeToken = com.florafusion.security.SecurityUtils.generateSecureToken();
+        }
+    }
 }

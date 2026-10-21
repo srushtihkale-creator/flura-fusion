@@ -91,6 +91,14 @@ application:
       password: ${SHIPROCKET_PASSWORD:}
       pickup-location: ${SHIPROCKET_PICKUP_LOCATION:Primary}
 
+  campaign:
+    authorized-test-recipient: ${CAMPAIGN_TEST_RECIPIENT:srushti.h.kale2004@gmail.com}
+
+  n8n:
+    webhook-url: ${N8N_WEBHOOK_URL:}
+    webhook-secret: ${N8N_WEBHOOK_SECRET:flora-n8n-secret-token}
+    internal-secret: ${N8N_INTERNAL_SECRET:flora-internal-n8n-secret-2026}
+
 # Actuator Configuration
 management:
   endpoints:

@@ -11,4 +11,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
+    Optional<User> findByUnsubscribeToken(String unsubscribeToken);
+    java.util.List<User> findByEmailVerifiedTrueAndMarketingConsentTrueAndUnsubscribedAtIsNull();
+    long countByEmailVerifiedTrueAndMarketingConsentTrueAndUnsubscribedAtIsNull();
 }

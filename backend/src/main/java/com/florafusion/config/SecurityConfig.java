@@ -52,6 +52,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/orders/track/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/orders/{orderNumber}/invoice").permitAll() // Guest invoice download
                 .requestMatchers("/api/v1/ai/**").permitAll()
+                .requestMatchers("/api/v1/unsubscribe/**").permitAll()
+                .requestMatchers("/api/v1/internal/**").permitAll()
                 
                 // OpenAPI / Swagger & Actuator / Health
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

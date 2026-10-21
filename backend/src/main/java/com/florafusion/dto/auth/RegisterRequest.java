@@ -17,5 +17,11 @@ public record RegisterRequest(
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, max = 100, message = "Password must be at least 6 characters")
-    String password
-) {}
+    String password,
+
+    Boolean marketingConsent
+) {
+    public RegisterRequest(String name, String email, String phone, String password) {
+        this(name, email, phone, password, false);
+    }
+}
